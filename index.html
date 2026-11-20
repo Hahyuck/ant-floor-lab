@@ -1046,16 +1046,15 @@ class DofPass extends Pass{
     u.maskOnly.value=0;renderer.setRenderTarget(this.renderToScreen?null:writeBuffer);this.fsQuad.render(renderer);
     u.maskOnly.value=1;renderer.setRenderTarget(maskBlurRT);this.fsQuad.render(renderer)}
 }
-// 렌즈 플레어: 아주 밝은 광원(폭죽·섬광)에서만 고스트와 가로 빛줄기가 생긴다
+// 렌즈 플레어: 아주 밝은 광원 주변에 가로 빛 번짐만 생긴다 (뒤집힌 잔상인 고스트는 뺐다)
 var FlareShader={uniforms:{tDiffuse:{value:null},amt:{value:1}},
   vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
   fragmentShader:[
     "uniform sampler2D tDiffuse;uniform float amt;varying vec2 vUv;",
     "vec3 br(vec2 uv){vec3 c=texture2D(tDiffuse,clamp(uv,0.0,1.0)).rgb;float l=max(c.r,max(c.g,c.b));return c*smoothstep(2.4,3.6,l);}",
     "void main(){vec4 base=texture2D(tDiffuse,vUv);vec2 f=vec2(1.0)-vUv;vec2 g=(vec2(0.5)-f)*0.34;vec3 gh=vec3(0.0);vec3 st=vec3(0.0);",
-    " for(int i=0;i<4;i++){vec2 o=f+g*float(i);float w=1.0-smoothstep(0.0,0.7,length(vec2(0.5)-o));gh+=br(o)*w*w;}",
     " for(int i=-9;i<=9;i++){float fi=float(i);st+=br(vUv+vec2(fi*0.014,0.0))*(1.0-abs(fi)/10.0);}",
-    " gl_FragColor=vec4(base.rgb+gh*amt*0.30*vec3(0.7,0.85,1.0)+st*amt*0.05*vec3(0.55,0.75,1.0),base.a);}"].join("\n")};
+    " gl_FragColor=vec4(base.rgb+st*amt*0.05*vec3(0.55,0.75,1.0),base.a);}"].join("\n")};
 function buildComposer(){
   var rt=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType,samples:4});
   composer=new EffectComposer(renderer,rt);
@@ -1973,7 +1972,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202156";
+var BUILD="B11202201";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
