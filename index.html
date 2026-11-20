@@ -145,6 +145,15 @@
   #gfx p{color:var(--dim);line-height:1.5;margin:10px 0 0}
   @media (max-width:1180px){#gfx{top:150px}}
   body.compact #gfx{position:fixed;left:50%;top:50%;right:auto;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 24px));max-height:84vh}
+  #thp{position:absolute;right:14px;top:64px;width:min(360px,calc(100vw - 28px));background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;font-size:13px;z-index:7}
+  #thp.show{display:block}
+  #thp h3{margin:0 0 10px;font-size:14px}
+  #thp .row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  #thp .btn{padding:12px 4px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--text);font-weight:700;font-size:14px}
+  #thp p{color:var(--dim);line-height:1.5;margin:10px 0 0}
+  @media (max-width:1180px){#thp{top:150px}}
+  body.compact #thp{position:fixed;left:50%;top:50%;right:auto;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 24px))}
   #fade{position:absolute;inset:0;background:#07080b;opacity:0;pointer-events:none;transition:opacity .35s ease}
   #fade.on{opacity:1}
   #exitp{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:min(340px,calc(100vw - 28px));display:none;padding:14px;border-radius:16px;text-align:center;
@@ -196,6 +205,7 @@
     <button class="pill" id="bSound">소리 켜기</button>
     <button class="pill" id="bPass" title="켜면 유튜브 화면을 직접 클릭할 수 있습니다">화면 직접 조작</button>
     <button class="pill" id="bFocus">방송 집중</button>
+    <button class="pill" id="bTheme">테마</button>
     <button class="pill" id="bWalk">자동 산책</button>
     <button class="pill" id="bInv">상점·가방</button>
     <button class="pill" id="bChat">채팅</button>
@@ -210,8 +220,6 @@
         <div class="row" style="margin-top:8px"><input type="text" id="rwText" maxlength="40" placeholder="공대 경보: 모두의 화면 중앙에 뜹니다"><button class="btn" id="rwGo">경보</button></div>
         <div class="row" style="margin-top:6px"><button class="btn alt2" id="bellGo">🔔 개장 종</button><button class="btn alt2" id="rallyGo">📯 집결</button><button class="btn alt2" id="rcGo">🗳️ 준비 확인</button></div>
       </div>
-      <label>테마 · 방 전체가 함께 바뀝니다</label>
-      <div class="row" id="thIn"></div>
       <label for="yt">가운데 화면에 틀 유튜브 주소 (실시간 방송·일반 영상). 들어오는 사람 모두 같은 시점을 봅니다</label>
       <div class="row"><input type="text" id="yt" placeholder="비우고 적용하면 방송을 끕니다"><button class="btn" id="ytGo">적용</button></div>
       <div class="row" style="margin-top:6px"><button class="btn alt2" id="ytDef">슈카월드 최신 영상</button><button class="btn alt2" id="ytLive">슈카월드 실시간</button></div>
@@ -226,6 +234,7 @@
   <div id="banner"></div>
   <div id="raid" aria-live="assertive"></div>
   <div id="gfx"><button class="x" aria-label="닫기">✕</button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출, 안개, 조명 소품을 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
+  <div id="thp"><button class="x" aria-label="닫기">✕</button><h3>테마 바꾸기</h3><div class="row" id="thIn"></div><p>고르면 방 전체가 그 자리에서 함께 바뀝니다. 방송은 끊기지 않습니다.</p></div>
   <div id="exitp"><b>EXIT</b><span>바깥문을 지나 나갈까요?</span><div class="row"><button id="exGo">나가기</button><button id="exNo">머물기</button></div></div>
   <div id="vote"><div class="q"><span id="voteQ"></span><small id="voteT"></small></div><div class="bar"><i id="voteBar"></i></div><div class="row"><button id="vA">🐂 황소</button><button id="vB">곰 🐻</button></div></div>
   <div id="pad">
@@ -1035,7 +1044,7 @@ function buildComposer(){
 buildComposer();
 /* ───────────── 그래픽 강도 조절 (테스트용) ─────────────
    효과마다 0~2배로 조절한다. "전체 강도"는 후처리 효과 전부에 곱해진다. 값은 이 브라우저에만 저장된다 */
-var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1},GFX={},FOG0=scene.fog.density,
+var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6},GFX={},FOG0=scene.fog.density,
     GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개",glow:"조명 소품 (등불·빛줄)"};
 (function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
 function applyGfx(){
@@ -1458,6 +1467,7 @@ function hostOnConn(c){
       else if(m.t==="c"){var s=clean(m.s,60),now=Date.now(),mg=m.m?1:0;if(s&&now-(c.lastChat||0)>1500){c.lastChat=now;say(pid,s,mg);castAll({t:"c",id:pid,s:s,m:mg})}}
       else if(m.t==="cos"){e2.cos=(m.v|0)&3;castAll({t:"cos",id:pid,v:e2.cos},pid)}
       else if(m.t==="don"){var da=+m.a,dn=Date.now();if((da===100||da===500||da===1000)&&dn-(c.lastDon||0)>3000){c.lastDon=dn;doDon(pid,da);castAll({t:"don",id:pid,a:da},pid)}}
+      else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME&&Date.now()-(c.lastTh||0)>3000){c.lastTh=Date.now();castAll({t:"theme",v:m.v});applyTheme(m.v);toast(e2.name+" 님이 테마를 "+TSHORT[m.v]+"(으)로 바꿨습니다",2600)}}
       else if(m.t==="sg"){if(Date.now()-(c.lastSg||0)>400){c.lastSg=Date.now();takeSugar(m.i|0,pid)}}
       else if(m.t==="rv"){var vv=m.v===1?1:m.v===2?2:0;if(vv&&voteEnd>performance.now()){e2.vote=vv;castAll({t:"rv",id:pid,v:vv},pid)}}
     }
@@ -1481,7 +1491,7 @@ function clientOnData(m){
   else if(m.t==="rw"){raidWarn(clean(m.s,40))}
   else if(m.t==="rally"){doRally()}
   else if(m.t==="bell"){doBell()}
-  else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME){applyTheme(m.v);toast("방장이 테마를 "+TSHORT[m.v]+"(으)로 바꿨습니다",2600)}}
+  else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME){applyTheme(m.v);toast("테마가 "+TSHORT[m.v]+"(으)로 바뀌었습니다",2600)}}
   else if(m.t==="sg"){applySugar(m.i|0,m.id,+m.r||20000)}
   else if(m.t==="rc"){startVote(clean(m.q,40))}
   else if(m.t==="rv"){if(ents[m.id]&&m.id!==myId)ents[m.id].vote=m.v===1?1:2}
@@ -1506,7 +1516,9 @@ function switchTheme(v,delay){
   try{sessionStorage.setItem("antauto",JSON.stringify({n:myName,c:roomCode,t:Date.now()}))}catch(_){}
   setTimeout(function(){try{var u=new URL(location.href);u.searchParams.set("theme",v);u.hash="room-"+roomCode;location.href=u.toString()}catch(_){location.search="?theme="+v}},delay);
 }
-function setTheme(v){if(!isHost||TLIST.indexOf(v)<0||v===THEME)return;if(!ownsTheme(v))return toast(TSHORT[v]+" 테마는 상점에서 먼저 구입해야 합니다 (🍬"+TPRICE[v].toLocaleString("ko-KR")+")",3600);castAll({t:"theme",v:v});applyTheme(v);toast(TSHORT[v]+" 테마로 바꿨습니다",2400)}
+function setTheme(v){if(TLIST.indexOf(v)<0||v===THEME)return;closePops();
+  if(!isHost){if(hostConn)hostConn.send({t:"theme",v:v});return}        // 손님은 방장에게 요청하고, 방장이 모두에게 알린다
+  if(!ownsTheme(v))return toast(TSHORT[v]+" 테마는 상점에서 먼저 구입해야 합니다 (🍬"+TPRICE[v].toLocaleString("ko-KR")+")",3600);castAll({t:"theme",v:v});applyTheme(v);toast(TSHORT[v]+" 테마로 바꿨습니다",2400)}
 function say(id,s,mg){var e=ents[id];if(e){e.say=s;e.sayT=performance.now()+5500;e.megaT=mg?e.sayT:0;if(mg)tickerSay("📣 "+e.name+": "+s,"#7fd4ff",12000);logChat(e,s)}}
 
 /* 방장 시뮬레이션·중계: 탭이 뒤로 가도 돌도록 setInterval */
@@ -1656,7 +1668,7 @@ function frame(ts){
   camera.lookAt(_T);
   if(focusMode){                                                                                // 방송 집중: 스크린이 화면을 채우도록 정면에서 잡는다
     var fth=Math.tan(camera.fov*Math.PI/360),fd=Math.max(SCR.h/2/fth/.86,SCR.w/2/(fth*camera.aspect)/.96),fcy=SCR.y0+SCR.h/2;
-    camera.position.set(0,fcy-.4,clamp(-RD+fd,-RD+6,RD-.9));camera.lookAt(0,fcy,-RD)}
+    camera.position.set(0,fcy-.4,clamp(-RD+fd,-RD+6,RD-.9));camera.lookAt(0,fcy-(W<H?fd*.17:0),-RD)}
   if(shake>.004){camera.position.x+=(Math.random()-.5)*shake;camera.position.y+=(Math.random()-.5)*shake;camera.rotation.z+=(Math.random()-.5)*shake*.06}
   camera.updateMatrixWorld();updateFx(dt);
   var focusD=me?camera.position.distanceTo(_c.set(me.x,1.2,me.z)):14;if(focusMode)focusD=camera.position.z+RD;if(dof)dof.material.uniforms.focus.value=focusD;
@@ -1805,6 +1817,7 @@ if(isTouch)touchOn();addEventListener("touchstart",touchOn,{once:true,passive:tr
   renderHot();setInterval(renderHot,250);
   logSys("이동 WASD · 점프 스페이스 · 아이템 1 2 3 · 채팅 Enter");
 })();
+$("bTheme").onclick=function(){var on=!$("thp").classList.contains("show");closePops();if(on){paintThemes();$("thp").classList.add("show")}};
 $("bGfx").onclick=function(){var on=!$("gfx").classList.contains("show");closePops();if(on){renderGfx();$("gfx").classList.add("show")}};
 $("bQ").onclick=function(){quality=quality==="high"?"low":"high";try{localStorage.setItem("antq",quality)}catch(_){}applyQuality()};
 $("bots").oninput=function(){$("botsN").textContent=this.value;setBots(+this.value)};
@@ -1873,7 +1886,7 @@ function goFull(on){var el=document.documentElement;try{
 function fullCh(){$("bFull").textContent=isFull()?"전체화면 끄기":"전체화면";setTimeout(resize,60)}
 document.addEventListener("fullscreenchange",fullCh);document.addEventListener("webkitfullscreenchange",fullCh);
 $("bFull").onclick=function(){if(!goFull(!isFull()))toast("이 브라우저는 전체화면을 지원하지 않습니다. 크롬이나 삼성 인터넷에서 열어 주세요",5000)};
-function closePops(){$("pop").classList.remove("show");$("inv").classList.remove("show");$("gfx").classList.remove("show")}
+function closePops(){$("pop").classList.remove("show");$("inv").classList.remove("show");$("gfx").classList.remove("show");$("thp").classList.remove("show")}
 function setCompact(){document.body.classList.toggle("compact",isTouch||innerWidth<=760)}
 setCompact();addEventListener("resize",setCompact);
 $("bMenu").onclick=function(){document.body.classList.toggle("menu");closePops()};
