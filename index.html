@@ -512,6 +512,7 @@ OBST=(BASE||RIVER?[]:POSTS.map(function(p){return [p[0],p[1],2.2]})).concat(STAT
 setLayout();
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
+var critters=[];   // 어슬렁거리는 동물 (강변의 양과 강아지)
 var spins=[];   // 계속 도는 것 (지구 둘레의 달)
 var stars=[],starMesh=null;function S(x,y,z,sz,r,g,b){stars.push([x,y,z,sz,r,g,b,Math.random()*6.283,.7+Math.random()*2.2])}   // 반짝이는 별: 위치, 크기, 색, 위상, 빠르기
 function buildProps(){
@@ -605,7 +606,7 @@ function buildProps(){
     // 땅: 방 밖으로 이어지는 잔디, 강가의 계단식 호안
     B(-RW-40,-.28,0,80,.5,700,GRASS);B(0,-.28,RD+165,RW*2,.5,330,GRASS);B(0,-.28,-RD-165,RW*2,.5,330,GRASS);
     B(RW+.9,-.45,0,1.8,.9,700,0x8c8e89);B(RW+2.4,-.95,0,1.4,.9,700,0x7c7e7a);B(RW+3.6,-1.45,0,1.4,.9,700,0x6c6e6a);
-    for(q=0;q<10;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,0x424a49);B(RW-.3,1.15,0,.3,.14,RD*2,0x695b4b);                                                       // 난간
+    for(q=-44;q<56;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,0x424a49);B(RW-.3,1.15,0,.3,.14,440,0x695b4b);                                                       // 난간
     // 강물: 물결이 흐르는 셰이더
     (function(){var m=new THREE.Mesh(new THREE.PlaneGeometry(112,700),new THREE.ShaderMaterial({uniforms:{time:{value:0},x0:{value:RW+4}},
       vertexShader:"varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}",
@@ -646,6 +647,24 @@ function buildProps(){
         c.position.set(RW+86-5.2,58+cr[1],-52+cr[0]);c.scale.x=.35;scene.add(c)})})();                                             // 보름달
     [[RW+70,40,-110,.30,.24,.42],[RW+95,50,30,.26,.3,.46],[-60,46,-70,.34,.24,.38],[-80,38,60,.24,.3,.44],[20,60,120,.3,.26,.44]].forEach(function(c){
       G(c[0],c[1],c[2],16,3,7,c[3],c[4],c[5]);G(c[0]+6,c[1]+2,c[2]+1,10,3,6,c[3]*1.15,c[4]*1.15,c[5]*1.1);G(c[0]-7,c[1]+1.2,c[2]-1,9,2.4,5,c[3],c[4],c[5])});   // 파스텔 구름
+    // 산책로: 방 밖으로 강을 따라 쭉 이어진다 (경계석, 자전거 도로, 흰 선, 보행로)
+    for(sx=-1;sx<=1;sx+=2){z=sx*(RD+165);B(RW-.45,-.25,z,.9,.5,330,0x9c9c96);B(RW-2.95,-.25,z,4.1,.5,330,0x763e36);B(RW-5.15,-.25,z,.3,.5,330,0xd8d8ce);B(RW-7,-.25,z,3.4,.5,330,0x94948f);B(RW-8.85,-.25,z,.3,.5,330,0x9c9c96);
+      for(q=0;q<60;q++)B(RW-3,-.24,sx*(RD+1.6+q*3.2),.22,.5,.8,0xdebe48);                                                                                     // 자전거 도로의 노란 점선
+      for(q=1;q<16;q++){k=sx*(RD+q*12);B(RW-5.15,2.2,k,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,k,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,k,.5,.3,.5,1.6,1.3,.8)}}           // 길을 따라 이어지는 가로등
+    // 나무: 방 밖 잔디에 크기와 종류를 섞어 흩뿌린다
+    for(q=0;q<150;q++){var tx_,tz_;if(rr()<.55){tx_=-RW-2.5-rr()*80;tz_=-200+rr()*400}else{tx_=-RW+rr()*(RW*2-11);tz_=(rr()<.5?-1:1)*(RD+4+rr()*190)}
+      k=rr();if(k<.12){B(tx_,.35,tz_,1.4+rr(),.7,1.4+rr(),0x356b3c)}else tree(tx_,tz_,.9+rr()*1.1,k<.36)}                                                      // 열에 하나는 낮은 덤불
+    // 양과 강아지: 잔디밭과 바깥 풀밭을 어슬렁거린다 (보는 사람마다 따로 움직인다)
+    var mkC=function(sheep,rg){var g=new THREE.Group(),M=function(c){return new THREE.MeshStandardMaterial({color:c,map:texDot,roughness:.9})},legs=[],a,b2,i,x,z,
+        P=function(mat,w,h,d,px,py,pz){var m=new THREE.Mesh(boxGeo,mat);m.scale.set(w,h,d);m.position.set(px,py,pz);m.castShadow=true;g.add(m);return m};
+      if(sheep){a=M(0xf4f1e8);b2=M(0x3a3632);P(a,1,.8,1.4,0,.85,0);P(a,.8,.5,1,0,1.3,-.05);P(a,.6,.4,.5,0,1.25,.55);P(a,.3,.3,.3,0,.95,-.75);
+        P(b2,.42,.42,.46,0,1,.9);P(b2,.12,.12,.3,.26,1.12,.8);P(b2,.12,.12,.3,-.26,1.12,.8);for(i=0;i<4;i++)legs.push(P(b2,.16,.5,.16,i%2?.3:-.3,.25,i<2?.45:-.45))}
+      else{a=M([0xc9955a,0xf0e6d2,0x6b4a32,0x2e2a28][(rr()*4)|0]);b2=M(0x241f1c);P(a,.5,.46,1.05,0,.6,0);P(a,.44,.42,.42,0,.92,.6);P(a,.24,.2,.26,0,.84,.88);P(b2,.1,.1,.08,0,.9,1.02);
+        P(a,.12,.22,.1,.17,1.2,.55);P(a,.12,.22,.1,-.17,1.2,.55);P(a,.1,.4,.1,0,.95,-.55);for(i=0;i<4;i++)legs.push(P(a,.13,.4,.13,i%2?.17:-.17,.2,i<2?.38:-.38))}
+      x=rg[0]+rr()*(rg[1]-rg[0]);z=rg[2]+rr()*(rg[3]-rg[2]);g.position.set(x,0,z);g.rotation.y=rr()*6.28;scene.add(g);
+      critters.push({g:g,legs:legs,x:x,z:z,tx:x,tz:z,wait:rr()*5,sp:sheep?.8:2.1,ph:rr()*6.28,r:rg})};
+    var RIN=[-RW+2.5,RW-10.5,ZMIN+1.5,RD-2],ROUT=[-RW-36,-RW-3,-40,60],RBACK=[-RW+2,RW-11,RD+3,RD+50];
+    for(q=0;q<3;q++){mkC(true,RIN);mkC(true,ROUT)}mkC(true,RBACK);for(q=0;q<2;q++){mkC(false,RIN);mkC(false,ROUT)}mkC(false,RBACK);
     // 공원: 가로등, 나무, 돗자리, 텐트, 벤치, 야외 시세판
     for(q=0;q<5;q++){z=-RD+5+q*((RD*2-8)/4);B(RW-5.15,2.2,z,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,z,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,z,.5,.3,.5,1.6,1.3,.8)}
     for(q=0;q<8;q++)tree(-RW-3-(q%2)*3.5,-RD+3+q*5.4,1.1+(q%3)*.2,q%3===1);for(q=0;q<6;q++)tree(-RW+5+q*6,RD+3.5+(q%2)*3,1.1+(q%2)*.3,q%2===0);
@@ -1245,7 +1264,7 @@ function buildWorld(){
   if(worldRoot){scene.remove(worldRoot);worldRoot.traverse(function(o){if(o.isInstancedMesh)o.dispose();if(o.geometry&&o.geometry!==boxGeo)o.geometry.dispose();
     if(o.material&&o.material!==antMat&&o.material!==propMat&&o.material.dispose)o.material.dispose()})}
   worldRoot=new THREE.Group();scene.add=function(){worldRoot.add.apply(worldRoot,arguments);return scene};          // 짓는 동안 scene.add는 worldRoot로 들어간다
-  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;riverMat=null;stars.length=0;starMesh=null;spins.length=0;
+  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;riverMat=null;stars.length=0;starMesh=null;spins.length=0;critters.length=0;
     setDims();genTex();setLayout();buildPlanes();buildProps();buildInst();buildStatues();buildSugar();buildCam()}
   finally{delete scene.add}
   scene.add(worldRoot);applyLights();placeScreen();setBoss();placeMarks();if(GFX.all!=null&&finalPass)applyGfx();
@@ -1801,6 +1820,10 @@ function frame(ts){
   BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
   bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
   for(i=0;i<spins.length;i++)spins[i].rotation.y=time*.55;
+  for(i=0;i<critters.length;i++){var cr=critters[i],cdx=cr.tx-cr.x,cdz=cr.tz-cr.z,cd=Math.hypot(cdx,cdz),cmv=false,cq;                                  // 쉬다가, 새 자리를 골라 걸어간다
+    if(cr.wait>0)cr.wait-=dt;else if(cd<.2){cr.wait=1+Math.random()*7;cr.tx=cr.r[0]+Math.random()*(cr.r[1]-cr.r[0]);cr.tz=cr.r[2]+Math.random()*(cr.r[3]-cr.r[2])}
+    else{cr.x+=cdx/cd*cr.sp*dt;cr.z+=cdz/cd*cr.sp*dt;cr.g.rotation.y=Math.atan2(cdx,cdz);cmv=true}
+    cr.g.position.set(cr.x,cmv?Math.abs(Math.sin(time*9+cr.ph))*.06:0,cr.z);for(cq=0;cq<4;cq++)cr.legs[cq].rotation.x=cmv?Math.sin(time*10+cr.ph+(cq===0||cq===3?0:3.14))*.6:0}
   if(riverMat)riverMat.uniforms.time.value=time;
   if(starMesh){var sc_=starMesh.instanceColor.array,st_,sk_;for(i=0;i<stars.length;i++){st_=stars[i];sk_=.5+.5*Math.sin(time*st_[8]+st_[7]);sk_=.3+.9*sk_*sk_;           // 별마다 다른 박자로 밝아졌다 어두워진다
       sc_[i*3]=st_[4]*sk_;sc_[i*3+1]=st_[5]*sk_;sc_[i*3+2]=st_[6]*sk_}starMesh.instanceColor.needsUpdate=true}
@@ -2054,7 +2077,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202323";
+var BUILD="B11202331";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
