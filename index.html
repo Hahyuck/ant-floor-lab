@@ -346,7 +346,8 @@ function jit(base,n,r){var k=(r()-.5)*2*n;return [base[0]+k,base[1]+k,base[2]+k]
 var texDot=pixTex(4,4,function(x,y,r){var v=215+r()*40;return [v,v,v]});
 // 바닥: 밝은 쪽매널 마루 + 황동 테두리 + 떨어진 주문 전표
 var texFloor,texWall,texWallSide,texGrass,floorPx;
-function floorK(){return [1,2,3,4,6][((GFX&&GFX.floor)||1)-1]||1}   // 1단계(지금) ~ 5단계(가장 고운 픽셀)
+var DENS=[.5,1,2,3,4,6,8];                                    // 밀도 −3 ~ +3. 가운데(0)가 기본이고 예전 3단계와 같다
+function floorK(){var d=GFX&&GFX.dens;return DENS[d==null?3:d]||3}
 function genTex(){                                   // 테마에 맞는 바닥·벽 텍스처를 다시 만든다
 if(texFloor){texFloor.dispose();texWall.dispose();texWallSide.dispose()}
 var FK=floorK();                                      // 바닥 픽셀 단계: 같은 넓이에 픽셀을 더 많이 깔아 무늬가 촘촘해진다
@@ -359,9 +360,17 @@ floorPx=function(i,j,r,FK){                            // 바닥의 한 픽셀 �
   if(CLUB){                                                                                  // 클럽: 짙은 숯색 타일, 가운데 통로만 살짝 밝게
     if(z<ZMIN-.6)return jit([28,25,34],4,r);
     return jit((i%4===0||j%4===0)?[24,22,30]:Math.abs(x)<2?[46,41,54]:(((i>>2)+(j>>2))&1?[33,30,40]:[38,34,45]),4,r)}
-  if(RIVER){                                                                                 // 강변: 강과 나란한 나무 데크
-    if(z<ZMIN-.6)return jit([74,64,54],5,r);
-    var pk=Math.floor(i/3);return jit((i%3===0||((j+pk*5)%14)===0)?[76,66,55]:pk%5===0?[114,100,82]:[102,90,74],5,r)}
+  if(RIVER){                                                                                 // 한강 고수부지: 잔디밭, 보행로, 자전거 도로
+    if(z<ZMIN-.6)return jit([126,124,118],5,r);
+    var gx=RW-x;                                                                             // 강가에서 떨어진 거리
+    if(gx<.9)return jit([156,156,150],4,r);                                                  // 경계석
+    if(gx<5){if(Math.abs(gx-3)<.11&&Math.floor(z/1.6+50)%2===0)return [222,190,72];          // 자전거 도로: 붉은 포장에 노란 점선
+      return jit([118,62,54],6,r)}
+    if(gx<5.3)return [216,216,206];
+    if(gx<8.7)return jit((i%4===0||j%4===0)?[124,124,120]:[148,148,143],4,r);                // 보행로 블록
+    if(gx<9)return jit([156,156,150],4,r);
+    if(r()<.025)return r()<.5?[232,222,128]:[236,236,226];                                   // 들꽃
+    return jit(((i>>2)+(j>>2))&1?[72,124,62]:[64,114,58],9,r)}
   if(RAID){                                                                                  // 돌바닥 + 가운데 붉은 융단
     if(z<ZMIN-.6)return jit([70,64,74],6,r);
     var ax=Math.abs(x);if(z>ZMIN+.4&&ax<3)return ax>2.5?jit([186,146,58],9,r):jit(((i+j)&3)===0?[128,30,38]:[142,36,44],6,r);
@@ -375,7 +384,7 @@ floorPx=function(i,j,r,FK){                            // 바닥의 한 픽셀 �
   var base=inC?(((i>>2)+(j>>2))&1?[170,138,98]:[156,124,86]):[132,106,76];
   return jit(seam?[base[0]-26,base[1]-24,base[2]-20]:base,7,r);
 };
-texFloor=pixTex(Math.round(RW*4)*FK,Math.round(RD*4)*FK,function(i,j,r){return floorPx(i,j,r,FK)});
+texFloor=pixTex(Math.round(Math.round(RW*4)*FK),Math.round(Math.round(RD*4)*FK),function(i,j,r){return floorPx(i,j,r,FK)});
 // 벽: 어두운 석재 (위쪽이 떠 보이지 않게)
 texWall=pixTex(16,16,function(x,y,r){
   var row=y>>3, mortar=(y&7)===7||(row===0?x===15:x===7);
@@ -395,7 +404,7 @@ renderer.setClearColor(0x05060a,1);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 var scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x0c0b0d,.008);
-var camera=new THREE.PerspectiveCamera(55,1,.2,120);
+var camera=new THREE.PerspectiveCamera(55,1,.2,280);
 RectAreaLightUniformsLib.init();
 
 // 조명: 위에서 바닥으로 곧게 떨어지는 주광 + 바닥 반사광 + 관객 등 쪽 보조광
@@ -420,7 +429,7 @@ if(CLUB){                                                                       
   scene.fog.color.set(0x211e2a);scene.fog.density=.006;renderer.setClearColor(0x0a090e,1);
   hemi.color.set(0x858199);hemi.groundColor.set(0x382c35);hemi.intensity=.55;sun.color.set(0xffdbbc);sun.intensity=1.1;fill.intensity=.5;warm.intensity=cool.intensity=170}
 if(RIVER){                                                                                   // 밤 강변: 서늘한 하늘빛에 따뜻한 전구
-  scene.fog.color.set(0x263744);scene.fog.density=.003;renderer.setClearColor(0x0c1420,1);
+  scene.fog.color.set(0x16304a);scene.fog.density=.0024;renderer.setClearColor(0x0d2038,1);
   hemi.color.set(0x889faf);hemi.groundColor.set(0x47413b);hemi.intensity=.95;sun.color.set(0xf2d8b4);sun.intensity=1.8;
   warm.color.set(0xffc27a);cool.color.set(0xffc27a);warm.intensity=cool.intensity=120}
 if(BASE){                                                                                    // 밤하늘 아래 밝고 가벼운 광장
@@ -437,10 +446,10 @@ function plane(w,h,tex,x,y,z,rx,ry){
 }
 function buildPlanes(){
 plane(RW*2,RD*2,texFloor,0,0,0,-Math.PI/2,0).material.roughness=.55;
-plane(RW*2,RD*2,texCeil,0,RH,0,Math.PI/2,0).visible=!BASE;
+plane(RW*2,RD*2,texCeil,0,RH,0,Math.PI/2,0).visible=!(BASE||RIVER);
 plane(RW*2,RH,texWall,0,RH/2,-RD,0,0);
-plane(RW*2,RH,texWall,0,RH/2,RD,0,Math.PI).visible=!BASE;
-plane(RD*2,RH,texWallSide,-RW,RH/2,0,0,Math.PI/2).visible=!BASE;
+plane(RW*2,RH,texWall,0,RH/2,RD,0,Math.PI).visible=!(BASE||RIVER);
+plane(RD*2,RH,texWallSide,-RW,RH/2,0,0,Math.PI/2).visible=!(BASE||RIVER);
 plane(RD*2,RH,texWallSide,RW,RH/2,0,0,-Math.PI/2).visible=!(RIVER||BASE);   // 강변 테마는 오른쪽이 강으로 트여 있다
 }
 
@@ -491,13 +500,14 @@ function glowPlane(w,h,tex,k,x,y,z,ry){
 
 /* 고정 소품: 상자 조립 */
 var boxGeo=new THREE.BoxGeometry(1,1,1);
+var riverMat=null;
 var props=[], glows=[], fires=[], drift=[], riverT=null, bobs=[], beams=[];   // beams: 움직이는 조명 (클럽)
 //   // bobs: 둥실 떠 있는 소품 (기본 테마)   // drift: 색이 천천히 흐르는 조명 (클럽)
 var POSTS,STATUES,OBST;
 function setLayout(){
 POSTS=RAID?[[-1,-.03],[1,-.03],[-1,.47],[1,.47]].map(function(p){return [p[0]*(RW+3)/2,p[1]*RD]})   // 게임 테마: 앞쪽 동상과 뒷문 사이를 고르게 나눈 자리, 좌우는 융단과 벽의 중간
   :[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ]});STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ,p[2]]});
-OBST=(BASE?[]:POSTS.map(function(p){return [p[0],p[1],2.2]})).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
+OBST=(BASE||RIVER?[]:POSTS.map(function(p){return [p[0],p[1],2.2]})).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
 }
 setLayout();
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
@@ -577,17 +587,55 @@ function buildProps(){
     (function(){var mb=new THREE.Mesh(new THREE.IcosahedronGeometry(1.56,2),new THREE.MeshStandardMaterial({color:0xcfd3e0,roughness:.25,metalness:.1,flatShading:true}));
       mb.position.set(0,RH-2.7,0);scene.add(mb);drift.ball=mb;var st=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0x15141a}));st.scale.set(.1,1.4,.1);st.position.set(0,RH-.9,0);scene.add(st)})();   // 미러볼
   }
-  if(RIVER){                                                                                 // 강변 테라스: 오른쪽이 밤 강으로 트여 있다
-    var WDN=0x695b4b,WDD=0x424a49,q,tz,th,w,rr=rng(12);
-    for(q=0;q<10;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,WDD);B(RW-.3,1.15,0,.3,.14,RD*2,WDN);                                                                // 난간
-    B(RW+45,-2.2,0,90,.4,240,0x2c4c62);                                                                                                                       // 강
-    B(RW+33,3.4,-9,66,.8,3,0x56666e);B(RW+33,4.1,-9,66,.25,.25,0x7a8a92);for(q=0;q<5;q++){B(RW+6+q*13,.6,-9,1.8,5.4,2.6,0x3f4d55);G(RW+6+q*13,5,-9,.55,.55,.55,1.7,1.3,.65);G(RW+6+q*13,-1.95,-3,.6,.05,9,.6,.46,.22)}   // 다리 · 가로등 · 물에 비친 빛
-    for(q=0;q<9;q++){tz=-76+q*18+(q%3)*3;th=16+((q*7)%5)*5;B(RW+70+(q%3)*4,th/2-2,tz,8,th,8,q%2?0x3d5060:0x485a68);G(RW+38,-1.96,tz,60,.04,1.4,.2,.19,.13);
-      for(w=0;w<16;w++)G(RW+65.9+(q%3)*4,1+rr()*(th-5),tz-3.5+rr()*7,.1,.6,.8,1.25,1.05,.6)}                                                                      // 건너편 아파트와 창불
-    G(RW+70,40,-70,5,5,.5,1.5,1.5,1.35);for(q=0;q<60;q++)G(RW+30+rr()*130,12+rr()*52,-120+rr()*240,.3,.3,.3,1.3,1.3,1.6);                                     // 달 · 별
-    for(q=0;q<12;q++)G(RW-.5,RH-1.2-(q%2)*.25,-RD+2+q*3.3,.22,.22,.22,1.7,1.25,.6);                                                                           // 줄전구
-    for(sx=-1;sx<=1;sx+=2)for(q=0;q<3;q++){z=1+q*5;B(sx*10,.55,z,8,.16,1,0x796857);B(sx*10,.28,z,7.4,.4,.2,0x514b44);B(sx*10,1,z+.45,8,.7,.14,0x796857)}        // 긴 벤치
-    B(RW-3.4,1,RD-2.2,4.4,2,1.6,0x526360);B(RW-4.2,2.25,RD-2.2,.9,.5,.9,0x373f40);B(RW-2.8,2.25,RD-2.2,.9,.5,.9,0x373f40);B(RW-3.5,2.15,RD-1.5,1.4,.3,.5,0xa69a82);   // 라면 카운터
+  if(RIVER){                                                                                 // 한강 고수부지: 꿈동산 같은 밤하늘, 물결치는 강, 건너편 아파트
+    var q,k,n,rr=rng(12),d,ang,by,bz,bh,bx,fl2,cols,cz,GRASS=0x3f6f3c;
+    var tree=function(x,z,s,pink){B(x,1.2*s,z,.5*s,2.4*s,.5*s,0x5a4030);B(x,3.3*s,z,2.6*s,2*s,2.6*s,pink?0xf0a9c8:0x3f7d45);B(x+.4*s,4.5*s,z-.3*s,1.8*s,1.4*s,1.8*s,pink?0xf8c6dc:0x4c9150)};
+    // 땅: 방 밖으로 이어지는 잔디, 강가의 계단식 호안
+    B(-RW-40,-.28,0,80,.5,RD*2+200,GRASS);B(0,-.28,RD+50,RW*2,.5,100,GRASS);B(0,-.28,-RD-50,RW*2,.5,100,GRASS);
+    B(RW+.9,-.45,0,1.8,.9,RD*2+200,0x8c8e89);B(RW+2.4,-.95,0,1.4,.9,RD*2+200,0x7c7e7a);B(RW+3.6,-1.45,0,1.4,.9,RD*2+200,0x6c6e6a);
+    for(q=0;q<10;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,0x424a49);B(RW-.3,1.15,0,.3,.14,RD*2,0x695b4b);                                                       // 난간
+    // 강물: 물결이 흐르는 셰이더
+    (function(){var m=new THREE.Mesh(new THREE.PlaneGeometry(112,340),new THREE.ShaderMaterial({uniforms:{time:{value:0},x0:{value:RW+4}},
+      vertexShader:"varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}",
+      fragmentShader:[
+        "uniform float time,x0;varying vec3 vW;",
+        "float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}",
+        "float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(h(i),h(i+vec2(1.0,0.0)),f.x),mix(h(i+vec2(0.0,1.0)),h(i+vec2(1.0,1.0)),f.x),f.y);}",
+        "void main(){vec2 p=floor(vW.xz*2.5)/2.5;float d=clamp((p.x-x0)/100.0,0.0,1.0);",                                         // 복셀 느낌이 나게 격자로 끊는다
+        " float w=n(p*vec2(0.30,0.85)+vec2(time*0.30,time*0.10))*0.6+n(p*vec2(0.8,2.1)-vec2(time*0.45,time*0.05))*0.4;",          // 큰 물결 + 잔물결
+        " float crest=smoothstep(0.60,0.78,w);vec3 c=mix(vec3(0.045,0.13,0.21),vec3(0.02,0.06,0.12),d);",
+        " c+=crest*vec3(0.10,0.19,0.26)*(0.30+0.45*(1.0-d));",                                                                    // 물마루의 빛
+        " float col=smoothstep(0.52,0.9,n(vec2(p.y*0.42,7.0)));float sh=0.5+0.5*sin(p.x*1.1+w*9.0+time*1.8);",
+        " c+=col*sh*vec3(1.0,0.76,0.42)*0.22*smoothstep(0.12,0.85,d);",                                                           // 건너편 불빛이 길게 비친다
+        " c+=exp(-pow((p.y+52.0)/9.0,2.0))*crest*vec3(0.85,0.9,1.0)*0.55;",                                                       // 달빛 윤슬
+        " gl_FragColor=vec4(c,1.0);",
+        " #include <tonemapping_fragment>",
+        " #include <colorspace_fragment>",
+        "}"].join("\n")}));
+      m.rotation.x=-Math.PI/2;m.position.set(RW+4+56,-1.7,0);scene.add(m);riverMat=m.material})();
+    // 건너편: 강둑과 아파트 단지
+    B(RW+130,-1.3,0,36,1.2,340,0x2e4a3c);B(RW+113,-.9,0,2.5,1.8,340,0x55605c);
+    for(q=0;q<7;q++){bz=-132+q*44+((q*13)%7);bh=30+((q*7)%4)*6;bx=RW+122+(q%2)*7;cols=9;fl2=Math.floor((bh-3)/2);
+      B(bx,bh/2-1,bz,7,bh,22,q%2?0x51657a:0x5b6f84);B(bx-3.6,bh/2-1,bz,.3,bh,2.2,0x3a4a5a);                                                                     // 판상형 몸체 · 계단실
+      B(bx,bh-.4,bz-5,4,1.4,3,0x47596b);B(bx,bh-.2,bz+6,3,1,2.4,0x47596b);B(bx-3.56,bh-1.7,bz,.2,1.1,22,0x8fa3b8);                                             // 옥탑 · 옥상 띠
+      for(k=0;k<fl2;k++){by=1.2+k*2;B(bx-3.62,by-.72,bz,.22,.16,22,0x7a8ea4);                                                                                  // 층마다 발코니 난간
+        for(n=0;n<cols;n++){cz=bz-9.6+n*2.4;if(Math.abs(cz-bz)<1.3)continue;if(rr()<.55)G(bx-3.62,by+.1,cz,.12,.95,1.5,rr()<.7?1.25:.75,rr()<.7?1.02:.95,rr()<.7?.6:1.15)}}}
+    // 꿈동산 밤하늘: 별, 별자리, 달, 옅은 구름
+    for(q=0;q<230;q++){d=75+rr()*70;ang=rr()*6.283;k=rr();G(Math.cos(ang)*d,4+rr()*90,Math.sin(ang)*d,.36,.36,.36,k<.2?1.7:1.35,k<.2?1.25:k<.4?1.2:1.45,k<.4?1.15:1.75)}
+    [[60,70,-40,74,82,-52],[74,82,-52,90,76,-60],[90,76,-60,96,88,-78],[-70,64,20,-82,74,34],[-82,74,34,-78,86,52]].forEach(function(L){for(k=1;k<9;k++)G(L[0]+(L[3]-L[0])*k/9,L[1]+(L[4]-L[1])*k/9,L[2]+(L[5]-L[2])*k/9,.14,.14,.14,.6,.8,1)});
+    G(RW+86,58,-52,7,10,.8,1.6,1.55,1.3);G(RW+86,58,-52,10,7,.8,1.6,1.55,1.3);G(RW+86,58,-52,9,9,.8,1.6,1.55,1.3);                                             // 보름달
+    [[RW+70,40,-110,.30,.24,.42],[RW+95,50,30,.26,.3,.46],[-60,46,-70,.34,.24,.38],[-80,38,60,.24,.3,.44],[20,60,120,.3,.26,.44]].forEach(function(c){
+      G(c[0],c[1],c[2],16,3,7,c[3],c[4],c[5]);G(c[0]+6,c[1]+2,c[2]+1,10,3,6,c[3]*1.15,c[4]*1.15,c[5]*1.1);G(c[0]-7,c[1]+1.2,c[2]-1,9,2.4,5,c[3],c[4],c[5])});   // 파스텔 구름
+    // 공원: 가로등, 나무, 돗자리, 텐트, 벤치, 야외 시세판
+    for(q=0;q<5;q++){z=-RD+5+q*((RD*2-8)/4);B(RW-5.15,2.2,z,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,z,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,z,.5,.3,.5,1.6,1.3,.8)}
+    for(q=0;q<8;q++)tree(-RW-3-(q%2)*3.5,-RD+3+q*5.4,1.1+(q%3)*.2,q%3===1);for(q=0;q<6;q++)tree(-RW+5+q*6,RD+3.5+(q%2)*3,1.1+(q%2)*.3,q%2===0);
+    [[-12,3,0xe8799a],[-6,9,0x6fa8e0],[-13,13,0xf0c95a],[2,14,0x8fd08a],[4,5,0xe8799a],[-3,-1,0xf0c95a]].forEach(function(mt){B(mt[0],.05,mt[1],2.6,.07,1.9,mt[2]);B(mt[0],.06,mt[1],2.6,.07,.25,0xf6f1e6);
+      B(mt[0]-.8,.2,mt[1]+.5,.4,.3,.4,0xd9503f);B(mt[0]+.6,.16,mt[1]-.4,.5,.2,.5,0xf4f1e8)});                                                                  // 돗자리와 간식
+    [[-15.5,-6,0x5aa6d8],[-15.5,7,0xe89a4a],[-14.5,17,0x8a6ad0]].forEach(function(tn){B(tn[0],.55,tn[1],2.6,1.1,2.4,tn[2]);B(tn[0],1.35,tn[1],1.7,.5,2.4,tn[2]);B(tn[0],1.8,tn[1],.8,.4,2.4,tn[2]);B(tn[0]+1.31,.5,tn[1],.04,.9,.9,0x1c2530)});   // 텐트
+    for(q=0;q<3;q++){z=3+q*5.5;B(RW-10.2,.55,z,.9,.16,3.2,0x796857);B(RW-10.2,.28,z,.2,.4,2.8,0x514b44);B(RW-10.6,1,z,.14,.7,3.2,0x796857)}                      // 강을 보는 벤치
+    B(RW-12,1,RD-2.2,4.4,2,1.6,0x526360);B(RW-12.8,2.25,RD-2.2,.9,.5,.9,0x373f40);B(RW-11.4,2.25,RD-2.2,.9,.5,.9,0x373f40);B(RW-12.1,2.15,RD-1.5,1.4,.3,.5,0xa69a82);   // 라면 매점
+    for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(-(RW-.6),5.2,z,.3,5.3,8.8,DARK);B(-(RW-.6),1.3,z-3.4,.3,2.6,.4,0x2a2e33);B(-(RW-.6),1.3,z+3.4,.3,2.6,.4,0x2a2e33);
+      glowPlane(8,4.5,bdTex,1.2,-(RW-.77),5.2,z,Math.PI/2)}                                                                                                   // 야외 시세판
     // 한강 수온계: 난간 옆에 서 있고, 다가가면 오늘 수온을 알려 준다. 수온은 시세판의 평균 등락을 따라간다
     B(RW-1.6,.3,4,1.6,.6,1.6,0x4a4f55);B(RW-1.6,3.3,4,.9,5.4,.5,0xf1ede0);B(RW-1.6,.95,4,1.2,1,.7,0xf1ede0);for(q=0;q<6;q++)B(RW-1.98,1.9+q*.7,4.27,.14,.05,.02,0x4a4f55);
     (function(){var col=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0xff5a4a,fog:false})),bulb=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0xff5a4a,fog:false})),
@@ -595,8 +643,7 @@ function buildProps(){
       col.position.set(RW-1.6,1.5,4.27);col.scale.set(.3,1,.06);bulb.position.set(RW-1.6,.95,4.38);bulb.scale.set(.7,.6,.06);scene.add(col,bulb);
       B(RW-1.6,7.1,4,3.4,1.9,.2,DARK);glowPlane(3.1,1.55,tex,1.2,RW-1.72,7.1,4,-Math.PI/2);glowPlane(3.1,1.55,tex,1.2,RW-1.6,7.1,4.12,0);
       riverT={col:col,bulb:bulb,cv:cv,tex:tex,t:0,temp:13,near:false}})();
-    B(0,.25,zb+1.5,RW*2-6,.5,3,0x65574b);
-    for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(-(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.2,-(RW-.37),9,z,Math.PI/2)}                          // 왼쪽 벽 시세판
+    B(0,.25,zb+1.5,RW*2-6,.5,3,0x8a8c88);
   }
   if(RAID){                                                                                  // 판타지 공격대 홀
     var ST=0x7d7684,STD=0x5a5462,STL=0x9a93a0,IRON=0x1c1a20,BC=[0xa8262e,0x7d1c26,0x2f4fa8,0x243a80],n,cx,ch,cy;
@@ -703,7 +750,7 @@ function buildProps(){
   B(SIDE,9.4,zb+.25,4.8,2.2,.4,DARK);glowPlane(4.2,1.6,ckTex,1.5,SIDE,9.4,zb+.47,0);
   }
   // 거래 포스트 (공격대 테마에서는 파티 집결석)
-  if(!BASE)for(i=0;i<POSTS.length;i++){var px=POSTS[i][0],pz=POSTS[i][1];
+  if(!(BASE||RIVER))for(i=0;i<POSTS.length;i++){var px=POSTS[i][0],pz=POSTS[i][1];
     B(px,.55,pz,2.6,1.1,2.6,RAID?0x5a5462:0x5c3c27);B(px,1.16,pz,3,.12,3,RAID?0x7d7684:0x23262c);B(px,2.2,pz,.8,2,.8,RAID?0x5a5462:0x1b1d23);B(px,3.55,pz,2.5,1.1,2.5,DARK);B(px,4.16,pz,2.7,.12,2.7,BRASS);
     glowPlane(2.3,.9,bdTex,1.5,px,3.55,pz+1.26,0);glowPlane(2.3,.9,bdTex,1.5,px,3.55,pz-1.26,Math.PI);
     glowPlane(2.3,.9,bdTex,1.5,px+1.26,3.55,pz,Math.PI/2);glowPlane(2.3,.9,bdTex,1.5,px-1.26,3.55,pz,-Math.PI/2)}
@@ -1071,7 +1118,7 @@ function buildComposer(){
 buildComposer();
 /* ───────────── 그래픽 강도 조절 (테스트용) ─────────────
    효과마다 0~2배로 조절한다. "전체 강도"는 후처리 효과 전부에 곱해진다. 값은 이 브라우저에만 저장된다 */
-var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6,floor:1},GFX={},FOG0=scene.fog.density,
+var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6,dens:3},GFX={},FOG0=scene.fog.density,
     GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개",glow:"조명 소품 (등불·빛줄)"};
 (function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
 function applyGfx(){
@@ -1081,20 +1128,20 @@ function applyGfx(){
 }
 function renderGfx(){
   var box=$("gfxList"),k;box.textContent="";
-  for(k in GFX_DEF)(function(k){if(k==="floor")return;var row=mk("div","gr"),inp=document.createElement("input"),val=mk("span",null,GFX[k].toFixed(2));
+  for(k in GFX_DEF)(function(k){if(k==="dens")return;var row=mk("div","gr"),inp=document.createElement("input"),val=mk("span",null,GFX[k].toFixed(2));
     inp.type="range";inp.min=0;inp.max=2;inp.step=.05;inp.value=GFX[k];
     inp.oninput=function(){GFX[k]=+this.value;val.textContent=GFX[k].toFixed(2);try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}applyGfx()};
     row.appendChild(mk("label",null,GFX_LBL[k]));row.appendChild(inp);row.appendChild(val);box.appendChild(row)})(k);
-  var fl=mk("div",null,""),fb=mk("div",null,""),fi;fl.style.cssText="padding:8px 0 4px";fl.appendChild(mk("label",null,"픽셀 밀도 (바닥·벽·천장) · 저밀도 → 고밀도"));
-  fb.style.cssText="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px";
-  for(fi=1;fi<=5;fi++)(function(fi){var b=mk("button","rst",""),cv=document.createElement("canvas"),g,K=[1,2,3,4,6][fi-1],n=12*K,px=60/n,r=rng(7+fi),i,j,c,i0=Math.round((RW+3.5)*2*K),j0=Math.round((RD+2)*2*K);
-    cv.width=cv.height=60;cv.style.cssText="width:100%;display:block;border-radius:6px;image-rendering:pixelated";g=cv.getContext("2d");                       // 지금 테마의 바닥 6칸 넓이를 이 단계로 그린 미리보기
+  var fl=mk("div",null,""),fb=mk("div",null,""),fi;fl.style.cssText="padding:8px 0 4px";fl.appendChild(mk("label",null,"픽셀 밀도 (바닥·벽·천장) · −3 저밀도 ← 0 기본 → +3 고밀도"));
+  fb.style.cssText="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px";
+  for(fi=0;fi<7;fi++)(function(fi){var b=mk("button","rst",""),cv=document.createElement("canvas"),g,K=DENS[fi],n=Math.round(12*K),px=48/n,r=rng(7+fi),i,j,c,i0=Math.round((RW-6)*2*K),j0=Math.round((RD+2)*2*K);
+    cv.width=cv.height=48;cv.style.cssText="width:100%;display:block;border-radius:5px;image-rendering:pixelated";g=cv.getContext("2d");                       // 지금 테마의 바닥 6칸 넓이를 이 단계로 그린 미리보기
     for(i=0;i<n;i++)for(j=0;j<n;j++){c=floorPx(i0+i,j0+j,r,K);g.fillStyle="rgb("+(c[0]|0)+","+(c[1]|0)+","+(c[2]|0)+")";g.fillRect(i*px,j*px,px+.5,px+.5)}
-    b.style.cssText="margin:0;padding:5px";b.appendChild(cv);b.appendChild(mk("div",null,["1 저밀도","2","3","4","5 고밀도"][fi-1]));b.lastChild.style.cssText="font-size:11px;margin-top:4px;white-space:nowrap";
-    if(GFX.floor===fi){b.style.borderColor="var(--amber)";b.style.boxShadow="0 0 0 2px var(--amber)";b.lastChild.style.color="var(--amber)"}
-    b.onclick=function(){if(GFX.floor===fi)return;GFX.floor=fi;try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}buildWorld();renderGfx()};fb.appendChild(b)})(fi);
+    b.style.cssText="margin:0;padding:4px";b.appendChild(cv);b.appendChild(mk("div",null,fi===3?"0":(fi>3?"+":"−")+Math.abs(fi-3)));b.lastChild.style.cssText="font-size:11px;margin-top:3px;white-space:nowrap";
+    if(GFX.dens===fi){b.style.borderColor="var(--amber)";b.style.boxShadow="0 0 0 2px var(--amber)";b.lastChild.style.color="var(--amber)"}
+    b.onclick=function(){if(GFX.dens===fi)return;GFX.dens=fi;try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}buildWorld();renderGfx()};fb.appendChild(b)})(fi);
   fl.appendChild(fb);box.appendChild(fl);
-  var rs=mk("button","rst","기본값으로");rs.onclick=function(){var of=GFX.floor;for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx2")}catch(_){}if(of!==GFX.floor)buildWorld();applyGfx();renderGfx()};box.appendChild(rs);
+  var rs=mk("button","rst","기본값으로");rs.onclick=function(){var of=GFX.dens;for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx2")}catch(_){}if(of!==GFX.dens)buildWorld();applyGfx();renderGfx()};box.appendChild(rs);
 }
 function applyQuality(){
   var hi=quality==="high";
@@ -1154,7 +1201,7 @@ function collide(e){
 /* 카메라가 큰 구조물 속으로 들어가면 안쪽 단면이 보인다. 구조물 상자 목록을 두고, 카메라가 그 안에 들면 캐릭터 쪽으로 당긴다 */
 var CAMBOX=[],camY=1;
 function buildCam(){CAMBOX.length=0;var m=.55,i,p,add=function(x0,x1,y1,z0,z1){CAMBOX.push([x0-m,x1+m,-1,y1+m,z0-m,z1+m])};
-  if(!BASE)for(i=0;i<POSTS.length;i++){p=POSTS[i];add(p[0]-1.5,p[0]+1.5,4.3,p[1]-1.5,p[1]+1.5)}                    // 거래 포스트
+  if(!(BASE||RIVER))for(i=0;i<POSTS.length;i++){p=POSTS[i];add(p[0]-1.5,p[0]+1.5,4.3,p[1]-1.5,p[1]+1.5)}                    // 거래 포스트
   if(RAID){for(i=0;i<STATUES.length;i++){p=STATUES[i];add(p[0]-3.6,p[0]+3.6,7.6,p[1]-2.8,p[1]+2.8)}      // 동상
     for(i=-1;i<=1;i+=2){add(i*3.15-.25,i*3.15+.25,9.1,RD-3.55,RD-.45);                                    // 열린 문짝
       add(i*4.1-.9,i*4.1+.9,10,RD-1.3,RD+1.3);add(i*3.6-.7,i*3.6+.7,6.6,RD+YD-1.1,RD+YD+.3)}              // 문기둥 · 바깥문 기둥
@@ -1168,7 +1215,7 @@ function buildWorld(){
   if(worldRoot){scene.remove(worldRoot);worldRoot.traverse(function(o){if(o.isInstancedMesh)o.dispose();if(o.geometry&&o.geometry!==boxGeo)o.geometry.dispose();
     if(o.material&&o.material!==antMat&&o.material!==propMat&&o.material.dispose)o.material.dispose()})}
   worldRoot=new THREE.Group();scene.add=function(){worldRoot.add.apply(worldRoot,arguments);return scene};          // 짓는 동안 scene.add는 worldRoot로 들어간다
-  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;
+  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;riverMat=null;
     setDims();genTex();setLayout();buildPlanes();buildProps();buildInst();buildStatues();buildSugar();buildCam()}
   finally{delete scene.add}
   scene.add(worldRoot);applyLights();placeScreen();setBoss();placeMarks();if(GFX.all!=null&&finalPass)applyGfx();
@@ -1723,6 +1770,7 @@ function frame(ts){
   if(BOSS.on&&performance.now()>BOSS.until){BOSS.on=0;bossPoof();popSound();bossEnt.say="뽕~";bossEnt.sayT=performance.now()+1300}
   BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
   bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
+  if(riverMat)riverMat.uniforms.time.value=time;
   for(i=0;i<bobs.length;i++){var bg=bobs[i];bg.position.y=bg.userData.y+Math.sin(time*.6+bg.userData.ph)*.2;bg.rotation.y=Math.sin(time*.25+bg.userData.ph)*.3}   // 떠 있는 소품이 둥실거린다
   if(CLUB){var bon0=ts<ballT,bmo,bud;partyK+=((bon0?1:0)-partyK)*Math.min(1,dt*(bon0?6:1.5));                                                             // partyK: 0 평소 ~ 1 미러볼이 도는 중
     for(i=0;i<drift.length;i++){var dmm=drift[i],dph=dmm.userData.ph,dk=dmm.userData.k*(dmm.userData.tile?.75+.25*Math.sin(time*.6+dph*3):1);                  // 평소: 보라 → 분홍 → 청록을 1~2분에 걸쳐 오간다
@@ -1972,7 +2020,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202201";
+var BUILD="B11202211";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
