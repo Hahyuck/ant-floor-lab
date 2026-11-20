@@ -1059,6 +1059,15 @@ function collide(e){
   for(var i=0;i<OBST.length;i++){var o=OBST[i],dx=e.x-o[0],dz=e.z-o[1],d=Math.hypot(dx,dz);
     if(d<o[2]){if(d<.001){dx=1;dz=0;d=1}e.x=o[0]+dx/d*o[2]-dz/d*.04;e.z=o[1]+dz/d*o[2]+dx/d*.04}}
 }
+/* 카메라가 큰 구조물 속으로 들어가면 안쪽 단면이 보인다. 구조물 상자 목록을 두고, 카메라가 그 안에 들면 캐릭터 쪽으로 당긴다 */
+var CAMBOX=[],camY=1;
+(function(){var m=.55,i,p,add=function(x0,x1,y1,z0,z1){CAMBOX.push([x0-m,x1+m,-1,y1+m,z0-m,z1+m])};
+  for(i=0;i<POSTS.length;i++){p=POSTS[i];add(p[0]-1.5,p[0]+1.5,4.3,p[1]-1.5,p[1]+1.5)}                    // 거래 포스트
+  if(RAID){for(i=0;i<STATUES.length;i++){p=STATUES[i];add(p[0]-3.6,p[0]+3.6,7.6,p[1]-2.8,p[1]+2.8)}      // 동상
+    for(i=-1;i<=1;i+=2){add(i*3.15-.25,i*3.15+.25,9.1,RD-3.55,RD-.45);                                    // 열린 문짝
+      add(i*4.1-.9,i*4.1+.9,10,RD-1.3,RD+1.3);add(i*3.6-.7,i*3.6+.7,6.6,RD+YD-1.1,RD+YD+.3)}              // 문기둥 · 바깥문 기둥
+    add(-4.9,4.9,12.4,RD-1.2,RD+1.3);CAMBOX[CAMBOX.length-1][2]=9.3}                                      // 문 위 아치 (아래는 뚫려 있다)
+})();
 function bound(e){
   e.x=clamp(e.x,-XMAX,XMAX);e.z=clamp(e.z,ZMIN,ZMAXY);if(!YARD)return;
   if(e.out==null)e.out=e.z>RD;                                                   // out: 지금 마당에 있는가
@@ -1561,7 +1570,12 @@ function frame(ts){
   // 카메라 (방 안에 머물도록 제한)
   if(me)_T.set(me.x,5.6,me.z);else _T.set(0,5,4);
   var cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
-  camera.position.set(clamp(_T.x+cam.dist*Math.sin(cam.yaw)*cp,-RW+.8,RW-.8),clamp(_T.y+cam.dist*sp,1,RH-.9),clamp(_T.z+cam.dist*Math.cos(cam.yaw)*cp,me&&me.out?RD+1:-RD+.8,me&&me.out?RD+YD-1.6:RD-.8));
+  var cx0=clamp(_T.x+cam.dist*Math.sin(cam.yaw)*cp,-RW+.8,RW-.8),cy0=clamp(_T.y+cam.dist*sp,1,RH-.9),cz0=clamp(_T.z+cam.dist*Math.cos(cam.yaw)*cp,me&&me.out?RD+1:-RD+.8,me&&me.out?RD+YD-1.6:RD-.8);
+  var cpx=cx0,cpy=cy0,cpz=cz0,cks=1,ckn,cki,ckb,ckh;
+  for(ckn=0;ckn<12;ckn++){ckh=false;for(cki=0;cki<CAMBOX.length;cki++){ckb=CAMBOX[cki];if(cpx>ckb[0]&&cpx<ckb[1]&&cpy>ckb[2]&&cpy<ckb[3]&&cpz>ckb[4]&&cpz<ckb[5]){ckh=true;break}}
+    if(!ckh)break;cks*=.86;cpx=_T.x+(cx0-_T.x)*cks;cpy=_T.y+(cy0-_T.y)*cks;cpz=_T.z+(cz0-_T.z)*cks}                    // 구조물 속이면 캐릭터 쪽으로 당긴다
+  camY+=(cks-camY)*Math.min(1,dt*(cks<camY?30:5));if(camY<.999){cpx=_T.x+(cx0-_T.x)*camY;cpy=_T.y+(cy0-_T.y)*camY;cpz=_T.z+(cz0-_T.z)*camY}   // 당길 때는 바로, 풀 때는 천천히
+  camera.position.set(cpx,cpy,cpz);
   camera.lookAt(_T);
   if(focusMode){                                                                                // 방송 집중: 스크린이 화면을 채우도록 정면에서 잡는다
     var fth=Math.tan(camera.fov*Math.PI/360),fd=Math.max(SCR.h/2/fth/.86,SCR.w/2/(fth*camera.aspect)/.96),fcy=SCR.y0+SCR.h/2;
