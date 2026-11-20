@@ -623,7 +623,7 @@ var ants=new AntMesh(MAXA);scene.add(ants.mesh);
    무대 왼쪽 단상에 선다. 계란·토마토는 영상이 아니라 이 캐릭터가 맞는다 (영상 위에 아무것도 올리지 않기 위해).
    실제 서비스에서는 슈카월드 공식 캐릭터 원본으로 교체한다 */
 var BOSS=RAID?{x:0,y:1.2,z:-RD+1.5,ry:0,hit:0,hop:0}:{x:-11.3,y:.6,z:-RD+2.5,ry:.35,hit:0,hop:0};   // 공격대 테마에서는 가운데 단상
-var bossG=new THREE.Group();
+var bossG=new THREE.Group();BOSS.on=0;BOSS.until=0;BOSS.sc=0;   // 평소에는 숨어 있다가 연설할 때 나타나고, 끝나면 뽕~ 하고 사라진다
 var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT:0,megaT:0,look:{title:"공대장 · 대역 캐릭터",scale:1,color:"#f0826a"}};
 (function(){
   // 개미와 같은 방식: 작은 복셀로 둥근 덩어리를 빚고 겉면만 남긴다
@@ -867,6 +867,7 @@ function updateFx(dt){
 
 /* 무대 리액션: 계란·토마토를 무대의 새우 공대장에게 던진다. 맞으면 움찔하고, 얼룩이 붙어 흘러내린다 */
 function throwAt(e,k){
+  bossShow(3500);                                                                            // 뭔가 날아오면 새우가 튀어나와 맞는다
   var s=e.look.scale,x0=e.x,y0=2*s+e.y,z0=e.z,tx=BOSS.x+(Math.random()-.5)*1.2,ty=BOSS.y+1.2+Math.random()*2.4,tz=BOSS.z+.6;
   var T=.55+Math.hypot(tx-x0,tz-z0)*.022,g=14,c=k==="egg"?[1.3,1.25,1.1]:[1.4,.14,.1],n0=parts.length;
   spawn(x0,y0,z0,(tx-x0)/T,(ty-y0)/T+.5*g*T,(tz-z0)/T,T+.6,.36,c[0],c[1],c[2],g,5);if(parts.length>n0)parts[n0].k=k;
@@ -985,7 +986,7 @@ function doDon(id,a){
 /* ───────────── 공대장 명령: 경보 · 집결 · 준비 확인 ─────────────
    방장이 공대장이다. 정식 서비스에서는 진행자·운영진 계정에만 권한을 주고 전 채널에 동시에 보낸다 */
 var voteEnd=0,raidT=0;
-function raidWarn(s,ms){var r=$("raid");r.textContent=s;r.classList.add("show");bossEnt.say=s;bossEnt.sayT=performance.now()+(ms||5000);BOSS.hop=1;clearTimeout(raidT);raidT=setTimeout(function(){r.classList.remove("show")},ms||5000);logSys("📢 "+s)}
+function raidWarn(s,ms){var r=$("raid");r.textContent=s;r.classList.add("show");bossEnt.say=s;bossEnt.sayT=performance.now()+(ms||5000);BOSS.hop=1;bossShow((ms||5000)+500);clearTimeout(raidT);raidT=setTimeout(function(){r.classList.remove("show")},ms||5000);logSys("📢 "+s)}
 function partySpot(pt){var p=POSTS[pt],a=Math.random()*6.283,r=3+Math.random()*1.8;return [clamp(p[0]+Math.cos(a)*r,-XMAX,XMAX),clamp(p[1]+Math.sin(a)*r,ZMIN,RD-.8)]}
 function doRally(){
   raidWarn("📯 집결! 자기 파티 징표 아래로 모이세요",4000);for(var k=0;k<3;k++)flash(POSTS[k][0],6,POSTS[k][1],2,1.6,1,90);
@@ -996,6 +997,13 @@ var actx=null;
 function bellSound(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var t0=actx.currentTime;
   for(var n=0;n<3;n++)[880,1318,1760,2637].forEach(function(f,j){var o=actx.createOscillator(),g=actx.createGain(),t=t0+n*.55;o.type="sine";o.frequency.value=f;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16/(j+1),t+.01);g.gain.exponentialRampToValueAtTime(.0005,t+1.4);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+1.5)})}catch(_){}}
+function bossPoof(){var x=BOSS.x,y=BOSS.y+2,z=BOSS.z,i,a,u;                                    // 연기 뭉치
+  for(i=0;i<70;i++){a=Math.random()*6.283;u=Math.random();spawn(x+Math.cos(a)*.5,y+(Math.random()-.5)*3,z+Math.sin(a)*.5,Math.cos(a)*(1+u*2.5),.5+Math.random()*2,Math.sin(a)*(1+u*2.5),.5+Math.random()*.5,.22,1.5,1.4,1.5,-1,2)}
+  flash(x,y,z+1,2,1.8,2,70)}
+function popSound(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+  o.type="sine";o.frequency.setValueAtTime(620,t);o.frequency.exponentialRampToValueAtTime(110,t+.2);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.24);
+  o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+.25)}catch(_){}}
+function bossShow(ms){var now=performance.now();if(!BOSS.on){BOSS.on=1;bossPoof()}BOSS.until=Math.max(BOSS.until,now+ms)}
 function doBell(){                                                                                          // 개장 종: 종소리와 함께 전표가 흩날린다
   raidWarn("🔔 개장! 오늘도 성투하세요",4500);bellSound();flash(-SIDE,9.3,-RD+1.5,3,2.4,1,200);
   for(var i=0;i<400;i++)spawn((Math.random()*2-1)*(RW-3),RH-1-Math.random()*3,-RD+5+Math.random()*(RD*2-8),(Math.random()-.5)*1.5,-.6-Math.random(),(Math.random()-.5)*1.5,3+Math.random()*2.5,.13,1.5,1.45,1.3,1.2,0);
@@ -1292,7 +1300,9 @@ function frame(ts){
   $("ytwrap").style.visibility=ok?"visible":"hidden";holeMesh.visible=ok;phMesh.visible=!ok;
   BOSS.hit*=Math.pow(.02,dt);BOSS.hop*=Math.pow(.05,dt);
   bossG.position.y=BOSS.y+Math.abs(Math.sin(time*1.6))*.06+BOSS.hop*Math.abs(Math.sin(time*9))*.7;bossG.rotation.z=Math.sin(time*23)*.14*BOSS.hit;bossG.rotation.y=BOSS.ry+Math.sin(time*.7)*.12;
-  bossG.scale.set(1.2*(1+BOSS.hit*.12),1.2*(1-BOSS.hit*.15),1.2*(1+BOSS.hit*.12));
+  if(BOSS.on&&performance.now()>BOSS.until){BOSS.on=0;bossPoof();popSound();bossEnt.say="뽕~";bossEnt.sayT=performance.now()+1300}
+  BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
+  bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
   for(i=0;i<fires.length;i++)if(Math.random()<dt*14){var ff=fires[i],fr=Math.random();                // 횃불 · 화로 불꽃
     spawn(ff[0]+(fr-.5)*.3*ff[3],ff[1],ff[2]+(Math.random()-.5)*.3*ff[3],0,1+fr*1.4,0,.45+fr*.35,.1*ff[3],1.9,.8+fr*.7,.2,-.6,0)}
   if(RAID){warm.intensity=200+Math.sin(time*9)*18+Math.sin(time*23)*10;cool.intensity=200+Math.sin(time*11+2)*18+Math.sin(time*19)*10}
@@ -1308,7 +1318,7 @@ function frame(ts){
     if(e.bot&&!(e.say&&now0<e.sayT)&&(focusMode||dep-focusD>9||focusD-dep>5))continue;      // 초점 밖 봇은 이름표 생략
     _c.applyMatrix4(camera.projectionMatrix);labels.push([e,{x:(_c.x*.5+.5)*W,y:(.5-_c.y*.5)*H,z:dep,k:focal/dep}])}
   _c.set(BOSS.x,BOSS.y+4.7,BOSS.z).applyMatrix4(camera.matrixWorldInverse);
-  if(-_c.z>1.2){var bdp=-_c.z;_c.applyMatrix4(camera.projectionMatrix);labels.push([bossEnt,{x:(_c.x*.5+.5)*W,y:(.5-_c.y*.5)*H,z:bdp,k:focal/bdp}])}
+  if(-_c.z>1.2&&(BOSS.sc>.05||bossEnt.sayT>performance.now())){var bdp=-_c.z;_c.applyMatrix4(camera.projectionMatrix);labels.push([bossEnt,{x:(_c.x*.5+.5)*W,y:(.5-_c.y*.5)*H,z:bdp,k:focal/bdp}])}
   labels.sort(function(a,b){return b[1].z-a[1].z});
   var now=performance.now(),kept=[],show=[],j;
   for(i=labels.length-1;i>=0;i--){ // 가까운 개미부터 자리 잡고, 겹치는 이름표는 생략
@@ -1408,6 +1418,7 @@ function fail(s){status(s,true);$("go").disabled=false;$("alt").style.display=""
 function enterRoom(){
   inRoom=true;$("entry").classList.add("hide");applyQuality();
   $("hostOnly").style.display=isHost?"":"none";$("bSet").textContent=isHost?"공대장 메뉴":"방 설정";
+  bossEnt.say="어서 오세요, 공대원 여러분";bossEnt.sayT=performance.now()+5000;bossShow(5500);
   if(me)setTimeout(function(){if(me)toast("당신은 "+PARTY[me.party].s+" "+PARTY[me.party].n+" 파티입니다. 집결 때 같은 징표 아래로 모입니다",4500)},1500);
   $("popNote").textContent=isHost
     ?(useBC?"지금은 같은 브라우저의 탭끼리만 연결되는 시험 모드입니다.":"방장이 이 탭을 닫으면 방이 사라집니다. 탭을 화면에 띄워 두세요.")
