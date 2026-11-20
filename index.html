@@ -330,7 +330,8 @@ var ROOM_K=1, ROOM_KZ=1.3, RW=18*ROOM_K, RD=15*ROOM_KZ, RH=15.5;   // 반폭, �
 var SIDE=(RW+10.4)/2, SIDE_W=RW-10.4;                    // 스크린 옆 벽면의 중심과 너비
 var SCR={w:19.2,h:10.8,y0:2.6};       // 뒷벽(z=-RD) 스크린
 var SCREEN_C={x:0,z:-RD};
-var YD=24, ZMAXY=RD-.8;function setDims(){RH=RAID?19:15.5;SCR.y0=RAID?5.2:2.6;ZMAXY=YARD?RD+YD-1.2:RD-.8}setDims();     // 앞마당 깊이, 걸어갈 수 있는 가장 먼 z
+var YD=24, ZMAXY=RD-.8;function setDims(){RH=RAID?19:15.5;SCR.y0=RAID?5.2:2.6;ZMAXY=YARD?RD+YD-1.2:RIVER?RD-2.3:RD-.8}setDims();
+function XL(){return RIVER?-RW+2.3:-(RW-2.8)}function XH(){return RIVER?RW-9.5:RW-2.8}   // 걸어갈 수 있는 좌우 끝. 강변은 보도블럭 안쪽 잔디밭까지만     // 앞마당 깊이, 걸어갈 수 있는 가장 먼 z
 var ZMIN=-RD+3.6;                      // 무대 앞까지만 걸어갈 수 있음
 var FONT=getComputedStyle(document.documentElement).getPropertyValue("--font");
 
@@ -674,8 +675,8 @@ function buildProps(){
         P(a,.12,.22,.1,.17,1.2,.55);P(a,.12,.22,.1,-.17,1.2,.55);P(a,.1,.4,.1,0,.95,-.55);for(i=0;i<4;i++)legs.push(P(a,.13,.4,.13,i%2?.17:-.17,.2,i<2?.38:-.38))}
       x=rg[0]+rr()*(rg[1]-rg[0]);z=rg[2]+rr()*(rg[3]-rg[2]);g.position.set(x,0,z);g.rotation.y=rr()*6.28;scene.add(g);
       critters.push({g:g,legs:legs,x:x,z:z,tx:x,tz:z,wait:rr()*5,sp:sheep?.8:2.1,ph:rr()*6.28,r:rg})};
-    var RIN=[-RW+2.5,RW-10.5,ZMIN+1.5,RD-2],ROUT=[-RW-28,-RW-3,-30,30],RBACK=[-RW+2,RW-11,RD+3,RD+28];
-    for(q=0;q<3;q++){mkC(true,RIN);mkC(true,ROUT)}mkC(true,RBACK);for(q=0;q<2;q++){mkC(false,RIN);mkC(false,ROUT)}mkC(false,RBACK);
+    var RIN=[-RW+2.5,RW-10.5,ZMIN+1.5,RD-2],ROUT=[-RW-24,-RW-2,-RD-10,RD+22],RBACK=[-RW-2,RW-11,RD+2,RD+24];
+    for(q=0;q<3;q++){mkC(true,ROUT);mkC(true,RBACK)}for(q=0;q<2;q++){mkC(false,ROUT);mkC(false,RBACK)}                                   // 동물은 보도블럭 바깥 풀밭에서만 논다
     // 공원: 가로등, 나무, 돗자리, 텐트, 벤치, 야외 시세판
     for(q=0;q<5;q++){z=-RD+5+q*((RD*2-8)/4);B(RW-5.15,2.2,z,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,z,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,z,.5,.3,.5,1.6,1.3,.8)}
     for(q=0;q<8;q++)tree(-RW-3-(q%2)*3.5,-RD+3+q*5.4,1.1+(q%3)*.2,q%3===1);for(q=0;q<6;q++)tree(-RW+5+q*6,RD+3.5+(q%2)*3,1.1+(q%2)*.3,q%2===0);
@@ -1245,11 +1246,12 @@ function updateCount(){
   var n=order.length,f=0;for(var i=0;i<n;i++)if(!ents[order[i]].bot)f++;
   $("count").textContent=chLabel()+n+"명 함께 보는 중"+(f>1?" · 친구 "+f+"명":"");
 }
-function spawnPos(){for(var t=0;t<12;t++){var p=[(Math.random()*2-1)*(XMAX-2),2+Math.random()*(RD-4)];if(!blocked(p[0],p[1]))return p}return [0,8]}
+function spawnPos(){for(var t=0;t<12;t++){var p=[(Math.random()*2-1)*(XMAX-2),2+Math.random()*(RD-4)];p[0]=clamp(p[0],XL(),XH());p[1]=Math.min(p[1],ZMAXY);if(!blocked(p[0],p[1]))return p}return [0,8]}
 function blocked(x,z){for(var i=0;i<OBST.length;i++)if(Math.hypot(x-OBST[i][0],z-OBST[i][1])<OBST[i][2]+.4)return true;return false}
 function pickSpot(){
   for(var t=0;t<12;t++){
     var p=Math.random()<.7?[(Math.random()*2-1)*13*ROOM_K,ZMIN+1.8+Math.random()*16*ROOM_KZ]:[(Math.random()*2-1)*XMAX,ZMIN+Math.random()*(RD-.8-ZMIN)];
+    p[0]=clamp(p[0],XL(),XH());p[1]=Math.min(p[1],ZMAXY);                                                                   // 테마가 정한 활동 범위 안에서만 자리를 고른다
     if(!blocked(p[0],p[1]))return p}
   return [0,4];
 }
@@ -1297,7 +1299,7 @@ function applyTheme(v){
   var f=$("fade");f.classList.add("on");setTimeout(function(){doit();setTimeout(function(){f.classList.remove("on")},140)},380);
 }
 function bound(e){
-  e.x=clamp(e.x,-XMAX,XMAX);e.z=clamp(e.z,ZMIN,ZMAXY);if(!YARD)return;
+  e.x=clamp(e.x,XL(),XH());e.z=clamp(e.z,ZMIN,ZMAXY);if(!YARD)return;
   if(e.out==null)e.out=e.z>RD;                                                   // out: 지금 마당에 있는가
   if(Math.abs(e.x)<2.3){if(e.z>RD+.8)e.out=true;else if(e.z<RD-.8)e.out=false}   // 문 폭 안에서만 벽을 지난다
   else if(e.out){if(e.z<RD+.8)e.z=RD+.8}else if(e.z>RD-.8)e.z=RD-.8;
@@ -1475,7 +1477,7 @@ function doDon(id,a){
    방장이 공대장이다. 정식 서비스에서는 진행자·운영진 계정에만 권한을 주고 전 채널에 동시에 보낸다 */
 var voteEnd=0,raidT=0,markUntil=0,ballT=0,partyK=0;
 function raidWarn(s,ms){var r=$("raid");r.textContent=s;r.classList.add("show");bossEnt.say=s;bossEnt.sayT=performance.now()+(ms||5000);BOSS.hop=1;bossShow((ms||5000)+500);clearTimeout(raidT);raidT=setTimeout(function(){r.classList.remove("show")},ms||5000);logSys("📢 "+s)}
-function partySpot(pt){var p=POSTS[pt],a=Math.random()*6.283,r=3+Math.random()*1.8;return [clamp(p[0]+Math.cos(a)*r,-XMAX,XMAX),clamp(p[1]+Math.sin(a)*r,ZMIN,RD-.8)]}
+function partySpot(pt){var p=POSTS[pt],a=Math.random()*6.283,r=3+Math.random()*1.8;return [clamp(p[0]+Math.cos(a)*r,XL(),XH()),clamp(p[1]+Math.sin(a)*r,ZMIN,RD-.8)]}
 function doRally(){
   raidWarn("📯 집결! 자기 파티 징표 아래로 모이세요",4000);markUntil=performance.now()+30000;for(var k=0;k<3;k++)flash(POSTS[k][0],6,POSTS[k][1],2,1.6,1,90);
   if(me&&performance.now()-lastInput>1500)moveTarget=partySpot(me.party);                                  // 가만히 있던 사람은 소환된다
@@ -1604,7 +1606,7 @@ function hostOnConn(c){
     }else if(pid&&ents[pid]){
       c.last=Date.now();var e2=ents[pid];
       if(m.t==="m"){var mn=performance.now(),ct=+m.ts||mn,cd=mn-ct;c.off=c.off==null?cd:Math.min(cd,c.off+2);e2.off=c.off;        // 참가자 시계와 내 시계의 차이
-        pushState(e2,ct,clamp(+m.x||0,-XMAX,XMAX),clamp(+m.z||0,ZMIN,ZMAXY),+m.r||0,ct-100)}
+        pushState(e2,ct,clamp(+m.x||0,XL(),XH()),clamp(+m.z||0,ZMIN,ZMAXY),+m.r||0,ct-100)}
       else if(m.t==="j"){jump(e2);castAll({t:"j",id:pid},pid)}
       else if(m.t==="fx"){var fn=Date.now();if(ITEMS[m.k]&&fn-(c.lastFx||0)>700){c.lastFx=fn;applyFx(pid,m.k);castAll({t:"fx",id:pid,k:m.k},pid)}}
       else if(m.t==="c"){var s=clean(m.s,60),now=Date.now(),mg=m.m?1:0;if(s&&now-(c.lastChat||0)>1500){c.lastChat=now;say(pid,s,mg);castAll({t:"c",id:pid,s:s,m:mg})}}
@@ -1856,7 +1858,7 @@ function frame(ts){
       rg.fillStyle="#8a93a3";rg.font="700 22px "+FONT;rg.fillText("한강 수온",128,28);rg.fillStyle=hot?"#ff5d5d":"#5aa2ff";rg.font="900 56px "+FONT;rg.fillText(riverT.temp.toFixed(1)+"°C",128,84);riverT.tex.needsUpdate=true;
       riverT.col.material.color.set(hot?0xff5a4a:0x4a8dff);riverT.bulb.material.color.set(hot?0xff5a4a:0x4a8dff)}
     var rh=.4+riverT.temp/29*4;riverT.col.scale.y+=(rh-riverT.col.scale.y)*Math.min(1,dt*3);riverT.col.position.y=1.3+riverT.col.scale.y/2;
-    var rn=!!(me&&me.x>RW-6.5&&Math.abs(me.z-4)<3.2);if(rn!==riverT.near){riverT.near=rn;                                                                       // 다가가면 수온을 알려 준다
+    var rn=!!(me&&me.x>RW-11.5&&Math.abs(me.z-4)<3.5);if(rn!==riverT.near){riverT.near=rn;                                                                       // 다가가면 수온을 알려 준다
       if(rn)toast("🌡️ 한강 수온 "+riverT.temp.toFixed(1)+"°C · "+(riverT.temp>=17?"오늘 장은 따뜻합니다":riverT.temp>=11?"미지근합니다. 관망하기 좋은 날":"물이 찹니다. 오늘은 구경만 하세요"),3800)}}
   for(i=0;i<fires.length;i++)if(Math.random()<dt*14){var ff=fires[i],fr=Math.random();                // 횃불 · 화로 불꽃
     spawn(ff[0]+(fr-.5)*.3*ff[3],ff[1],ff[2]+(Math.random()-.5)*.3*ff[3],0,1+fr*1.4,0,.45+fr*.35,.1*ff[3],1.9,.8+fr*.7,.2,-.6,0)}
@@ -1903,7 +1905,7 @@ addEventListener("blur",function(){keys={}});
     if(drag){cam.yaw-=dx*.005;cam.pitch=clamp(cam.pitch+dy*.004,.02,1.25);down={x:ev.clientX,y:ev.clientY}}});
   cv.addEventListener("pointerup",function(ev){
     if(down&&!drag&&me){_ndc.set(ev.clientX/innerWidth*2-1,-(ev.clientY/innerHeight)*2+1);_ray.setFromCamera(_ndc,camera);
-      if(_ray.ray.intersectPlane(_floor,_hit)&&Math.abs(_hit.x)<RW+3&&_hit.z>-RD-3&&_hit.z<ZMAXY+4){moveTarget=[clamp(_hit.x,-XMAX,XMAX),clamp(_hit.z,ZMIN,ZMAXY)];lastInput=performance.now();if(me.ai)me.ai.wait=0}}
+      if(_ray.ray.intersectPlane(_floor,_hit)&&Math.abs(_hit.x)<RW+3&&_hit.z>-RD-3&&_hit.z<ZMAXY+4){moveTarget=[clamp(_hit.x,XL(),XH()),clamp(_hit.z,ZMIN,ZMAXY)];lastInput=performance.now();if(me.ai)me.ai.wait=0}}
     down=null});
   cv.addEventListener("pointercancel",function(){down=null});
   cv.addEventListener("wheel",function(ev){ev.preventDefault();cam.dist=clamp(cam.dist*(ev.deltaY>0?1.1:.9),4,44)},{passive:false});
@@ -2088,7 +2090,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202347";
+var BUILD="B11202351";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
