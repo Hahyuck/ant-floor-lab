@@ -207,6 +207,8 @@
         <div class="row" style="margin-top:8px"><input type="text" id="rwText" maxlength="40" placeholder="공대 경보: 모두의 화면 중앙에 뜹니다"><button class="btn" id="rwGo">경보</button></div>
         <div class="row" style="margin-top:6px"><button class="btn alt2" id="bellGo">🔔 개장 종</button><button class="btn alt2" id="rallyGo">📯 집결</button><button class="btn alt2" id="rcGo">🗳️ 준비 확인</button></div>
       </div>
+      <label>테마 · 방 전체가 함께 바뀝니다</label>
+      <div class="row" id="thIn"></div>
       <label for="yt">가운데 화면에 틀 유튜브 주소 (실시간 방송·일반 영상). 들어오는 사람 모두 같은 시점을 봅니다</label>
       <div class="row"><input type="text" id="yt" placeholder="비우고 적용하면 방송을 끕니다"><button class="btn" id="ytGo">적용</button></div>
       <div class="row" style="margin-top:6px"><button class="btn alt2" id="ytDef">슈카월드 최신 영상</button><button class="btn alt2" id="ytLive">슈카월드 실시간</button></div>
@@ -1235,7 +1237,7 @@ function wander(e,dt,speed){ // 봇·자동 산책 공용
 }
 
 /* ───────────── 네트워크 ───────────── */
-var PREFIX="shuka-friends-v2-"+THEME+"-", conns={}, hostConn=null, lastSnap=0, useBC=/[?&]bc\b/.test(location.search)||typeof Peer==="undefined";
+var PREFIX="shuka-friends-v2-", conns={}, hostConn=null, lastSnap=0, useBC=/[?&]bc\b/.test(location.search)||typeof Peer==="undefined";
 function pack(e){return [e.id,e.name,e.bot?1:0,+e.x.toFixed(2),+e.z.toFixed(2),+e.r.toFixed(2),e.cos|0]}
 function castAll(m,except){for(var k in conns)if(k!==except)try{conns[k].send(m)}catch(_){}}
 
@@ -1300,7 +1302,7 @@ function hostOnConn(c){
       if(humans>=30){c.send({t:"full"});return}
       var nm=clean(m.n,12)||"이름없는개미",p=spawnPos();pid="p"+(++pidSeq);
       var e=addEnt(pid,nm,false,p[0],p[1],Math.PI,(m.cos|0)&3);conns[pid]=c;c.last=Date.now();
-      c.send({t:"wel",id:pid,vid:video,vt:vtMsg(),ps:order.map(function(id){return pack(ents[id])})});
+      c.send({t:"wel",th:THEME,id:pid,vid:video,vt:vtMsg(),ps:order.map(function(id){return pack(ents[id])})});
       castAll({t:"join",p:pack(e)},pid);toast(nm+" 님이 들어왔습니다");logSys(nm+" 님이 들어왔습니다");
     }else if(pid&&ents[pid]){
       c.last=Date.now();var e2=ents[pid];
@@ -1320,7 +1322,7 @@ function hostOnConn(c){
 function clientOnData(m){
   if(!m||typeof m!=="object")return;lastSnap=Date.now();
   var i,e;
-  if(m.t==="wel"){myId=m.id;ents={};order=[];
+  if(m.t==="wel"){if(m.th&&m.th!==THEME){switchTheme(m.th,0);return}myId=m.id;ents={};order=[];
     for(i=0;i<m.ps.length;i++){var p=m.ps[i];addEnt(p[0],p[1],p[2],p[3],p[4],p[5],p[6])}
     me=ents[myId];if((m.vid||"")!==video||!ytFrame)setVideo(m.vid||"",true);if(m.vt)vsync=mkSync(m.vt);enterRoom();
   }else if(m.t==="join"){var q=m.p;if(!ents[q[0]]){addEnt(q[0],q[1],q[2],q[3],q[4],q[5],q[6]);if(!q[2])logSys(q[1]+" 님이 들어왔습니다")}}
@@ -1334,6 +1336,7 @@ function clientOnData(m){
   else if(m.t==="rw"){raidWarn(clean(m.s,40))}
   else if(m.t==="rally"){doRally()}
   else if(m.t==="bell"){doBell()}
+  else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME){toast("방장이 테마를 "+TSHORT[m.v]+"(으)로 바꿨습니다. 곧 넘어갑니다",1e9);switchTheme(m.v,4000)}}
   else if(m.t==="sg"){applySugar(m.i|0,m.id,+m.r||20000)}
   else if(m.t==="rc"){startVote(clean(m.q,40))}
   else if(m.t==="rv"){if(ents[m.id]&&m.id!==myId)ents[m.id].vote=m.v===1?1:2}
@@ -1352,6 +1355,13 @@ function sample(e,t){var b=e.buf;if(!b||!b.length)return;while(b.length>2&&b[1][
   var k=clamp((t-a[0])/(c[0]-a[0]),0,1);e.x=a[1]+(c[1]-a[1])*k;e.z=a[2]+(c[2]-a[2])*k;e.r=a[3]+Math.atan2(Math.sin(c[3]-a[3]),Math.cos(c[3]-a[3]))*k;
   e.moving=k<1&&Math.hypot(c[1]-a[1],c[2]-a[2])>.02}
 var netIv=90,netOff=null,lastHts=0;
+/* 방 안에서 테마 바꾸기: 테마는 공간을 통째로 다시 지어야 해서 화면을 새로 불러온다.
+   방장이 먼저 넘어가 같은 방 코드로 방을 다시 열고, 참가자는 4초 뒤 따라와 자동으로 다시 들어온다 */
+function switchTheme(v,delay){
+  try{sessionStorage.setItem("antauto",JSON.stringify({n:myName,c:roomCode,t:Date.now()}))}catch(_){}
+  setTimeout(function(){try{var u=new URL(location.href);u.searchParams.set("theme",v);u.hash="room-"+roomCode;location.href=u.toString()}catch(_){location.search="?theme="+v}},delay);
+}
+function setTheme(v){if(!isHost||TLIST.indexOf(v)<0||v===THEME)return;castAll({t:"theme",v:v});toast(TSHORT[v]+" 테마로 바꾸는 중입니다",1e9);switchTheme(v,400)}
 function say(id,s,mg){var e=ents[id];if(e){e.say=s;e.sayT=performance.now()+5500;e.megaT=mg?e.sayT:0;if(mg)tickerSay("📣 "+e.name+": "+s,"#7fd4ff",12000);logChat(e,s)}}
 
 /* 방장 시뮬레이션·중계: 탭이 뒤로 가도 돌도록 setInterval */
@@ -1728,6 +1738,11 @@ if(!FLOOR)$("entry").style.background="linear-gradient(rgba(8,9,13,.5),rgba(8,9,
 (function(){var box=$("ths");if(joinCode){box.style.display="none";return}
   TLIST.forEach(function(id){var b=mk("button",id===THEME?"on":"",TSHORT[id]);
     b.onclick=function(){if(id===THEME)return;try{var u=new URL(location.href);u.searchParams.set("theme",id);u.hash="";location.href=u.toString()}catch(_){location.search="?theme="+id}};box.appendChild(b)})})();
+(function(){var box=$("thIn");TLIST.forEach(function(id){var b=mk("button","btn alt2",TSHORT[id]);if(id===THEME){b.style.background="var(--amber)";b.style.color="#201600"}
+  b.style.padding="9px 4px";b.onclick=function(){setTheme(id)};box.appendChild(b)})})();
+// 테마를 바꾸며 넘어온 경우: 같은 이름으로 같은 방에 자동으로 다시 들어간다
+(function(){var a=null;try{a=JSON.parse(sessionStorage.getItem("antauto")||"null");sessionStorage.removeItem("antauto")}catch(_){}
+  if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 $("name").focus();
 requestAnimationFrame(frame);
 window.__dbg={ents:function(){return ents},me:function(){return me},cam:cam,setVideo:setVideo,renderer:renderer,q:function(){return quality},use:useSlot,fx:applyFx,yt:yt,room:room,roomNow:roomNow,sync:function(){return vsync},ytNow:ytNow,jump:doJump,sug:function(){return SUG},boss:function(){return bossG},raidWarn:raidWarn,bell:doBell,rally:doRally,vote:startVote,don:doDon,throwAt:throwAt,parts:function(){return parts},setFocus:function(v){focusMode=v}};
