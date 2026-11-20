@@ -746,9 +746,9 @@ function buildVox(L){
   var bow=function(o,y,z,c){for(var bs=-1;bs<=1;bs+=2){put(o,bs*VS,y,z,c);put(o,bs*VS*2,y+VS*.5,z,c);put(o,bs*VS*2,y-VS*.5,z,c)}put(o,0,y,z+VS*.3,[c[0]*.5,c[1]*.5,c[2]*.5])};
   if(STOCK&&L.cls!=null){
     var SUIT=[lin(0x24304a),lin(0x2e3138),lin(0x4a4f5a),lin(0x4a3528)][(r()*4)|0],LAP=[SUIT[0]*.6,SUIT[1]*.6,SUIT[2]*.6],jk=part([0,0,-.04]),lv1,q1,np1,rr1,an1,sn1;
-    for(lv1=0;lv1<5;lv1++){rr1=.27+lv1*.012;np1=Math.ceil(6.283*rr1/VS);for(q1=0;q1<np1;q1++){an1=q1/np1*6.283;sn1=Math.sin(an1);
+    for(lv1=0;lv1<4;lv1++){rr1=.27+lv1*.012;np1=Math.ceil(6.283*rr1/VS);for(q1=0;q1<np1;q1++){an1=q1/np1*6.283;sn1=Math.sin(an1);
       put(jk,Math.cos(an1)*rr1,1.02-lv1*VS,sn1*rr1,sn1>.86?V_WHITE:sn1>.68?LAP:SUIT)}}                                                                           // 허리까지 오는 재킷, 앞은 흰 셔츠
-    if(L.cls===0)for(lv1=0;lv1<5;lv1++)put(jk,0,1.0-lv1*VS,.3+lv1*.012,lv1===0?[V_RED[0]*.7,V_RED[1]*.7,V_RED[2]*.7]:V_RED);                                     // 넥타이
+    if(L.cls===0)for(lv1=0;lv1<4;lv1++)put(jk,0,1.0-lv1*VS,.3+lv1*.012,lv1===0?[V_RED[0]*.7,V_RED[1]*.7,V_RED[2]*.7]:V_RED);                                     // 넥타이
     else bow(jk,1.0,.31,[lin(0xd9362f),lin(0x2f5fd0),lin(0xd9a82e)][(r()*3)|0]);                                                                                // 리본
   }
   if(CLUB&&L.cls!=null){
@@ -760,7 +760,7 @@ function buildVox(L){
         put(H,fx3,fy3,.32*h+.04,k3&1?PINK:V_WHITE);put(H,fx3-VS,fy3,.32*h+.03,k3&1?PINK:V_WHITE);put(H,fx3,fy3+VS,.32*h+.03,k3&1?PINK:V_WHITE);put(H,fx3-VS*.5,fy3+VS*.5,.32*h+.08,YEL)}}   // 꽃 머리띠
   }
   if(RAID&&L.cls!=null){                                                                     // 직업 복장: 망토 · 머리 장비 · 손에 든 것
-    var cl=L.cls,fc=L.fac,CC=fc?lin(0x2f4fa8):lin(0xa8262e),TRIM=fc?V_GOLD:lin(0xe8dcc0),HEMC=fc?V_GOLD:lin(0x1a1418),HOOD=cl===1?lin(0xf1ece0):fc?lin(0x1c2748):lin(0x2a1a1a),STEEL=fc?lin(0x9aa6bc):lin(0x4a4650),sp,rb=part([0,0,-.04]),lv,nL=cl===3?4:6,rr,np,q,ang,a2,b2,it;
+    var cl=L.cls,fc=L.fac,CC=fc?lin(0x2f4fa8):lin(0xa8262e),TRIM=fc?V_GOLD:lin(0xe8dcc0),HEMC=fc?V_GOLD:lin(0x1a1418),HOOD=cl===1?lin(0xf1ece0):fc?lin(0x1c2748):lin(0x2a1a1a),STEEL=fc?lin(0x9aa6bc):lin(0x4a4650),sp,rb=part([0,0,-.04]),lv,nL=cl===3?3:4,rr,np,q,ang,a2,b2,it;
     for(lv=0;lv<nL;lv++){rr=.27+lv*.02;np=Math.ceil(6.283*rr/VS);for(q=0;q<np;q++){ang=q/np*6.283;put(rb,Math.cos(ang)*rr,1.02-lv*VS,Math.sin(ang)*rr,lv===nL-1?HEMC:CC)}}
     for(sx=-1;sx<=1;sx+=2){sp=part([sx*.3,1.0,-.02]);for(a2=-1;a2<=1;a2++)for(b2=0;b2<2;b2++)for(q=-1;q<=1;q++)put(sp,a2*VS,b2*VS,q*VS,fc?V_GOLD:STEEL);   // 어깨 갑옷
       if(!fc){put(sp,sx*VS*1.5,VS*2,0,TRIM);put(sp,sx*VS*2.4,VS*3,0,TRIM);put(sp,0,VS*2,VS,TRIM)}}                                                          // 군단은 가시가 돋는다
