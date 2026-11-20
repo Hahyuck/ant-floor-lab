@@ -145,6 +145,8 @@
   #gfx p{color:var(--dim);line-height:1.5;margin:10px 0 0}
   @media (max-width:1180px){#gfx{top:150px}}
   body.compact #gfx{position:fixed;left:50%;top:50%;right:auto;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 24px));max-height:84vh}
+  #fade{position:absolute;inset:0;background:#07080b;opacity:0;pointer-events:none;transition:opacity .35s ease}
+  #fade.on{opacity:1}
   #exitp{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:min(340px,calc(100vw - 28px));display:none;padding:14px;border-radius:16px;text-align:center;
     background:var(--panel);border:1px solid rgba(255,207,90,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:6}
   #exitp.show{display:block}
@@ -184,6 +186,7 @@
   <div id="ytwrap"></div>
   <canvas id="cv"></canvas>
   <canvas id="lb"></canvas>
+  <div id="fade"></div>
 
   <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small></div>
   <button class="pill" id="bMenu">메뉴</button>
@@ -281,7 +284,9 @@ function shade(hex,k){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255
    normal: 슈카월드풍 메타버스 광장 (기본) · stock: 원본 객장에 정장 차림 · raid: 판타지 공격대 홀 · club: 클럽 라운지 · river: 강변 테라스 */
 var TLIST=["normal","stock","raid","club","river"];
 var THEME=(function(){var t="";try{t=new URLSearchParams(location.search).get("theme")||""}catch(_){}if(t==="floor")t="normal";return TLIST.indexOf(t)<0?"normal":t})();   // 주소의 ?theme= 로 고른다. 기본은 노멀
-var BASE=THEME==="normal", STOCK=THEME==="stock", FLOOR=STOCK, RAID=THEME==="raid", CLUB=THEME==="club", RIVER=THEME==="river", YARD=RAID;                                         // YARD: 문 밖 앞마당이 있는가
+var BASE,STOCK,FLOOR,RAID,CLUB,RIVER,YARD;
+function setFlags(t){THEME=t;BASE=t==="normal";STOCK=t==="stock";FLOOR=STOCK;RAID=t==="raid";CLUB=t==="club";RIVER=t==="river";YARD=RAID}
+setFlags(THEME);                                         // YARD: 문 밖 앞마당이 있는가
 var TNAME={normal:"슈카친구들 광장",stock:"슈카친구들 주식시장",raid:"슈카친구들 공격대",club:"슈카친구들 클럽",river:"슈카친구들 강변"}, TSHORT={normal:"기본",stock:"주식시장",raid:"게임",club:"클럽",river:"강변"};
 var CLS=["탱커","힐러","마법사","도적"], FAC=["황소 군단","곰 연합"];
 var STY={stock:["넥타이 정장","리본 정장"],club:["나비넥타이","스카프","머리띠","꽃 머리띠"]};   // 테마별 차림 이름 (노멀과 강변은 그냥 일개미)
@@ -311,11 +316,11 @@ function lookOf(name){
 
 
 /* ───────────── 방 크기 ───────────── */
-var ROOM_K=1, ROOM_KZ=1.3, RW=18*ROOM_K, RD=15*ROOM_KZ, RH=RAID?19:15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 가로 배율, ROOM_KZ: 세로 깊이 배율)
+var ROOM_K=1, ROOM_KZ=1.3, RW=18*ROOM_K, RD=15*ROOM_KZ, RH=15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 가로 배율, ROOM_KZ: 세로 깊이 배율)
 var SIDE=(RW+10.4)/2, SIDE_W=RW-10.4;                    // 스크린 옆 벽면의 중심과 너비
-var SCR={w:19.2,h:10.8,y0:RAID?5.2:2.6};       // 뒷벽(z=-RD) 스크린
+var SCR={w:19.2,h:10.8,y0:2.6};       // 뒷벽(z=-RD) 스크린
 var SCREEN_C={x:0,z:-RD};
-var YD=24, ZMAXY=YARD?RD+YD-1.2:RD-.8;     // 앞마당 깊이, 걸어갈 수 있는 가장 먼 z
+var YD=24, ZMAXY=RD-.8;function setDims(){RH=RAID?19:15.5;SCR.y0=RAID?5.2:2.6;ZMAXY=YARD?RD+YD-1.2:RD-.8}setDims();     // 앞마당 깊이, 걸어갈 수 있는 가장 먼 z
 var ZMIN=-RD+3.6;                      // 무대 앞까지만 걸어갈 수 있음
 var FONT=getComputedStyle(document.documentElement).getPropertyValue("--font");
 
@@ -330,7 +335,10 @@ function pixTex(w,h,fn,rx,ry){
 function jit(base,n,r){var k=(r()-.5)*2*n;return [base[0]+k,base[1]+k,base[2]+k]}
 var texDot=pixTex(4,4,function(x,y,r){var v=215+r()*40;return [v,v,v]});
 // 바닥: 밝은 쪽매널 마루 + 황동 테두리 + 떨어진 주문 전표
-var texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
+var texFloor,texWall,texWallSide,texGrass;
+function genTex(){                                   // 테마에 맞는 바닥·벽 텍스처를 다시 만든다
+if(texFloor){texFloor.dispose();texWall.dispose();texWallSide.dispose()}
+texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
   var x=-RW+i*.5+.25,z=-RD+j*.5+.25;
   if(BASE){                                                                                  // 기본: 민트빛 유리 타일에 은은한 격자, 가운데 통로
     if(z<ZMIN-.6)return jit([150,170,176],4,r);
@@ -356,12 +364,14 @@ var texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
   return jit(seam?[base[0]-26,base[1]-24,base[2]-20]:base,7,r);
 });
 // 벽: 어두운 석재 (위쪽이 떠 보이지 않게)
-var texWall=pixTex(16,16,function(x,y,r){
+texWall=pixTex(16,16,function(x,y,r){
   var row=y>>3, mortar=(y&7)===7||(row===0?x===15:x===7);
   return jit(mortar?(RAID?[44,40,50]:CLUB?[31,27,36]:RIVER?[44,50,51]:BASE?[32,70,82]:[30,33,40]):(RAID?[88,82,96]:CLUB?[50,42,58]:RIVER?[70,78,78]:BASE?[23,54,69]:[52,56,66]),mortar?2:6,r);
 },RW,RH/2);
-var texGrass=pixTex(64,32,function(x,y,r){var v=r();return v<.035?[168,186,96]:v<.07?[44,86,46]:jit(((x>>2)+(y>>2))&1?[62,112,58]:[56,104,54],8,r)},RW/4,YD/8);
-var texWallSide=texWall.clone();texWallSide.repeat.set(RD,RH/2);texWallSide.needsUpdate=true;
+texGrass=texGrass||pixTex(64,32,function(x,y,r){var v=r();return v<.035?[168,186,96]:v<.07?[44,86,46]:jit(((x>>2)+(y>>2))&1?[62,112,58]:[56,104,54],8,r)},RW/4,YD/8);
+texWallSide=texWall.clone();texWallSide.repeat.set(RD,RH/2);texWallSide.needsUpdate=true;
+}
+genTex();
 var texCeil=pixTex(8,8,function(x,y,r){return jit((x===0||y===0)?[20,22,27]:[33,35,42],3,r)},RW*2/3,RD*2/3);
 
 /* ───────────── 씬 ───────────── */
@@ -384,6 +394,10 @@ var screenLight=new THREE.RectAreaLight(0x9fc6ff,4.2,SCR.w,SCR.h);
 screenLight.position.set(0,SCR.y0+SCR.h/2,-RD+.3);screenLight.lookAt(0,SCR.y0+SCR.h/2,0);scene.add(screenLight);
 var warm=new THREE.PointLight(0xffb060,130,40,2);warm.position.set(-11*ROOM_K,6,9*ROOM_KZ);scene.add(warm);
 var cool=new THREE.PointLight(0xffd9a0,130,40,2);cool.position.set(11*ROOM_K,6,9*ROOM_KZ);scene.add(cool);
+function applyLights(){                                                                      // 테마마다 다시 부른다: 기본값으로 되돌린 뒤 테마 값을 얹는다
+  scene.fog.color.set(0x0c0b0d);scene.fog.density=.008;renderer.setClearColor(0x05060a,1);hemi.color.set(0x6f7c9c);hemi.groundColor.set(0xc4a57c);hemi.intensity=.75;
+  sun.color.set(0xfff0dc);sun.intensity=2.5;fill.intensity=.85;warm.color.set(0xffb060);cool.color.set(0xffd9a0);warm.intensity=cool.intensity=130;
+  warm.position.set(-11*ROOM_K,6,9*ROOM_KZ);cool.position.set(11*ROOM_K,6,9*ROOM_KZ);screenLight.color.set(0x9fc6ff);
 if(RAID){                                                                                    // 횃불빛: 보랏빛 안개 속의 따뜻한 주황
   scene.fog.color.set(0x2a2030);scene.fog.density=.011;renderer.setClearColor(0x0b0810,1);
   hemi.color.set(0x8a7fb0);hemi.groundColor.set(0xd09a6a);hemi.intensity=.7;sun.color.set(0xffe2c4);sun.intensity=1.9;
@@ -399,17 +413,22 @@ if(BASE){                                                                       
   scene.fog.color.set(0x12303f);scene.fog.density=.0035;renderer.setClearColor(0x0c2233,1);
   hemi.color.set(0xddf6f1);hemi.groundColor.set(0xa6c4bb);hemi.intensity=1;sun.color.set(0xfff0d4);sun.intensity=2.2;
   warm.color.set(0xffd9a0);cool.color.set(0xc9f2ee);warm.intensity=cool.intensity=110}
+  if(GFX&&GFX.all!=null){FOG0=scene.fog.density;scene.fog.density=FOG0*GFX.fog}
+}
+applyLights();
 
 function plane(w,h,tex,x,y,z,rx,ry){
   var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:tex,roughness:.9,metalness:0}));
   m.position.set(x,y,z);m.rotation.set(rx,ry,0);m.receiveShadow=true;scene.add(m);return m;
 }
+function buildPlanes(){
 plane(RW*2,RD*2,texFloor,0,0,0,-Math.PI/2,0).material.roughness=.55;
 plane(RW*2,RD*2,texCeil,0,RH,0,Math.PI/2,0).visible=!BASE;
 plane(RW*2,RH,texWall,0,RH/2,-RD,0,0);
 plane(RW*2,RH,texWall,0,RH/2,RD,0,Math.PI).visible=!BASE;
 plane(RD*2,RH,texWallSide,-RW,RH/2,0,0,Math.PI/2).visible=!BASE;
 plane(RD*2,RH,texWallSide,RW,RH/2,0,0,-Math.PI/2).visible=!(RIVER||BASE);   // 강변 테마는 오른쪽이 강으로 트여 있다
+}
 
 /* 시세판·시계·전광판 텍스처 */
 var NAMES=["개미전자","존버바이오","떡상화학","물타기건설","가즈아모터스","익절은행","야수증권","풀매수에너지","단타게임즈","배당통신"];
@@ -442,7 +461,10 @@ tkTex.userData.aspect=2048/48;tkTex.repeat.set(SCR.w/(2048/48),1);
 function drawTicker(s,col){
   var g=tkCv.getContext("2d");g.setTransform(1,0,0,1,0,0);g.fillStyle="#050608";g.fillRect(0,0,2048,48);g.font="700 34px "+FONT;g.textBaseline="middle";
   var w=Math.max(40,Math.ceil(g.measureText(s).width)),n=Math.max(1,Math.round(2048/w)),k=2048/(n*w),i;g.fillStyle=col||"#ffb834";
-  for(i=0;i<n;i++){g.setTransform(k,0,0,1,i*w*k,0);g.fillText(s,0,25)}                                  // 이음매가 안 보이게 정수 번 반복
+  var tw=CLUB&&!col?s.split(/(\s+)/):null,TC=["#ff5fa8","#5fd8ff","#ffd24a","#8cff7a","#c58bff","#ff8a4a"],tx,ti,tc=0;
+  for(i=0;i<n;i++){g.setTransform(k,0,0,1,i*w*k,0);                                                      // 이음매가 안 보이게 정수 번 반복
+    if(!tw){g.fillText(s,0,25);continue}
+    for(tx=0,ti=0;ti<tw.length;ti++){if(tw[ti].trim()&&tw[ti]!=="·")g.fillStyle=TC[tc++%TC.length];else g.fillStyle="#8a8f9c";g.fillText(tw[ti],tx,25);tx+=g.measureText(tw[ti]).width}}   // 클럽: 단어마다 다른 색
   g.setTransform(1,0,0,1,0,0);g.fillStyle="#050608";for(var y=0;y<48;y+=3)g.fillRect(0,y,2048,1);for(var x=0;x<2048;x+=3)g.fillRect(x,0,1,48);   // LED 도트
   tkTex.needsUpdate=true;if(tkSide)tkSide.needsUpdate=true;for(var tq=0;tq<tkMore.length;tq++)tkMore[tq].needsUpdate=true;
 }
@@ -455,16 +477,22 @@ function glowPlane(w,h,tex,k,x,y,z,ry){
 
 /* 고정 소품: 상자 조립 */
 var boxGeo=new THREE.BoxGeometry(1,1,1);
-var props=[], glows=[], fires=[], drift=[], riverT=null, bobs=[];   // bobs: 둥실 떠 있는 소품 (기본 테마)   // drift: 색이 천천히 흐르는 조명 (클럽)
-var POSTS=RAID?[[-1,-.03],[1,-.03],[-1,.47],[1,.47]].map(function(p){return [p[0]*(RW+3)/2,p[1]*RD]})   // 게임 테마: 앞쪽 동상과 뒷문 사이를 고르게 나눈 자리, 좌우는 융단과 벽의 중간
-  :[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ]}), STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ,p[2]]});
-var OBST=POSTS.map(function(p){return [p[0],p[1],2.2]}).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
+var props=[], glows=[], fires=[], drift=[], riverT=null, bobs=[], beams=[];   // beams: 움직이는 조명 (클럽)
+//   // bobs: 둥실 떠 있는 소품 (기본 테마)   // drift: 색이 천천히 흐르는 조명 (클럽)
+var POSTS,STATUES,OBST;
+function setLayout(){
+POSTS=RAID?[[-1,-.03],[1,-.03],[-1,.47],[1,.47]].map(function(p){return [p[0]*(RW+3)/2,p[1]*RD]})   // 게임 테마: 앞쪽 동상과 뒷문 사이를 고르게 나눈 자리, 좌우는 융단과 벽의 중간
+  :[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ]});STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ,p[2]]});
+OBST=(BASE?[]:POSTS.map(function(p){return [p[0],p[1],2.2]})).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
+}
+setLayout();
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
-(function(){
+function buildProps(){
   var i,sx,z,y1=SCR.y0+SCR.h,zb=-RD,WOOD=0x4d3221,BRASS=0xb9903c,MARBLE=0xb7ae9b,DARK=0x0c0d11,GOLD=0xd9a82e;
   if(BASE){                                                                                  // 기본 테마: 슈카월드 타이틀의 소품이 떠 있는 메타버스 광장
-    var STN=0xb9c4c8,STN2=0x8fa0a6,GRS=0x8ccf6a,MINT=0x79dbc9,CORAL=0xef7667,AMB=0xf2bd56,q,k,gl,br=rng(44),L,d,a;
+    var STN=0xb9c4c8,STN2=0x8fa0a6,GRS=0x8ccf6a,MINT=0x79dbc9,CORAL=0xef7667,AMB=0xf2bd56,q,k,gl,br=rng(44),L,d,a,cxs;
+    var tkb=function(len,x,y,z,ry){var t=tkTex.clone();t.repeat.set(len/(.5*tkTex.userData.aspect),1);t.needsUpdate=true;tkMore.push(t);glowPlane(len,.5,t,1.9,x,y,z,ry)};   // 전광판 띠 한 줄
     var bmat=new THREE.MeshStandardMaterial({roughness:.7,metalness:0});
     var grp=function(list,x,y,z,ph,sc){var m=new THREE.InstancedMesh(boxGeo,bmat,list.length),t=new THREE.Matrix4(),c=new THREE.Color(),u,p,g=new THREE.Group();   // 상자 묶음 하나를 둥실 띄운다
       for(u=0;u<list.length;u++){p=list[u];t.makeScale(p[3],p[4],p[5]).setPosition(p[0],p[1],p[2]);m.setMatrixAt(u,t);m.setColorAt(u,c.set(p[6]))}
@@ -480,7 +508,8 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
       for(q=0;q<2;q++){z=-3+q*12;B(sx*(RW-3.4),.9,z,3,1.8,5.4,0x8a6a4c);B(sx*(RW-3.4),1.86,z,3.3,.14,5.7,0xa98562);                                               // 장터 좌판
         for(k=0;k<4;k++)B(sx*(RW-3.4),2.2,z-1.9+k*1.25,2.2,.5,.9,[0xe8b83a,0xd9503f,0x7fc05a,0xe8893a][k]);
         B(sx*(RW-4.7),2.6,z-2.6,.25,3.4,.25,0x6a4f38);B(sx*(RW-4.7),2.6,z+2.6,.25,3.4,.25,0x6a4f38);B(sx*(RW-3.2),4.5,z,4.8,.4,6.6,0x3f5fae);B(sx*(RW-3.2),4.9,z,3.6,.4,5.4,0x4a6cc0);
-        for(k=0;k<7;k++)B(sx*(RW-5.5),3.95,z-2.7+k*.9,.2,.6,.9,k%2?0xf4f1e8:0xd9503f);                                                                             // 줄무늬 차양
+        cxs=sx*(RW-3.2);B(cxs,4.02,z,5,.62,6.8,DARK);                                                                                                           // 지붕 둘레 전광판
+        tkb(6.6,cxs-sx*2.52,4.02,z,-sx*Math.PI/2);tkb(6.6,cxs+sx*2.52,4.02,z,sx*Math.PI/2);tkb(4.8,cxs,4.02,z+3.42,0);tkb(4.8,cxs,4.02,z-3.42,Math.PI);
         G(sx*(RW-5.2),3.1,z-3,.5,.7,.5,1.5,1.25,.7);G(sx*(RW-5.2),3.1,z+3,.5,.7,.5,1.5,1.25,.7)}
       for(q=0;q<4;q++){B(sx*5,.25,-9+q*7,.6,.5,.6,STN);G(sx*5,.72,-9+q*7,.42,.42,.42,1.45,1.2,.7)}                                                                // 통로 등불
       isle(sx*(RW+8),2.5,-12,6,5,true);isle(sx*(RW+13),6,4,5,4,true);isle(sx*(RW+7),.5,15,7,5,false);isle(sx*14,3,RD+9,6,5,true);
@@ -502,12 +531,13 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     grp([[0,0,0,2.9,2,.9,0xe4574c],[0,0,0,3.2,1.6,.86,0xe4574c],[-.25,0,.48,.3,1,.1,0xfdf6ee],[.05,0,.48,.3,.62,.1,0xfdf6ee],[.35,0,.48,.3,.26,.1,0xfdf6ee]],19.6,12.4,zb+2.8,5,1);   // 재생 블록
   }
   if(CLUB){                                                                                  // 클럽 라운지: 스트로브 없이 느린 색 흐름만
-    var PL=0x51384d,PLD=0x302733,WAL=0x61483f,FELT=0x463a4b,q,tm;
+    var PL=0x51384d,PLD=0x302733,WAL=0x61483f,FELT=0x463a4b,q,tm,cx;
     var tky=SCR.y0+SCR.h+1.25,tkl,tkw=function(len,x,y,z,ry){var t=tkTex.clone();t.repeat.set(len/tkTex.userData.aspect,1);t.needsUpdate=true;tkMore.push(t);glowPlane(len,1,t,2,x,y,z,ry)};   // 전광판 한 줄
     var dm=function(w,h,d,x,y,z,ph,k){var m=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({fog:false}));m.scale.set(w,h,d);m.position.set(x,y,z);m.userData.ph=ph||0;m.userData.k=k||.85;scene.add(m);drift.push(m);return m};
     for(sx=-1;sx<=1;sx+=2){
-      for(q=0;q<3;q++){z=2+q*5.5;B(sx*(RW-5.2),.35,z,8,.3,1.6,PLD);B(sx*(RW-5.2),.7,z,8,.5,1.6,PL);B(sx*(RW-5.2),1.25,z+.65,8,.9,.3,PL);dm(7.6,.06,.06,sx*(RW-5.2),.24,z-.8,q*.7+sx);   // 벨벳 소파 · 발밑 조명
-        B(sx*(RW-10.3),.5,z,1.1,.12,1.1,WAL);B(sx*(RW-10.3),.25,z,.3,.5,.3,PLD)}                                                                                          // 작은 테이블
+      for(q=0;q<5;q++){z=-1+q*4.4;cx=sx*(RW-4-(q%2)*3.6);                                                                                                       // 스탠딩 테이블과 음료
+        B(cx,.06,z,1.1,.12,1.1,PLD);B(cx,.75,z,.22,1.4,.22,0x2a2630);B(cx,1.5,z,1.5,.12,1.5,WAL);dm(1.3,.05,.05,cx,1.41,z+.76,q*.9+sx);
+        B(cx-.38,1.77,z-.2,.2,.42,.2,0xd9c27a);B(cx+.32,1.73,z+.25,.2,.34,.2,0x9fd6e0);B(cx+.05,1.81,z-.38,.16,.5,.16,0xe07a8a);B(cx+.32,1.93,z+.25,.05,.08,.05,0xf2efe6)}
       for(q=0;q<Math.floor((RD*2-4)/7);q++){z=-RD+3+q*7;B(sx*(RW-.2),7,z,.2,5,1.6,FELT);B(sx*(RW-.2),7,z+1.8,.2,5,1.6,0x3b323f);B(sx*(RW-.2),7,z+3.6,.2,5,1.6,FELT)}                  // 흡음 패널
       B(sx*(RW-.15),tky,0,.3,1.3,RD*2,DARK);tkw(RD*2-.6,sx*(RW-.32),tky,0,-sx*Math.PI/2);                                                                     // 옆벽 전광판
       tkl=RW-SCR.w/2-.9;B(sx*(SCR.w/2+.6+tkl/2),tky,zb+.3,tkl,1.3,.6,DARK);tkw(tkl,sx*(SCR.w/2+.6+tkl/2),tky,zb+.62,0);                                      // 스크린 양옆으로 이어지는 전광판
@@ -517,9 +547,16 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     B(0,.25,zb+1.5,RW*2-6,.5,3,0x513d3a);                                                                                                                     // 무대
     B(-11.3,1.1,zb+3.25,4.4,1.2,.5,0x302733);dm(4.2,.1,.06,-11.3,1.5,zb+3.53,2);B(-12.4,1.78,zb+3.25,1.1,.14,.44,0x15141a);B(-10.2,1.78,zb+3.25,1.1,.14,.44,0x15141a);   // DJ 부스
     B(-(RW-5.4),1,RD-1,9,2,1.6,WAL);for(q=0;q<5;q++)B(-(RW-2)+q*1.7,2.5,RD-.9,.9,.9,.12,q%2?0x98758a:0x352c38);dm(8.6,.06,.06,-(RW-5.4),.2,RD-1.85,3);                       // 레코드 바
+    for(q=0;q<POSTS.length;q++){tm=dm(2.62,.06,2.62,POSTS[q][0],4.25,POSTS[q][1],q*1.7,.3);tm.userData.tile=1}                                                 // 포스트 윗면 반사판
+    (function(){var hh=RH-1.6,geo=new THREE.ConeGeometry(1.7,hh,24,1,true),n,hd,bm,gc=document.createElement("canvas"),gg,gd,gt,gy;geo.translate(0,-hh/2,0);
+      gc.width=4;gc.height=128;gg=gc.getContext("2d");gd=gg.createLinearGradient(0,0,0,128);for(gy=0;gy<=10;gy++){gt=Math.round(255*Math.pow(1-gy/10,3.6));gd.addColorStop(gy/10,"rgb("+gt+","+gt+","+gt+")")}
+      gg.fillStyle=gd;gg.fillRect(0,0,4,128);gt=new THREE.CanvasTexture(gc);                                                                                  // 위(조명 쪽)는 밝고 아래로 갈수록 0                                                  // 움직이는 조명: 평소엔 은은하게, 미러볼이 돌면 광선
+      B(0,RH-.3,-3,22,.25,.4,0x15141a);B(0,RH-.3,8,22,.25,.4,0x15141a);
+      for(n=0;n<6;n++){hd=new THREE.Group();bm=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0xffffff,map:gt,transparent:true,opacity:.04,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false}));
+        hd.position.set((n%3-1)*9,RH-.95,n<3?-3:8);hd.add(bm);hd.userData={ph:n*1.1,m:bm.material,ax:0,az:0};scene.add(hd);beams.push(hd);B((n%3-1)*9,RH-.65,n<3?-3:8,.9,.6,.9,0x1b1a20)}})();
     for(i=-3;i<=3;i++)for(q=-3;q<=3;q++){tm=dm(1.8,.04,1.8,i*2,.03,-1+q*2,i*.6+q*.9,.14+((i*7+q*13)&3)*.045);tm.userData.tile=1}                              // 댄스 플로어 타일
-    (function(){var mb=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3,1),new THREE.MeshStandardMaterial({color:0xcfd3e0,roughness:.25,metalness:.1,flatShading:true}));
-      mb.position.set(0,RH-2.4,0);scene.add(mb);drift.ball=mb;var st=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0x15141a}));st.scale.set(.1,1.4,.1);st.position.set(0,RH-.9,0);scene.add(st)})();   // 미러볼
+    (function(){var mb=new THREE.Mesh(new THREE.IcosahedronGeometry(1.56,2),new THREE.MeshStandardMaterial({color:0xcfd3e0,roughness:.25,metalness:.1,flatShading:true}));
+      mb.position.set(0,RH-2.7,0);scene.add(mb);drift.ball=mb;var st=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0x15141a}));st.scale.set(.1,1.4,.1);st.position.set(0,RH-.9,0);scene.add(st)})();   // 미러볼
   }
   if(RIVER){                                                                                 // 강변 테라스: 오른쪽이 밤 강으로 트여 있다
     var WDN=0x695b4b,WDD=0x424a49,q,tz,th,w,rr=rng(12);
@@ -641,7 +678,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
   B(SIDE,9.4,zb+.25,4.8,2.2,.4,DARK);glowPlane(4.2,1.6,ckTex,1.5,SIDE,9.4,zb+.47,0);
   }
   // 거래 포스트 (공격대 테마에서는 파티 집결석)
-  for(i=0;i<POSTS.length;i++){var px=POSTS[i][0],pz=POSTS[i][1];
+  if(!BASE)for(i=0;i<POSTS.length;i++){var px=POSTS[i][0],pz=POSTS[i][1];
     B(px,.55,pz,2.6,1.1,2.6,RAID?0x5a5462:0x5c3c27);B(px,1.16,pz,3,.12,3,RAID?0x7d7684:0x23262c);B(px,2.2,pz,.8,2,.8,RAID?0x5a5462:0x1b1d23);B(px,3.55,pz,2.5,1.1,2.5,DARK);B(px,4.16,pz,2.7,.12,2.7,BRASS);
     glowPlane(2.3,.9,bdTex,1.5,px,3.55,pz+1.26,0);glowPlane(2.3,.9,bdTex,1.5,px,3.55,pz-1.26,Math.PI);
     glowPlane(2.3,.9,bdTex,1.5,px+1.26,3.55,pz,Math.PI/2);glowPlane(2.3,.9,bdTex,1.5,px-1.26,3.55,pz,-Math.PI/2)}
@@ -656,16 +693,16 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
   }
   // 천장 조명 (은은하게)
   if(FLOOR)for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.25,z*6*ROOM_KZ,3,.5,3,0x1c1f26);G(i*10*ROOM_K,RH-.55,z*6*ROOM_KZ,2.2,.12,2.2,1.5,1.35,1.1)}
-})();
+}
 var propMat=new THREE.MeshStandardMaterial({map:texDot,roughness:.8,metalness:0});
-(function(){
+function buildInst(){
   var m=new THREE.InstancedMesh(boxGeo,propMat,props.length),t=new THREE.Matrix4(),c=new THREE.Color(),i,p;
   for(i=0;i<props.length;i++){p=props[i];t.makeScale(p[3],p[4],p[5]).setPosition(p[0],p[1],p[2]);m.setMatrixAt(i,t);m.setColorAt(i,c.set(p[6]))}
   m.castShadow=true;m.receiveShadow=true;scene.add(m);
   var g=new THREE.InstancedMesh(boxGeo,new THREE.MeshBasicMaterial({fog:false}),glows.length);
   for(i=0;i<glows.length;i++){p=glows[i];t.makeScale(p[3],p[4],p[5]).setPosition(p[0],p[1],p[2]);g.setMatrixAt(i,t);g.setColorAt(i,c.setRGB(p[6],p[7],p[8]))}
   scene.add(g);
-})();
+}
 
 /* 스크린: 방송이 있으면 캔버스에 구멍을 뚫어 뒤의 유튜브가 보이게 하고, 없으면 안내판 */
 var scrPos=[0,SCR.y0+SCR.h/2,-RD+.06];
@@ -686,6 +723,8 @@ function drawPlaceholder(time){
   g.fillText(video?"화면이 시야 밖입니다":"방장이 유튜브 주소를 넣으면 여기에 방송이 나옵니다",320,322);phTex.needsUpdate=true;
 }
 var tkMesh=glowPlane(SCR.w,1,tkTex,2.4,0,SCR.y0+SCR.h+1.25,-RD+.62,0);
+function placeScreen(){var cy=SCR.y0+SCR.h/2;scrPos[1]=cy;holeMesh.position.y=cy;phMesh.position.y=cy;tkMesh.position.y=SCR.y0+SCR.h+1.25;screenLight.position.y=cy;screenLight.lookAt(0,cy,0);   // 스크린 높이는 테마마다 다르다
+  if(corners){corners[0][1]=corners[1][1]=SCR.y0+SCR.h;corners[2][1]=corners[3][1]=SCR.y0}}
 
 /* ───────────── 복셀 개미: 작은 복셀로 빚은 둥근 몸 ───────────── */
 var VS=.085, VMAX=1000, MAXA=132;
@@ -821,7 +860,9 @@ var ants=new AntMesh(MAXA);scene.add(ants.mesh);
 /* ───────────── 새우 공대장 (대역 캐릭터) ─────────────
    무대 왼쪽 단상에 선다. 계란·토마토는 영상이 아니라 이 캐릭터가 맞는다 (영상 위에 아무것도 올리지 않기 위해).
    실제 서비스에서는 슈카월드 공식 캐릭터 원본으로 교체한다 */
-var BOSS=RAID?{x:0,y:1.2,z:-RD+1.5,ry:0,hit:0,hop:0}:BASE?{x:14.6,y:3.3,z:-RD+3.2,ry:-.4,hit:0,hop:0}:{x:-11.3,y:.6,z:-RD+2.5,ry:.35,hit:0,hop:0};   // 공격대 테마에서는 가운데 단상
+var BOSS={x:0,y:0,z:0,ry:0,hit:0,hop:0};
+function setBoss(){var p=RAID?[0,1.2,-RD+1.5,0]:BASE?[14.6,3.3,-RD+3.2,-.4]:[-11.3,.6,-RD+2.5,.35];BOSS.x=p[0];BOSS.y=p[1];BOSS.z=p[2];BOSS.ry=p[3];if(bossG)bossG.position.set(p[0],p[1],p[2])}   // 테마마다 새우가 서는 자리
+setBoss();
 var bossG=new THREE.Group();BOSS.on=0;BOSS.until=0;BOSS.sc=0;   // 평소에는 숨어 있다가 연설할 때 나타나고, 끝나면 뽕~ 하고 사라진다
 var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT:0,megaT:0,look:{title:"공대장 · 대역 캐릭터",scale:1,color:"#f0826a"}};
 (function(){
@@ -867,7 +908,7 @@ var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT
 })();
 
 /* 황소와 곰 복셀 동상 (공격대 테마): 스크린 양옆 앞쪽, 돌 받침대 위 */
-if(RAID)(function(){
+function buildStatues(){if(!RAID)return;
   var S=.16,GOLD=[1.25,.62,.07],GOLD2=[1.5,.9,.16],CREAM=lin(0xf3ead0),BR=lin(0x7a5232),BR2=lin(0x5e3d24),TAN=lin(0xb88a5c),DKK=lin(0x1a1410),r=rng(77);
   function make(fn,x,z,ry){
     var P=[],C=[];
@@ -899,17 +940,17 @@ if(RAID)(function(){
     for(sz=-1;sz<=1;sz+=2){blob(1.6,3.0,sz*.42,.2,.2,.16,2,BR2);blob(1.0,.66,sz*.52,.4,.82,.4,3,BR);blob(-1.05,.66,sz*.52,.42,.82,.42,3,BR);put(2.2,2.6,sz*.5,DKK);
       for(i=-1;i<=1;i++)put(1.42,.1,sz*.52+i*S,CREAM)}
   },STATUES[1][0],STATUES[1][1],Math.PI+.64);
-})();
+}
 
 /* 설탕 밭: 앞마당 곳곳의 각설탕. 가까이 가면 캐서 설탕을 얻고, 잠시 뒤 다시 자란다.
    누가 캤는지는 방장이 판정해서 모두에게 알린다 (정식 서비스에서는 서버가 판정) */
 var SUG=[],sugReq=0;
-if(YARD)(function(){
+function buildSugar(){SUG.length=0;if(!YARD)return;
   var r=rng(31),i,j,g,m,s,x,z,mat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x8fa0c8,emissiveIntensity:.3,roughness:.4});
   for(i=0;i<14;i++){x=(r()*2-1)*(RW-4);z=RD+3.5+r()*(YD-8);if(Math.abs(x)<3.6)x+=x<0?-4.2:4.2;if(x<-9&&x>-16&&z>RD+YD/2&&z<RD+YD/2+7)x+=8;
     g=new THREE.Group();for(j=0;j<5;j++){m=new THREE.Mesh(boxGeo,mat);s=.36+r()*.22;m.scale.set(s,s,s);m.position.set((r()-.5)*.9,s/2+(j>3?.42:0),(r()-.5)*.9);m.rotation.y=r()*1.5;m.castShadow=true;g.add(m)}
     g.position.set(x,0,z);scene.add(g);SUG.push({x:x,z:z,g:g,t:0,s:1})}
-})();
+}
 function yardSpot(){if(SUG.length&&Math.random()<.75){var n=SUG[(Math.random()*SUG.length)|0];return [n.x+(Math.random()-.5)*1.6,n.z+(Math.random()-.5)*1.6]}
   return [(Math.random()*2-1)*(RW-4),RD+3+Math.random()*(YD-6)]}
 function takeSugar(i,id){var n=SUG[i];if(!n||!ents[id]||performance.now()<n.t)return;var r=Math.round(16000+Math.random()*10000);applySugar(i,id,r);castAll({t:"sg",i:i,id:id,r:r})}
@@ -927,6 +968,7 @@ var PARTY=[{n:"별",s:"★",c:"#ffd24a"},{n:"동그라미",s:"●",c:"#5fe08a"},
   for(i=0;i<4;i++){var m=new THREE.Mesh(geos[i],new THREE.MeshBasicMaterial({color:new THREE.Color(PARTY[i].c).multiplyScalar(1.7),fog:false}));
     m.position.set(POSTS[i][0],6.3,POSTS[i][1]);scene.add(m);marks.push(m)}
 })();
+function placeMarks(){for(var i=0;i<marks.length;i++){marks[i].position.x=POSTS[i][0];marks[i].position.z=POSTS[i][1]}}
 
 /* ───────────── 후처리 ───────────── */
 var composer,gtao,bloom,flare,maskRT,finalPass,quality="high";
@@ -1061,13 +1103,42 @@ function collide(e){
 }
 /* 카메라가 큰 구조물 속으로 들어가면 안쪽 단면이 보인다. 구조물 상자 목록을 두고, 카메라가 그 안에 들면 캐릭터 쪽으로 당긴다 */
 var CAMBOX=[],camY=1;
-(function(){var m=.55,i,p,add=function(x0,x1,y1,z0,z1){CAMBOX.push([x0-m,x1+m,-1,y1+m,z0-m,z1+m])};
-  for(i=0;i<POSTS.length;i++){p=POSTS[i];add(p[0]-1.5,p[0]+1.5,4.3,p[1]-1.5,p[1]+1.5)}                    // 거래 포스트
+function buildCam(){CAMBOX.length=0;var m=.55,i,p,add=function(x0,x1,y1,z0,z1){CAMBOX.push([x0-m,x1+m,-1,y1+m,z0-m,z1+m])};
+  if(!BASE)for(i=0;i<POSTS.length;i++){p=POSTS[i];add(p[0]-1.5,p[0]+1.5,4.3,p[1]-1.5,p[1]+1.5)}                    // 거래 포스트
   if(RAID){for(i=0;i<STATUES.length;i++){p=STATUES[i];add(p[0]-3.6,p[0]+3.6,7.6,p[1]-2.8,p[1]+2.8)}      // 동상
     for(i=-1;i<=1;i+=2){add(i*3.15-.25,i*3.15+.25,9.1,RD-3.55,RD-.45);                                    // 열린 문짝
       add(i*4.1-.9,i*4.1+.9,10,RD-1.3,RD+1.3);add(i*3.6-.7,i*3.6+.7,6.6,RD+YD-1.1,RD+YD+.3)}              // 문기둥 · 바깥문 기둥
     add(-4.9,4.9,12.4,RD-1.2,RD+1.3);CAMBOX[CAMBOX.length-1][2]=9.3}                                      // 문 위 아치 (아래는 뚫려 있다)
-})();
+}
+
+/* ───────────── 공간 다시 짓기 ─────────────
+   테마에 딸린 것은 전부 worldRoot 아래에 들어간다. 테마를 바꾸면 통째로 걷어 내고 새로 짓는다 (새로고침 없이) */
+var worldRoot=null;
+function buildWorld(){
+  if(worldRoot){scene.remove(worldRoot);worldRoot.traverse(function(o){if(o.isInstancedMesh)o.dispose();if(o.geometry&&o.geometry!==boxGeo)o.geometry.dispose();
+    if(o.material&&o.material!==antMat&&o.material!==propMat&&o.material.dispose)o.material.dispose()})}
+  worldRoot=new THREE.Group();scene.add=function(){worldRoot.add.apply(worldRoot,arguments);return scene};          // 짓는 동안 scene.add는 worldRoot로 들어간다
+  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;
+    setDims();genTex();setLayout();buildPlanes();buildProps();buildInst();buildStatues();buildSugar();buildCam()}
+  finally{delete scene.add}
+  scene.add(worldRoot);applyLights();placeScreen();setBoss();placeMarks();
+}
+buildWorld();
+function tkText(){return TNAME[THEME]+"   ·   새우 공대장과 시황 방송 같이 보는 곳   ·   투자의 책임은 투자자 본인에게 있습니다   ·   "}
+/* 테마 바꾸기: 화면이 잠깐 어두워진 사이에 공간과 의상을 바꾼다. 방송과 연결은 그대로 이어진다 */
+function applyTheme(v){
+  if(TLIST.indexOf(v)<0||v===THEME)return;
+  var doit=function(){
+    setFlags(v);buildWorld();TK_DEF=tkText();tkUntil=0;drawTicker(TK_DEF);
+    var k,e,p;for(k in ents){e=ents[k];e.look=lookOf(e.name);e.parts=null;e.out=null;
+      if(!YARD){e.yard=false;if(e.z>RD-.8||(e.sz!=null&&e.sz>RD-.8)){p=pickSpot();e.x=e.tx=e.sx=p[0];e.z=e.tz=e.sz=p[1];e.buf=null;if(e.ai){e.ai.gx=p[0];e.ai.gz=p[1]}}}     // 마당에 있던 개미는 안으로
+      else if(isHost&&e.bot&&(+e.id.slice(1))%7===3){e.yard=true;p=yardSpot();e.x=e.tx=e.sx=p[0];e.z=e.tz=e.sz=p[1];e.buf=null;if(e.ai){e.ai.gx=p[0];e.ai.gz=p[1];e.ai.wait=1}}}
+    ants.dirty=true;var nm=clean($("name").value,12);setPreview(nm);$("pvtitle").textContent=nm?pvEnt.look.title:"";themeUI();paintThemes();
+    try{var u=new URL(location.href);u.searchParams.set("theme",v);history.replaceState(null,"",u.pathname+u.search+u.hash)}catch(_){}               // 초대 링크에 테마가 실리도록
+  };
+  if(!inRoom){doit();return}
+  var f=$("fade");f.classList.add("on");setTimeout(function(){doit();setTimeout(function(){f.classList.remove("on")},140)},380);
+}
 function bound(e){
   e.x=clamp(e.x,-XMAX,XMAX);e.z=clamp(e.z,ZMIN,ZMAXY);if(!YARD)return;
   if(e.out==null)e.out=e.z>RD;                                                   // out: 지금 마당에 있는가
@@ -1244,7 +1315,7 @@ function doDon(id,a){
 
 /* ───────────── 공대장 명령: 경보 · 집결 · 준비 확인 ─────────────
    방장이 공대장이다. 정식 서비스에서는 진행자·운영진 계정에만 권한을 주고 전 채널에 동시에 보낸다 */
-var voteEnd=0,raidT=0,markUntil=0,ballT=0;
+var voteEnd=0,raidT=0,markUntil=0,ballT=0,partyK=0;
 function raidWarn(s,ms){var r=$("raid");r.textContent=s;r.classList.add("show");bossEnt.say=s;bossEnt.sayT=performance.now()+(ms||5000);BOSS.hop=1;bossShow((ms||5000)+500);clearTimeout(raidT);raidT=setTimeout(function(){r.classList.remove("show")},ms||5000);logSys("📢 "+s)}
 function partySpot(pt){var p=POSTS[pt],a=Math.random()*6.283,r=3+Math.random()*1.8;return [clamp(p[0]+Math.cos(a)*r,-XMAX,XMAX),clamp(p[1]+Math.sin(a)*r,ZMIN,RD-.8)]}
 function doRally(){
@@ -1390,7 +1461,7 @@ function hostOnConn(c){
 function clientOnData(m){
   if(!m||typeof m!=="object")return;lastSnap=Date.now();
   var i,e;
-  if(m.t==="wel"){if(m.th&&m.th!==THEME){switchTheme(m.th,0);return}myId=m.id;ents={};order=[];
+  if(m.t==="wel"){if(m.th&&m.th!==THEME)applyTheme(m.th);myId=m.id;ents={};order=[];
     for(i=0;i<m.ps.length;i++){var p=m.ps[i];addEnt(p[0],p[1],p[2],p[3],p[4],p[5],p[6])}
     me=ents[myId];if((m.vid||"")!==video||!ytFrame)setVideo(m.vid||"",true);if(m.vt)vsync=mkSync(m.vt);enterRoom();
   }else if(m.t==="join"){var q=m.p;if(!ents[q[0]]){addEnt(q[0],q[1],q[2],q[3],q[4],q[5],q[6]);if(!q[2])logSys(q[1]+" 님이 들어왔습니다")}}
@@ -1404,7 +1475,7 @@ function clientOnData(m){
   else if(m.t==="rw"){raidWarn(clean(m.s,40))}
   else if(m.t==="rally"){doRally()}
   else if(m.t==="bell"){doBell()}
-  else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME){toast("방장이 테마를 "+TSHORT[m.v]+"(으)로 바꿨습니다. 곧 넘어갑니다",1e9);switchTheme(m.v,4000)}}
+  else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME){applyTheme(m.v);toast("방장이 테마를 "+TSHORT[m.v]+"(으)로 바꿨습니다",2600)}}
   else if(m.t==="sg"){applySugar(m.i|0,m.id,+m.r||20000)}
   else if(m.t==="rc"){startVote(clean(m.q,40))}
   else if(m.t==="rv"){if(ents[m.id]&&m.id!==myId)ents[m.id].vote=m.v===1?1:2}
@@ -1429,7 +1500,7 @@ function switchTheme(v,delay){
   try{sessionStorage.setItem("antauto",JSON.stringify({n:myName,c:roomCode,t:Date.now()}))}catch(_){}
   setTimeout(function(){try{var u=new URL(location.href);u.searchParams.set("theme",v);u.hash="room-"+roomCode;location.href=u.toString()}catch(_){location.search="?theme="+v}},delay);
 }
-function setTheme(v){if(!isHost||TLIST.indexOf(v)<0||v===THEME)return;if(!ownsTheme(v))return toast(TSHORT[v]+" 테마는 상점에서 먼저 구입해야 합니다 (🍬"+TPRICE[v].toLocaleString("ko-KR")+")",3600);castAll({t:"theme",v:v});toast(TSHORT[v]+" 테마로 바꾸는 중입니다",1e9);switchTheme(v,400)}
+function setTheme(v){if(!isHost||TLIST.indexOf(v)<0||v===THEME)return;if(!ownsTheme(v))return toast(TSHORT[v]+" 테마는 상점에서 먼저 구입해야 합니다 (🍬"+TPRICE[v].toLocaleString("ko-KR")+")",3600);castAll({t:"theme",v:v});applyTheme(v);toast(TSHORT[v]+" 테마로 바꿨습니다",2400)}
 function say(id,s,mg){var e=ents[id];if(e){e.say=s;e.sayT=performance.now()+5500;e.megaT=mg?e.sayT:0;if(mg)tickerSay("📣 "+e.name+": "+s,"#7fd4ff",12000);logChat(e,s)}}
 
 /* 방장 시뮬레이션·중계: 탭이 뒤로 가도 돌도록 setInterval */
@@ -1599,13 +1670,17 @@ function frame(ts){
   BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
   bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
   for(i=0;i<bobs.length;i++){var bg=bobs[i];bg.position.y=bg.userData.y+Math.sin(time*.6+bg.userData.ph)*.2;bg.rotation.y=Math.sin(time*.25+bg.userData.ph)*.3}   // 떠 있는 소품이 둥실거린다
-  if(CLUB){for(i=0;i<drift.length;i++){var dmm=drift[i],dk=dmm.userData.k*(dmm.userData.tile?.75+.25*Math.sin(time*.6+dmm.userData.ph*3):1);   // 보라 → 분홍 → 청록을 1~2분에 걸쳐 오간다
-      dmm.material.color.setHSL(.72+.2*Math.sin(time*.07+dmm.userData.ph),.55,.5).multiplyScalar(dk)}
+  if(CLUB){var bon0=ts<ballT,bmo,bud;partyK+=((bon0?1:0)-partyK)*Math.min(1,dt*(bon0?6:1.5));                                                             // partyK: 0 평소 ~ 1 미러볼이 도는 중
+    for(i=0;i<drift.length;i++){var dmm=drift[i],dph=dmm.userData.ph,dk=dmm.userData.k*(dmm.userData.tile?.75+.25*Math.sin(time*.6+dph*3):1);                  // 평소: 보라 → 분홍 → 청록을 1~2분에 걸쳐 오간다
+      if(dmm.userData.tile)dk*=1+partyK*(.35+.75*Math.max(0,Math.sin(time*4+dph*9)));                                                                       // 반짝임: 바닥 타일과 반사판이 엇박으로 번쩍인다
+      dmm.material.color.setHSL((.72+.2*Math.sin(time*.07+dph)+partyK*(time*.12+dph*.13))%1,.5+.1*partyK,.5).multiplyScalar(dk)}
+    for(i=0;i<beams.length;i++){bud=beams[i].userData;bud.ax+=dt*(.22+partyK*1.5);bud.az+=dt*(.18+partyK*1.2);
+      beams[i].rotation.x=.5*Math.sin(bud.ax+bud.ph);beams[i].rotation.z=.55*Math.cos(bud.az+bud.ph*1.7);bud.m.opacity=.04+.1*partyK;bud.m.color.setHSL((time*.06+i*.17)%1,.45,.62)}
     warm.position.set(Math.cos(time*.15)*12,7,Math.sin(time*.15)*10);cool.position.set(-Math.cos(time*.15)*12,7,-Math.sin(time*.15)*10);
-    warm.color.setHSL(.8+.1*Math.sin(time*.05),.6,.55);cool.color.setHSL(.55+.08*Math.sin(time*.04+2),.6,.55);if(drift.ball){var bb=drift.ball,bon=ts<ballT,bi,ba,bu,bc;bb.rotation.y+=dt*(bon?3.2:.2);                                  // 폭죽이 터지면 미러볼이 6초간 빠르게 돌며 빛 조각을 뿌린다
-      bb.material.emissive.setHSL((time*.5)%1,.6,bon?.22+.12*Math.sin(time*18):0);
-      if(bon)for(bi=0;bi<3;bi++)if(Math.random()<dt*22){ba=Math.random()*6.283;bu=Math.random()*1.2-.9;bc=new THREE.Color().setHSL(Math.random(),.7,.6);
-        spawn(bb.position.x+Math.cos(ba)*1.4,bb.position.y+bu,bb.position.z+Math.sin(ba)*1.4,Math.cos(ba)*(3+Math.random()*5),bu*4-1,Math.sin(ba)*(3+Math.random()*5),1+Math.random()*.9,.13,bc.r*2.2,bc.g*2.2,bc.b*2.2,1.5,0)}}}
+    warm.color.setHSL(.8+.1*Math.sin(time*.05),.6,.55);cool.color.setHSL(.55+.08*Math.sin(time*.04+2),.6,.55);if(drift.ball){var bb=drift.ball,bon=ts<ballT,bi,ba,bu,bc;bb.rotation.y+=dt*(bon?1.6:.2);                                  // 폭죽이 터지면 미러볼이 6초간 빠르게 돌며 빛 조각을 뿌린다
+      bb.material.emissive.setHSL((time*.2)%1,.5,bon?.12+.05*Math.sin(time*6):0);
+      if(bon)for(bi=0;bi<2;bi++)if(Math.random()<dt*10){ba=Math.random()*6.283;bu=Math.random()*1.2-.9;bc=new THREE.Color().setHSL(Math.random(),.7,.6);
+        spawn(bb.position.x+Math.cos(ba)*1.4,bb.position.y+bu,bb.position.z+Math.sin(ba)*1.4,Math.cos(ba)*(3+Math.random()*5),bu*4-1,Math.sin(ba)*(3+Math.random()*5),1+Math.random()*.9,.1,bc.r*1.3,bc.g*1.3,bc.b*1.3,1.5,0)}}}
   if(riverT){if(time-riverT.t>1){riverT.t=time;var rs=0,rk;for(rk=0;rk<bd.c.length;rk++)rs+=bd.c[rk];riverT.temp=clamp(13+rs/bd.c.length*5,1,29);            // 시세판 평균 등락 → 수온
       var rg=riverT.cv.getContext("2d"),hot=riverT.temp>=13;rg.fillStyle="#04060a";rg.fillRect(0,0,256,128);rg.textAlign="center";rg.textBaseline="middle";
       rg.fillStyle="#8a93a3";rg.font="700 22px "+FONT;rg.fillText("한강 수온",128,28);rg.fillStyle=hot?"#ff5d5d":"#5aa2ff";rg.font="900 56px "+FONT;rg.fillText(riverT.temp.toFixed(1)+"°C",128,84);riverT.tex.needsUpdate=true;
@@ -1808,13 +1883,16 @@ if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status
   b.onclick=function(){joinCode="chan0"+i;[].forEach.call(box.children,function(x){x.classList.toggle("on",x===b)});
     $("go").textContent="채널 "+i+" 입장";$("alt").style.display="";$("alt").textContent="채널 말고 새 방 만들기";status("채널 "+i+" · 정식 서비스에서는 빈 채널로 자동 배정됩니다")};
   box.appendChild(b)})(i)})();
-document.title=TNAME[THEME];document.querySelector(".card h1").textContent=TNAME[THEME];$("topleft").firstElementChild.textContent=TNAME[THEME];
-if(RAID)document.querySelector(".card .sub").textContent="이름을 넣으면 그 이름의 개미와 직업이 정해집니다";
-if(!FLOOR)$("entry").style.background="linear-gradient(rgba(8,9,13,.5),rgba(8,9,13,.8)),url(art/keyart-"+THEME+".jpg) center/cover no-repeat";
+function themeUI(){
+  document.title=TNAME[THEME];document.querySelector(".card h1").textContent=TNAME[THEME];$("topleft").firstElementChild.textContent=TNAME[THEME];
+  document.querySelector(".card .sub").textContent=RAID?"이름을 넣으면 그 이름의 개미와 직업이 정해집니다":"이름을 넣으면 그 이름의 개미가 만들어집니다";
+  $("entry").style.background=FLOOR?"":"linear-gradient(rgba(8,9,13,.5),rgba(8,9,13,.8)),url(art/keyart-"+THEME+".jpg) center/cover no-repeat";
+}
+themeUI();
 // 테마 선택: 보유한 테마만 골라서 방을 열 수 있다. 초대 링크로 온 손님은 방장의 테마를 그대로 쓴다
 var invited=!!joinCode;
 (function(){var box=$("ths"),sg=mk("div",null,"");if(invited){box.style.display="none";return}
-  var go2=function(id){try{var u=new URL(location.href);u.searchParams.set("theme",id);u.hash="";location.href=u.toString()}catch(_){location.search="?theme="+id}};
+  var go2=function(id){applyTheme(id);status("");draw()};
   var draw=function(){box.textContent="";TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",id===THEME?"on":"",(has?"":"🔒 ")+TSHORT[id]),armed=false;
       b.onclick=function(){if(!ownsTheme(id)){var pr="🍬"+TPRICE[id].toLocaleString("ko-KR"),hv=" (보유 🍬"+sugar.toLocaleString("ko-KR")+")";
           if(sugar<TPRICE[id])return status(TSHORT[id]+" 테마는 "+pr+"입니다. 설탕이 부족합니다"+hv,true);
