@@ -1258,7 +1258,7 @@ var FlareShader={uniforms:{tDiffuse:{value:null},amt:{value:1}},
     "void main(){vec4 base=texture2D(tDiffuse,vUv);vec2 f=vec2(1.0)-vUv;vec2 g=(vec2(0.5)-f)*0.34;vec3 gh=vec3(0.0);vec3 st=vec3(0.0);",
     " float jt=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))))-0.5;",                                  // 픽셀마다 표본 위치를 조금씩 어긋내서, 밝은 점이 띄엄띄엄 복사돼 보이지 않고 한 줄기로 번진다
     " float asp=dFdy(vUv.y)/max(dFdx(vUv.x),1e-6);",                                                                           // 화면 비율: 세로 줄기를 가로와 같은 길이로 맞춘다
-    " for(int i=-18;i<=18;i++){float fi=float(i)+jt;float w=1.0-abs(fi)/19.0;w*=w;st+=(br(vUv+vec2(fi*0.0068,0.0))+br(vUv+vec2(0.0,fi*0.0068*asp))*0.85)*w;}",   // 십자 빛줄기: 가로 + 세로
+    " for(int i=-18;i<=18;i++){float fi=float(i)+jt;float w=1.0-abs(fi)/19.0;w*=w;float d=fi*0.0048;st+=(br(vUv+vec2(d,d*asp))+br(vUv+vec2(d,-d*asp)))*w;}",   // 십자 빛줄기를 45도 돌린 X자: 두 대각선
     " gl_FragColor=vec4(base.rgb+st*amt*0.055*vec3(0.55,0.75,1.0),base.a);}"].join("\n")};
 function buildComposer(){
   var rt=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType,samples:4});
@@ -2214,7 +2214,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11210105";
+var BUILD="B11210107";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
