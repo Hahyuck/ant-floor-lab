@@ -212,8 +212,8 @@
       <label for="yt">가운데 화면에 틀 유튜브 주소 (실시간 방송·일반 영상). 들어오는 사람 모두 같은 시점을 봅니다</label>
       <div class="row"><input type="text" id="yt" placeholder="비우고 적용하면 방송을 끕니다"><button class="btn" id="ytGo">적용</button></div>
       <div class="row" style="margin-top:6px"><button class="btn alt2" id="ytDef">슈카월드 최신 영상</button><button class="btn alt2" id="ytLive">슈카월드 실시간</button></div>
-      <label for="bots">자리 채우는 봇 개미 수: <b id="botsN">80</b></label>
-      <input type="range" id="bots" min="0" max="100" value="80">
+      <label for="bots">자리 채우는 봇 개미 수: <b id="botsN">60</b></label>
+      <input type="range" id="bots" min="0" max="100" value="60">
     </div>
     <p id="popNote"></p>
     <label>초대 링크</label>
@@ -278,11 +278,11 @@ function shade(hex,k){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255
   return "rgb("+(r|0)+","+(g|0)+","+(b|0)+")"}
 
 /* ───────────── 테마 ─────────────
-   normal: 원본 객장 (기본) · stock: 주식시장 · raid: 판타지 공격대 홀 · club: 클럽 라운지 · river: 강변 테라스 */
+   normal: 슈카월드풍 메타버스 광장 (기본) · stock: 원본 객장에 정장 차림 · raid: 판타지 공격대 홀 · club: 클럽 라운지 · river: 강변 테라스 */
 var TLIST=["normal","stock","raid","club","river"];
 var THEME=(function(){var t="";try{t=new URLSearchParams(location.search).get("theme")||""}catch(_){}if(t==="floor")t="normal";return TLIST.indexOf(t)<0?"normal":t})();   // 주소의 ?theme= 로 고른다. 기본은 노멀
-var STOCK=THEME==="stock", FLOOR=THEME==="normal"||STOCK, RAID=THEME==="raid", CLUB=THEME==="club", RIVER=THEME==="river", YARD=RAID;                                         // YARD: 문 밖 앞마당이 있는가
-var TNAME={normal:"슈카친구들 객장",stock:"슈카친구들 주식시장",raid:"슈카친구들 공격대",club:"슈카친구들 클럽",river:"슈카친구들 강변"}, TSHORT={normal:"노멀",stock:"주식시장",raid:"게임",club:"클럽",river:"강변"};
+var BASE=THEME==="normal", STOCK=THEME==="stock", FLOOR=STOCK, RAID=THEME==="raid", CLUB=THEME==="club", RIVER=THEME==="river", YARD=RAID;                                         // YARD: 문 밖 앞마당이 있는가
+var TNAME={normal:"슈카친구들 광장",stock:"슈카친구들 주식시장",raid:"슈카친구들 공격대",club:"슈카친구들 클럽",river:"슈카친구들 강변"}, TSHORT={normal:"기본",stock:"주식시장",raid:"게임",club:"클럽",river:"강변"};
 var CLS=["탱커","힐러","마법사","도적"], FAC=["황소 군단","곰 연합"];
 var STY={stock:["넥타이 정장","리본 정장"],club:["나비넥타이","스카프","머리띠","꽃 머리띠"]};   // 테마별 차림 이름 (노멀과 강변은 그냥 일개미)
 
@@ -311,7 +311,7 @@ function lookOf(name){
 
 
 /* ───────────── 방 크기 ───────────── */
-var ROOM_K=1.3, RW=18*ROOM_K, RD=15*ROOM_K, RH=RAID?19:15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 원래 크기 대비 배율)
+var ROOM_K=1, RW=18*ROOM_K, RD=15*ROOM_K, RH=RAID?19:15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 원래 크기 대비 배율)
 var SIDE=(RW+10.4)/2, SIDE_W=RW-10.4;                    // 스크린 옆 벽면의 중심과 너비
 var SCR={w:19.2,h:10.8,y0:RAID?5.2:2.6};       // 뒷벽(z=-RD) 스크린
 var SCREEN_C={x:0,z:-RD};
@@ -332,6 +332,10 @@ var texDot=pixTex(4,4,function(x,y,r){var v=215+r()*40;return [v,v,v]});
 // 바닥: 밝은 쪽매널 마루 + 황동 테두리 + 떨어진 주문 전표
 var texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
   var x=-RW+i*.5+.25,z=-RD+j*.5+.25;
+  if(BASE){                                                                                  // 기본: 민트빛 유리 타일에 은은한 격자, 가운데 통로
+    if(z<ZMIN-.6)return jit([150,170,176],4,r);
+    var gl=(i%8===0)||(j%8===0);if(Math.abs(x)<1.5&&!gl)return jit([172,214,207],3,r);
+    return jit(gl?[198,242,232]:(((i>>3)+(j>>3))&1?[159,202,196]:[150,192,188]),3,r)}
   if(CLUB){                                                                                  // 클럽: 짙은 숯색 타일, 가운데 통로만 살짝 밝게
     if(z<ZMIN-.6)return jit([28,25,34],4,r);
     return jit((i%4===0||j%4===0)?[24,22,30]:Math.abs(x)<2?[46,41,54]:(((i>>2)+(j>>2))&1?[33,30,40]:[38,34,45]),4,r)}
@@ -354,7 +358,7 @@ var texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
 // 벽: 어두운 석재 (위쪽이 떠 보이지 않게)
 var texWall=pixTex(16,16,function(x,y,r){
   var row=y>>3, mortar=(y&7)===7||(row===0?x===15:x===7);
-  return jit(mortar?(RAID?[44,40,50]:CLUB?[31,27,36]:RIVER?[44,50,51]:[30,33,40]):(RAID?[88,82,96]:CLUB?[50,42,58]:RIVER?[70,78,78]:[52,56,66]),mortar?2:6,r);
+  return jit(mortar?(RAID?[44,40,50]:CLUB?[31,27,36]:RIVER?[44,50,51]:BASE?[32,70,82]:[30,33,40]):(RAID?[88,82,96]:CLUB?[50,42,58]:RIVER?[70,78,78]:BASE?[23,54,69]:[52,56,66]),mortar?2:6,r);
 },RW,RH/2);
 var texGrass=pixTex(64,32,function(x,y,r){var v=r();return v<.035?[168,186,96]:v<.07?[44,86,46]:jit(((x>>2)+(y>>2))&1?[62,112,58]:[56,104,54],8,r)},RW/4,YD/8);
 var texWallSide=texWall.clone();texWallSide.repeat.set(RD,RH/2);texWallSide.needsUpdate=true;
@@ -391,17 +395,21 @@ if(RIVER){                                                                      
   scene.fog.color.set(0x263744);scene.fog.density=.003;renderer.setClearColor(0x0c1420,1);
   hemi.color.set(0x889faf);hemi.groundColor.set(0x47413b);hemi.intensity=.95;sun.color.set(0xf2d8b4);sun.intensity=1.8;
   warm.color.set(0xffc27a);cool.color.set(0xffc27a);warm.intensity=cool.intensity=120}
+if(BASE){                                                                                    // 밤하늘 아래 밝고 가벼운 광장
+  scene.fog.color.set(0x12303f);scene.fog.density=.0035;renderer.setClearColor(0x0c2233,1);
+  hemi.color.set(0xddf6f1);hemi.groundColor.set(0xa6c4bb);hemi.intensity=1;sun.color.set(0xfff0d4);sun.intensity=2.2;
+  warm.color.set(0xffd9a0);cool.color.set(0xc9f2ee);warm.intensity=cool.intensity=110}
 
 function plane(w,h,tex,x,y,z,rx,ry){
   var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:tex,roughness:.9,metalness:0}));
   m.position.set(x,y,z);m.rotation.set(rx,ry,0);m.receiveShadow=true;scene.add(m);return m;
 }
 plane(RW*2,RD*2,texFloor,0,0,0,-Math.PI/2,0).material.roughness=.55;
-plane(RW*2,RD*2,texCeil,0,RH,0,Math.PI/2,0);
+plane(RW*2,RD*2,texCeil,0,RH,0,Math.PI/2,0).visible=!BASE;
 plane(RW*2,RH,texWall,0,RH/2,-RD,0,0);
-plane(RW*2,RH,texWall,0,RH/2,RD,0,Math.PI);
-plane(RD*2,RH,texWallSide,-RW,RH/2,0,0,Math.PI/2);
-plane(RD*2,RH,texWallSide,RW,RH/2,0,0,-Math.PI/2).visible=!RIVER;   // 강변 테마는 오른쪽이 강으로 트여 있다
+plane(RW*2,RH,texWall,0,RH/2,RD,0,Math.PI).visible=!BASE;
+plane(RD*2,RH,texWallSide,-RW,RH/2,0,0,Math.PI/2).visible=!BASE;
+plane(RD*2,RH,texWallSide,RW,RH/2,0,0,-Math.PI/2).visible=!(RIVER||BASE);   // 강변 테마는 오른쪽이 강으로 트여 있다
 
 /* 시세판·시계·전광판 텍스처 */
 var NAMES=["개미전자","존버바이오","떡상화학","물타기건설","가즈아모터스","익절은행","야수증권","풀매수에너지","단타게임즈","배당통신"];
@@ -427,7 +435,7 @@ function drawClock(){
   g.fillStyle="#ffb834";g.textAlign="center";g.textBaseline="middle";g.font="700 50px ui-monospace,Consolas,monospace";g.fillText(s,128,44);
   g.fillStyle="#8a93a3";g.font="600 15px "+FONT;g.fillText("서울 KST",128,82);ckTex.needsUpdate=true;
 }
-var TK_DEF=TNAME[THEME]+"   ·   새우 공대장과 시황 방송 같이 보는 곳   ·   투자의 책임은 투자자 본인에게 있습니다   ·   ",tkUntil=0;
+var tkMore=[],TK_DEF=TNAME[THEME]+"   ·   새우 공대장과 시황 방송 같이 보는 곳   ·   투자의 책임은 투자자 본인에게 있습니다   ·   ",tkUntil=0;
 var tkCv=document.createElement("canvas");tkCv.width=2048;tkCv.height=48;
 var tkTex=new THREE.CanvasTexture(tkCv);tkTex.colorSpace=THREE.SRGBColorSpace;tkTex.wrapS=THREE.RepeatWrapping;tkTex.magFilter=THREE.NearestFilter;
 tkTex.userData.aspect=2048/48;tkTex.repeat.set(SCR.w/(2048/48),1);
@@ -436,7 +444,7 @@ function drawTicker(s,col){
   var w=Math.max(40,Math.ceil(g.measureText(s).width)),n=Math.max(1,Math.round(2048/w)),k=2048/(n*w),i;g.fillStyle=col||"#ffb834";
   for(i=0;i<n;i++){g.setTransform(k,0,0,1,i*w*k,0);g.fillText(s,0,25)}                                  // 이음매가 안 보이게 정수 번 반복
   g.setTransform(1,0,0,1,0,0);g.fillStyle="#050608";for(var y=0;y<48;y+=3)g.fillRect(0,y,2048,1);for(var x=0;x<2048;x+=3)g.fillRect(x,0,1,48);   // LED 도트
-  tkTex.needsUpdate=true;if(tkSide)tkSide.needsUpdate=true;
+  tkTex.needsUpdate=true;if(tkSide)tkSide.needsUpdate=true;for(var tq=0;tq<tkMore.length;tq++)tkMore[tq].needsUpdate=true;
 }
 function tickerSay(s,col,ms){drawTicker(s+"   ·   ",col);tkUntil=performance.now()+ms}
 var tkSide=tkTex.clone();tkSide.repeat.set((RD*2-3)/.8/tkTex.userData.aspect,1);drawTicker(TK_DEF);
@@ -447,27 +455,68 @@ function glowPlane(w,h,tex,k,x,y,z,ry){
 
 /* 고정 소품: 상자 조립 */
 var boxGeo=new THREE.BoxGeometry(1,1,1);
-var props=[], glows=[], fires=[], drift=[], riverT=null;   // drift: 색이 천천히 흐르는 조명 (클럽)
+var props=[], glows=[], fires=[], drift=[], riverT=null, bobs=[];   // bobs: 둥실 떠 있는 소품 (기본 테마)   // drift: 색이 천천히 흐르는 조명 (클럽)
 var POSTS=[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_K]}), STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_K,p[2]]});
 var OBST=POSTS.map(function(p){return [p[0],p[1],2.2]}).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
 (function(){
   var i,sx,z,y1=SCR.y0+SCR.h,zb=-RD,WOOD=0x4d3221,BRASS=0xb9903c,MARBLE=0xb7ae9b,DARK=0x0c0d11,GOLD=0xd9a82e;
+  if(BASE){                                                                                  // 기본 테마: 슈카월드 타이틀의 소품이 떠 있는 메타버스 광장
+    var STN=0xb9c4c8,STN2=0x8fa0a6,GRS=0x8ccf6a,MINT=0x79dbc9,CORAL=0xef7667,AMB=0xf2bd56,q,k,gl,br=rng(44),L,d,a;
+    var bmat=new THREE.MeshStandardMaterial({roughness:.7,metalness:0});
+    var grp=function(list,x,y,z,ph,sc){var m=new THREE.InstancedMesh(boxGeo,bmat,list.length),t=new THREE.Matrix4(),c=new THREE.Color(),u,p,g=new THREE.Group();   // 상자 묶음 하나를 둥실 띄운다
+      for(u=0;u<list.length;u++){p=list[u];t.makeScale(p[3],p[4],p[5]).setPosition(p[0],p[1],p[2]);m.setMatrixAt(u,t);m.setColorAt(u,c.set(p[6]))}
+      m.castShadow=true;g.add(m);g.position.set(x,y,z);g.scale.setScalar(sc||1);g.userData={y:y,ph:ph};scene.add(g);bobs.push(g);return g};
+    var isle=function(x,y,z,w,dp,tree){B(x,y,z,w,.5,dp,GRS);B(x,y-.7,z,w*.86,.9,dp*.86,STN);B(x,y-1.5,z,w*.6,.8,dp*.6,STN2);B(x,y-2.2,z,w*.32,.7,dp*.32,STN2);            // 떠 있는 섬
+      if(tree){B(x,y+1.1,z,.4,1.8,.4,0x7a5a44);B(x,y+2.5,z,2.2,1.3,2.2,0xf3a9c8);B(x+.5,y+3.3,z-.3,1.4,.9,1.4,0xf8c3da);B(x-.7,y+2.2,z+.5,1.2,.9,1.2,0xe98fb8)}};
+    B(0,-.66,0,RW*2+1.4,1.2,RD*2+1.4,0x9fb3b8);B(0,-1.7,0,RW*2-4,.9,RD*2-4,0x7f9197);                                                                             // 광장 바닥의 테두리와 밑동
+    B(0,.3,zb+1.5,RW*2-8,.6,3,STN);G(0,.62,zb+2.96,RW*2-8,.05,.08,1.3,1.05,.6);B(0,.15,zb+3.25,6,.3,.5,STN);                                                      // 무대 · 계단
+    for(sx=-1;sx<=1;sx+=2){
+      B(sx*(SCR.w/2+1.3),SCR.y0+SCR.h/2-.6,zb+.5,1.4,SCR.h+2.6,1,0x7f9197);B(sx*(SCR.w/2+1.3),SCR.y0+SCR.h+1,zb+.5,2,.7,1.3,STN);                                  // 스크린 돌기둥
+      for(q=0;q<2;q++){B(sx*(SCR.w/2+1.3),4.4+q*5,zb+1.15,.6,.9,.3,0x5a4a3a);G(sx*(SCR.w/2+1.3),4.4+q*5,zb+1.32,.42,.66,.1,1.5,1.25,.7)}                          // 기둥 등불
+      G(sx*(SCR.w/2+.35),SCR.y0+SCR.h/2,zb+.56,.1,SCR.h+.7,.1,.45,1.15,1.05);
+      for(q=0;q<2;q++){z=-3+q*12;B(sx*(RW-3.4),.9,z,3,1.8,5.4,0x8a6a4c);B(sx*(RW-3.4),1.86,z,3.3,.14,5.7,0xa98562);                                               // 장터 좌판
+        for(k=0;k<4;k++)B(sx*(RW-3.4),2.2,z-1.9+k*1.25,2.2,.5,.9,[0xe8b83a,0xd9503f,0x7fc05a,0xe8893a][k]);
+        B(sx*(RW-4.7),2.6,z-2.6,.25,3.4,.25,0x6a4f38);B(sx*(RW-4.7),2.6,z+2.6,.25,3.4,.25,0x6a4f38);B(sx*(RW-3.2),4.5,z,4.8,.4,6.6,0x3f5fae);B(sx*(RW-3.2),4.9,z,3.6,.4,5.4,0x4a6cc0);
+        for(k=0;k<7;k++)B(sx*(RW-5.5),3.95,z-2.7+k*.9,.2,.6,.9,k%2?0xf4f1e8:0xd9503f);                                                                             // 줄무늬 차양
+        G(sx*(RW-5.2),3.1,z-3,.5,.7,.5,1.5,1.25,.7);G(sx*(RW-5.2),3.1,z+3,.5,.7,.5,1.5,1.25,.7)}
+      for(q=0;q<4;q++){B(sx*5,.25,-9+q*7,.6,.5,.6,STN);G(sx*5,.72,-9+q*7,.42,.42,.42,1.45,1.2,.7)}                                                                // 통로 등불
+      isle(sx*(RW+8),2.5,-12,6,5,true);isle(sx*(RW+13),6,4,5,4,true);isle(sx*(RW+7),.5,15,7,5,false);isle(sx*14,3,RD+9,6,5,true);
+    }
+    isle(14.6,3.05,zb+3.2,5.4,3.8,false);isle(0,5,RD+14,8,6,true);                                                                                                // 새우가 서는 섬 · 뒤쪽 섬
+    G(0,SCR.y0-.35,zb+.56,SCR.w+.8,.1,.1,.45,1.15,1.05);G(0,SCR.y0+SCR.h+.35,zb+.56,SCR.w+.8,.1,.1,.45,1.15,1.05);
+    for(q=0;q<170;q++){d=60+br()*50;a=br()*6.283;G(Math.cos(a)*d,-6+br()*80,Math.sin(a)*d,.32,.32,.32,1.4,1.5,1.7)}                                               // 별
+    for(q=0;q<7;q++){gl=glowPlane(2.6,3.4,texDot,.5,(br()<.5?-1:1)*(RW+2+br()*6),5+br()*7,-14+br()*30,br()*3);gl.material.transparent=true;gl.material.opacity=.22;gl.material.color.setRGB(.5,1.3,1.2)}   // 홀로그램 패널
+    // 슈카월드 타이틀의 소품들
+    L=[];for(i=-4;i<4;i++)for(q=-4;q<4;q++)for(k=-4;k<4;k++){d=Math.hypot(i+.5,q+.5,k+.5);if(d<4&&d>3)L.push([(i+.5)*.42,(q+.5)*.42,(k+.5)*.42,.42,.42,.42,br()<.36?0x6fc46a:0x4f8fd0])}
+    grp(L,-16.8,11.2,zb+3,0,1);                                                                                                                                   // 지구본
+    L=[];[[-1.3,2],[0,4],[1.3,6]].forEach(function(st,si){for(q=0;q<st[1];q++)L.push([st[0],q*.27,(si-1)*.35,1.15,.22,1.15,q%2?0xe0a53c:0xf2bd56])});grp(L,-12.9,12.6,zb+2.4,1.3,1);   // 동전 탑
+    grp([[0,0,0,2.5,.42,1.7,0xd9584c],[.06,0,.04,2.3,.3,1.6,0xf6e9ce],[.1,.5,-.05,2.4,.42,1.6,0x4f8f96],[.16,.5,-.02,2.2,.3,1.5,0xf6e9ce],[-.05,1,0,2.3,.42,1.6,0x6aa05a],[.02,1,.04,2.1,.3,1.5,0xf6e9ce]],-17.6,6.4,zb+3.2,2.1,1);   // 책
+    L=[[0,0,.6,3.1,.16,2,0xaecbc7],[0,1.1,-.42,3.1,2.1,.14,0x8fa6a8],[0,1.1,-.34,2.8,1.8,.06,0x1c2f3a]];
+    [[-1,.9,1],[-.6,1.3,0],[-.2,1,1],[.2,1.5,0],[.6,1.1,1],[1,1.6,1],[-1.35,1.2,0]].forEach(function(cn){L.push([cn[0],cn[1],-.29,.2,.5+cn[2]*.3,.06,cn[2]?0xeb5a4c:0x4f8ff0],[cn[0],cn[1],-.29,.05,1,.05,cn[2]?0xeb5a4c:0x4f8ff0])});
+    grp(L,-13.2,5.6,zb+3.6,3,.95);                                                                                                                                // 캔들 차트 노트북
+    L=[];[[0,0],[1.1,.9],[2,.3],[3.1,1.4],[4,.9],[5.2,2.3]].forEach(function(pt,pi,ar){if(!pi)return;var p0=ar[pi-1],n=6,u;for(u=0;u<=n;u++)L.push([p0[0]+(pt[0]-p0[0])*u/n,p0[1]+(pt[1]-p0[1])*u/n,0,.42,.42,.42,0x6fcf5a])});
+    L.push([5.2,2.3,0,.9,.42,.42,0x6fcf5a],[5.45,2.05,0,.42,.9,.42,0x6fcf5a]);grp(L,13.2,11.6,zb+2.6,4,1);                                                        // 상승 화살표
+    grp([[0,0,0,2.9,2,.9,0xe4574c],[0,0,0,3.2,1.6,.86,0xe4574c],[-.25,0,.48,.3,1,.1,0xfdf6ee],[.05,0,.48,.3,.62,.1,0xfdf6ee],[.35,0,.48,.3,.26,.1,0xfdf6ee]],19.6,12.4,zb+2.8,5,1);   // 재생 블록
+  }
   if(CLUB){                                                                                  // 클럽 라운지: 스트로브 없이 느린 색 흐름만
     var PL=0x51384d,PLD=0x302733,WAL=0x61483f,FELT=0x463a4b,q,tm;
+    var tky=SCR.y0+SCR.h+1.25,tkl,tkw=function(len,x,y,z,ry){var t=tkTex.clone();t.repeat.set(len/tkTex.userData.aspect,1);t.needsUpdate=true;tkMore.push(t);glowPlane(len,1,t,2,x,y,z,ry)};   // 전광판 한 줄
     var dm=function(w,h,d,x,y,z,ph,k){var m=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({fog:false}));m.scale.set(w,h,d);m.position.set(x,y,z);m.userData.ph=ph||0;m.userData.k=k||.85;scene.add(m);drift.push(m);return m};
     for(sx=-1;sx<=1;sx+=2){
-      for(q=0;q<3;q++){z=2+q*5.5;B(sx*15,.35,z,9,.3,1.6,PLD);B(sx*15,.7,z,9,.5,1.6,PL);B(sx*15,1.25,z+.65,9,.9,.3,PL);dm(8.6,.06,.06,sx*15,.24,z-.8,q*.7+sx);   // 벨벳 소파 · 발밑 조명
-        B(sx*9.4,.5,z,1.1,.12,1.1,WAL);B(sx*9.4,.25,z,.3,.5,.3,PLD)}                                                                                          // 작은 테이블
+      for(q=0;q<3;q++){z=2+q*5.5;B(sx*(RW-5.2),.35,z,8,.3,1.6,PLD);B(sx*(RW-5.2),.7,z,8,.5,1.6,PL);B(sx*(RW-5.2),1.25,z+.65,8,.9,.3,PL);dm(7.6,.06,.06,sx*(RW-5.2),.24,z-.8,q*.7+sx);   // 벨벳 소파 · 발밑 조명
+        B(sx*(RW-10.3),.5,z,1.1,.12,1.1,WAL);B(sx*(RW-10.3),.25,z,.3,.5,.3,PLD)}                                                                                          // 작은 테이블
       for(q=0;q<5;q++){z=-13+q*7;B(sx*(RW-.2),7,z,.2,5,1.6,FELT);B(sx*(RW-.2),7,z+1.8,.2,5,1.6,0x3b323f);B(sx*(RW-.2),7,z+3.6,.2,5,1.6,FELT)}                  // 흡음 패널
-      dm(.1,.1,RD*2-4,sx*(RW-.4),RH-1,0,sx*1.2);                                                                                                              // 천장 모서리 빛줄
+      B(sx*(RW-.15),tky,0,.3,1.3,RD*2,DARK);tkw(RD*2-.6,sx*(RW-.32),tky,0,-sx*Math.PI/2);                                                                     // 옆벽 전광판
+      tkl=RW-SCR.w/2-.9;B(sx*(SCR.w/2+.6+tkl/2),tky,zb+.3,tkl,1.3,.6,DARK);tkw(tkl,sx*(SCR.w/2+.6+tkl/2),tky,zb+.62,0);                                      // 스크린 양옆으로 이어지는 전광판
       B(sx*(SCR.w/2+2.4),1.9,zb+1.4,1.6,3,1.6,0x211f26);B(sx*(SCR.w/2+2.4),2.3,zb+2.22,1.1,1.1,.06,0x302c34);                                                 // 무대 스피커
     }
+    B(0,tky,RD-.15,RW*2,1.3,.3,DARK);tkw(RW*2-.6,0,tky,RD-.32,Math.PI);                                                                                       // 뒷벽 전광판
     B(0,.25,zb+1.5,RW*2-6,.5,3,0x513d3a);                                                                                                                     // 무대
     B(-11.3,1.1,zb+3.25,4.4,1.2,.5,0x302733);dm(4.2,.1,.06,-11.3,1.5,zb+3.53,2);B(-12.4,1.78,zb+3.25,1.1,.14,.44,0x15141a);B(-10.2,1.78,zb+3.25,1.1,.14,.44,0x15141a);   // DJ 부스
-    B(-16,1,RD-1,10,2,1.6,WAL);for(q=0;q<6;q++)B(-20+q*1.7,2.5,RD-.9,.9,.9,.12,q%2?0x98758a:0x352c38);dm(9.6,.06,.06,-16,.2,RD-1.85,3);                       // 레코드 바
-    for(i=-4;i<=4;i++)for(q=-3;q<=3;q++){tm=dm(1.8,.04,1.8,i*2,.03,-1+q*2,i*.6+q*.9,.14+((i*7+q*13)&3)*.045);tm.userData.tile=1}                              // 댄스 플로어 타일
+    B(-(RW-5.4),1,RD-1,9,2,1.6,WAL);for(q=0;q<5;q++)B(-(RW-2)+q*1.7,2.5,RD-.9,.9,.9,.12,q%2?0x98758a:0x352c38);dm(8.6,.06,.06,-(RW-5.4),.2,RD-1.85,3);                       // 레코드 바
+    for(i=-3;i<=3;i++)for(q=-3;q<=3;q++){tm=dm(1.8,.04,1.8,i*2,.03,-1+q*2,i*.6+q*.9,.14+((i*7+q*13)&3)*.045);tm.userData.tile=1}                              // 댄스 플로어 타일
     (function(){var mb=new THREE.Mesh(new THREE.IcosahedronGeometry(1.3,1),new THREE.MeshStandardMaterial({color:0xcfd3e0,roughness:.25,metalness:.1,flatShading:true}));
       mb.position.set(0,RH-2.4,0);scene.add(mb);drift.ball=mb;var st=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0x15141a}));st.scale.set(.1,1.4,.1);st.position.set(0,RH-.9,0);scene.add(st)})();   // 미러볼
   }
@@ -506,8 +555,8 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
       B(sx*(RW-.12),1.5,0,.3,3,RD*2,STD);B(sx*SIDE,1.5,zb+.12,SIDE_W,3,.24,STD);                                                                              // 돌 굽도리
       for(z=-5*ROOM_K;z<=5*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.14),9,z,.2,5.8,9.3,GOLD);B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);
         glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2);bn(sx,z,15.2,BC[(sx>0?2:0)+(z>0?1:0)])}                                                     // 마법 시세판 · 깃발
-      for(n=0;n<3;n++)bn(0,sx*(12.6+n*3.5),13.2,BC[(sx>0?2:0)+(n&1)]);                                                                                        // 뒷벽 깃발
-      for(n=0;n<9;n++){cx=sx*(12.4+n*1.22);ch=.6+((n*7+3)%5)*.45;cy=5+((n*5+2)%4)*.55;B(cx,cy,zb+.14,.5,ch,.14,STL);B(cx,cy,zb+.14,.1,ch+.8,.1,STL)}          // 벽에 새긴 캔들 문양
+      for(n=0;n<(RW>20?3:2);n++)bn(0,sx*(12.3+n*(RW>20?3.5:3)),13.2,BC[(sx>0?2:0)+(n&1)]);                                                                                        // 뒷벽 깃발
+      for(n=0;n<Math.floor((RW-12.6)/1.22);n++){cx=sx*(12.4+n*1.22);ch=.6+((n*7+3)%5)*.45;cy=5+((n*5+2)%4)*.55;B(cx,cy,zb+.14,.5,ch,.14,STL);B(cx,cy,zb+.14,.1,ch+.8,.1,STL)}          // 벽에 새긴 캔들 문양
       B(sx*11,4.2,zb+.4,.14,.14,.6,IRON);torch(sx*11,4.4,zb+.8,1);
       B(sx*3.6,1.1,zb+2.2,.7,1,.7,STD);B(sx*3.6,1.7,zb+2.2,1.1,.25,1.1,IRON);G(sx*3.6,1.95,zb+2.2,.7,.3,.7,1.9,1,.3);fires.push([sx*3.6,2.25,zb+2.2,1.7]);   // 단상 화로
       B(sx*(SCR.w/2-1),(y1+RH)/2+1,zb+.5,.12,RH-y1-2,.12,IRON);                                                                                               // 스크린 사슬
@@ -577,8 +626,8 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_K;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
   }
   if(FLOOR){B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS)}
-  if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*13.5,7.2,RD-.14,10.6,6.4,.2,GOLD);B(sx*13.5,7.2,RD-.2,10.1,5.9,.3,DARK);glowPlane(9.6,5.4,bdTex,1.35,sx*13.5,7.2,RD-.37,Math.PI)}   // 문 양옆 시세판
-  else{B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI)}            // 뒤쪽 대형 시세판
+  if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*((RW+5.6)/2),7.2,RD-.14,10.6,6.4,.2,GOLD);B(sx*((RW+5.6)/2),7.2,RD-.2,10.1,5.9,.3,DARK);glowPlane(9.6,5.4,bdTex,1.35,sx*((RW+5.6)/2),7.2,RD-.37,Math.PI)}   // 문 양옆 시세판
+  else if(!BASE){B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI)}            // 뒤쪽 대형 시세판
   if(FLOOR){B(0,.3,zb+1.5,24,.6,3,0x5b4334);B(0,.62,zb+2.9,24,.06,.2,BRASS)}                            // 무대
   B(0,y1+.3,zb+.25,SCR.w+1.2,.6,.5,DARK);B(0,SCR.y0-.3,zb+.25,SCR.w+1.2,.6,.5,DARK);
   B(-SCR.w/2-.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);B(SCR.w/2+.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);
@@ -771,7 +820,7 @@ var ants=new AntMesh(MAXA);scene.add(ants.mesh);
 /* ───────────── 새우 공대장 (대역 캐릭터) ─────────────
    무대 왼쪽 단상에 선다. 계란·토마토는 영상이 아니라 이 캐릭터가 맞는다 (영상 위에 아무것도 올리지 않기 위해).
    실제 서비스에서는 슈카월드 공식 캐릭터 원본으로 교체한다 */
-var BOSS=RAID?{x:0,y:1.2,z:-RD+1.5,ry:0,hit:0,hop:0}:{x:-11.3,y:.6,z:-RD+2.5,ry:.35,hit:0,hop:0};   // 공격대 테마에서는 가운데 단상
+var BOSS=RAID?{x:0,y:1.2,z:-RD+1.5,ry:0,hit:0,hop:0}:BASE?{x:14.6,y:3.3,z:-RD+3.2,ry:-.4,hit:0,hop:0}:{x:-11.3,y:.6,z:-RD+2.5,ry:.35,hit:0,hop:0};   // 공격대 테마에서는 가운데 단상
 var bossG=new THREE.Group();BOSS.on=0;BOSS.until=0;BOSS.sc=0;   // 평소에는 숨어 있다가 연설할 때 나타나고, 끝나면 뽕~ 하고 사라진다
 var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT:0,megaT:0,look:{title:"공대장 · 대역 캐릭터",scale:1,color:"#f0826a"}};
 (function(){
@@ -985,7 +1034,7 @@ var XMAX=RW-2.8;
 var DEFAULT_VIDEO="list:UUsJ6RuBiTVWRX156FVbeaGg";   // 슈카월드 채널 업로드 목록(최신 영상부터)
 var ents={}, order=[], me=null, myId=null, isHost=false, roomCode="", video="";
 var cam={yaw:0,pitch:.07,dist:14}, keys={}, moveTarget=null, autoWalk=false, lastInput=0;
-var botTarget=80, botSeq=0, pidSeq=0;
+var botTarget=60, botSeq=0, pidSeq=0;
 function addEnt(id,name,bot,x,z,r,cos){
   var e={id:id,name:name,bot:!!bot,x:x,z:z,r:r,tx:x,tz:z,tr:r,y:0,vy:0,moving:false,look:lookOf(name),parts:null,say:"",sayT:0,ai:null,cos:cos|0,vote:0,party:hashStr("pt"+name)%4};
   ents[id]=e;order=Object.keys(ents);ants.dirty=true;updateCount();return e;
@@ -1088,6 +1137,9 @@ var PRICE={fw:10,big:10,boom:20,egg:30,tom:30,mega:100};
 var COS={trail:{n:"반짝이 발자국",i:"✨",b:1,p:300,d:"걸을 때 반짝이가 남습니다 (영구)"},gold:{n:"황금 이름표",i:"🏷️",b:2,p:300,d:"이름표가 금색으로 빛납니다 (영구)"}};
 var inv={fw:5,big:5,boom:2,egg:5,tom:5,mega:1},sugar=1000,own={},myCos=0,megaArmed=false,bind=["egg","tom","fw"],cdUntil={};
 try{var sv=JSON.parse(localStorage.getItem("antv2")||"null");if(sv){sugar=+sv.s||0;for(var ik in inv)if(sv.i&&sv.i[ik]>=0)inv[ik]=sv.i[ik]|0;own=sv.o||{};myCos=(sv.c|0)&3}}catch(_){}
+var TPRICE={normal:0,stock:500,raid:1500,club:1000,river:1000};
+function ownsTheme(id){return !TPRICE[id]||!!own["t_"+id]}
+function buyTheme(id){if(ownsTheme(id))return true;if(sugar<TPRICE[id])return false;sugar-=TPRICE[id];own["t_"+id]=1;save();return true}
 function save(){try{localStorage.setItem("antv2",JSON.stringify({s:sugar,i:inv,o:own,c:myCos}))}catch(_){}var sh=$("sugarHud");if(sh)sh.textContent="· 🍬 "+sugar.toLocaleString("ko-KR")}
 try{var sb=JSON.parse(localStorage.getItem("antbind2")||"null");if(sb&&sb.length===3)bind=sb.map(function(k){return ITEMS[k]?k:null})}catch(_){}
 var BIG=[1,1.7,2.4,3.2];                                  // 왕머리 단계별 머리 배율
@@ -1096,6 +1148,7 @@ function bigK(e,now){if(!e.bigT)return 1;var te=e.bigT-now;if(te<=0){e.bigT=0;e.
 function hiddenNow(e,now){return e.deadT>now||(e.blinkT>now&&((now/110|0)&1)===1)}
 function applyFx(id,k){
   var e=ents[id],now=performance.now(),s,i,o,d;if(!e||!ITEMS[k]||e.deadT>now)return;s=e.look.scale;
+  if(k==="fw"&&CLUB)ballT=performance.now()+6000;
   if(k==="fw"){spawn(e.x,2.2*s+e.y,e.z,(Math.random()-.5)*1.5,11+Math.random()*1.5,(Math.random()-.5)*1.5,.5+Math.random()*.1,.16,3,2.4,1.2,7,1)}
   if(k==="egg"||k==="tom")throwAt(e,k);
   if(k==="big"){
@@ -1160,6 +1213,11 @@ function renderInv(){
     row.appendChild(mk("span","ic",it.i));tx.appendChild(mk("b",null,it.n));tx.appendChild(mk("small",null,it.d));
     by.onclick=function(){if(!own[k]){if(sugar<it.p)return toast("설탕이 부족합니다");sugar-=it.p;own[k]=1;setCos(myCos|it.b)}else setCos(myCos^it.b);renderInv()};
     row.appendChild(tx);row.appendChild(by);box.appendChild(row)})(k);
+  box.appendChild(mk("h4",null,"테마 · 구입하면 그 테마로 방을 열 수 있고, 손님은 그냥 함께 즐깁니다"));
+  TLIST.forEach(function(id){if(!TPRICE[id])return;var row=mk("div","it"),tx=mk("div","tx"),has=ownsTheme(id),by=mk("button","buy"+(has?" on":""),has?"보유 중":"🍬"+TPRICE[id].toLocaleString("ko-KR"));
+    row.appendChild(mk("span","ic","🎨"));tx.appendChild(mk("b",null,TSHORT[id]+" 테마"));tx.appendChild(mk("small",null,TNAME[id]));
+    by.onclick=function(){if(has)return;if(!buyTheme(id))return toast("설탕이 부족합니다");toast(TSHORT[id]+" 테마를 구입했습니다. 방장이면 공대장 메뉴에서 바로 바꿀 수 있습니다",3600);renderInv();paintThemes()};
+    row.appendChild(tx);row.appendChild(by);box.appendChild(row)});
   box.appendChild(mk("h4",null,"후원 · 배너와 폭죽이 객장 전체에 뜹니다"));
   var dn=mk("div","don");[100,500,1000].forEach(function(a){var b=mk("button","buy","🍬"+a.toLocaleString("ko-KR"));b.onclick=function(){donate(a)};dn.appendChild(b)});box.appendChild(dn);
 }
@@ -1176,7 +1234,7 @@ function doDon(id,a){
 
 /* ───────────── 공대장 명령: 경보 · 집결 · 준비 확인 ─────────────
    방장이 공대장이다. 정식 서비스에서는 진행자·운영진 계정에만 권한을 주고 전 채널에 동시에 보낸다 */
-var voteEnd=0,raidT=0,markUntil=0;
+var voteEnd=0,raidT=0,markUntil=0,ballT=0;
 function raidWarn(s,ms){var r=$("raid");r.textContent=s;r.classList.add("show");bossEnt.say=s;bossEnt.sayT=performance.now()+(ms||5000);BOSS.hop=1;bossShow((ms||5000)+500);clearTimeout(raidT);raidT=setTimeout(function(){r.classList.remove("show")},ms||5000);logSys("📢 "+s)}
 function partySpot(pt){var p=POSTS[pt],a=Math.random()*6.283,r=3+Math.random()*1.8;return [clamp(p[0]+Math.cos(a)*r,-XMAX,XMAX),clamp(p[1]+Math.sin(a)*r,ZMIN,RD-.8)]}
 function doRally(){
@@ -1361,7 +1419,7 @@ function switchTheme(v,delay){
   try{sessionStorage.setItem("antauto",JSON.stringify({n:myName,c:roomCode,t:Date.now()}))}catch(_){}
   setTimeout(function(){try{var u=new URL(location.href);u.searchParams.set("theme",v);u.hash="room-"+roomCode;location.href=u.toString()}catch(_){location.search="?theme="+v}},delay);
 }
-function setTheme(v){if(!isHost||TLIST.indexOf(v)<0||v===THEME)return;castAll({t:"theme",v:v});toast(TSHORT[v]+" 테마로 바꾸는 중입니다",1e9);switchTheme(v,400)}
+function setTheme(v){if(!isHost||TLIST.indexOf(v)<0||v===THEME)return;if(!ownsTheme(v))return toast(TSHORT[v]+" 테마는 상점에서 먼저 구입해야 합니다 (🍬"+TPRICE[v].toLocaleString("ko-KR")+")",3600);castAll({t:"theme",v:v});toast(TSHORT[v]+" 테마로 바꾸는 중입니다",1e9);switchTheme(v,400)}
 function say(id,s,mg){var e=ents[id];if(e){e.say=s;e.sayT=performance.now()+5500;e.megaT=mg?e.sayT:0;if(mg)tickerSay("📣 "+e.name+": "+s,"#7fd4ff",12000);logChat(e,s)}}
 
 /* 방장 시뮬레이션·중계: 탭이 뒤로 가도 돌도록 setInterval */
@@ -1525,10 +1583,14 @@ function frame(ts){
   if(BOSS.on&&performance.now()>BOSS.until){BOSS.on=0;bossPoof();popSound();bossEnt.say="뽕~";bossEnt.sayT=performance.now()+1300}
   BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
   bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
+  for(i=0;i<bobs.length;i++){var bg=bobs[i];bg.position.y=bg.userData.y+Math.sin(time*.6+bg.userData.ph)*.2;bg.rotation.y=Math.sin(time*.25+bg.userData.ph)*.3}   // 떠 있는 소품이 둥실거린다
   if(CLUB){for(i=0;i<drift.length;i++){var dmm=drift[i],dk=dmm.userData.k*(dmm.userData.tile?.75+.25*Math.sin(time*.6+dmm.userData.ph*3):1);   // 보라 → 분홍 → 청록을 1~2분에 걸쳐 오간다
       dmm.material.color.setHSL(.72+.2*Math.sin(time*.07+dmm.userData.ph),.55,.5).multiplyScalar(dk)}
     warm.position.set(Math.cos(time*.15)*12,7,Math.sin(time*.15)*10);cool.position.set(-Math.cos(time*.15)*12,7,-Math.sin(time*.15)*10);
-    warm.color.setHSL(.8+.1*Math.sin(time*.05),.6,.55);cool.color.setHSL(.55+.08*Math.sin(time*.04+2),.6,.55);if(drift.ball)drift.ball.rotation.y=time*.2}
+    warm.color.setHSL(.8+.1*Math.sin(time*.05),.6,.55);cool.color.setHSL(.55+.08*Math.sin(time*.04+2),.6,.55);if(drift.ball){var bb=drift.ball,bon=ts<ballT,bi,ba,bu,bc;bb.rotation.y+=dt*(bon?3.2:.2);                                  // 폭죽이 터지면 미러볼이 6초간 빠르게 돌며 빛 조각을 뿌린다
+      bb.material.emissive.setHSL((time*.5)%1,.6,bon?.22+.12*Math.sin(time*18):0);
+      if(bon)for(bi=0;bi<3;bi++)if(Math.random()<dt*22){ba=Math.random()*6.283;bu=Math.random()*1.2-.9;bc=new THREE.Color().setHSL(Math.random(),.7,.6);
+        spawn(bb.position.x+Math.cos(ba)*1.4,bb.position.y+bu,bb.position.z+Math.sin(ba)*1.4,Math.cos(ba)*(3+Math.random()*5),bu*4-1,Math.sin(ba)*(3+Math.random()*5),1+Math.random()*.9,.13,bc.r*2.2,bc.g*2.2,bc.b*2.2,1.5,0)}}}
   if(riverT){if(time-riverT.t>1){riverT.t=time;var rs=0,rk;for(rk=0;rk<bd.c.length;rk++)rs+=bd.c[rk];riverT.temp=clamp(13+rs/bd.c.length*5,1,29);            // 시세판 평균 등락 → 수온
       var rg=riverT.cv.getContext("2d"),hot=riverT.temp>=13;rg.fillStyle="#04060a";rg.fillRect(0,0,256,128);rg.textAlign="center";rg.textBaseline="middle";
       rg.fillStyle="#8a93a3";rg.font="700 22px "+FONT;rg.fillText("한강 수온",128,28);rg.fillStyle=hot?"#ff5d5d":"#5aa2ff";rg.font="900 56px "+FONT;rg.fillText(riverT.temp.toFixed(1)+"°C",128,84);riverT.tex.needsUpdate=true;
@@ -1542,7 +1604,7 @@ function frame(ts){
   for(i=0;i<4;i++){marks[i].visible=ts<markUntil;marks[i].rotation.y=time*.9+i;marks[i].position.y=6.3+Math.sin(time*1.6+i)*.18}
   if(tkUntil&&performance.now()>tkUntil){tkUntil=0;drawTicker(TK_DEF)}
   renderer.toneMappingExposure+=((focusMode?.72:1.2)*GFX.exp-renderer.toneMappingExposure)*Math.min(1,dt*4);   // 집중 모드에서는 객장을 어둡게
-  tkTex.offset.x=time*.035;tkSide.offset.x=time*.02;drawBoard(time);drawClock();screenLight.intensity=4.2+Math.sin(time*1.7)*.35+Math.sin(time*4.3)*.15;
+  tkTex.offset.x=time*.035;for(i=0;i<tkMore.length;i++)tkMore[i].offset.x=time*.035;tkSide.offset.x=time*.02;drawBoard(time);drawClock();screenLight.intensity=4.2+Math.sin(time*1.7)*.35+Math.sin(time*4.3)*.15;
   if(quality==="high"){finalPass.uniforms.time.value=time%10;composer.render()}else renderer.render(scene,camera);
   // 이름표 (2D 오버레이)
   var now0=performance.now(),g=lbv.ctx,focal=(H/2)/Math.tan(camera.fov*Math.PI/360),labels=[];
@@ -1723,7 +1785,7 @@ $("topright").addEventListener("click",function(){document.body.classList.remove
 $("name").addEventListener("input",function(){var n=clean(this.value,12);$("go").disabled=!n;
   setPreview(n);$("pvtitle").textContent=n?pvEnt.look.title:""});
 $("name").addEventListener("keydown",function(ev){if(ev.key==="Enter"&&!$("go").disabled)$("go").click()});
-$("go").onclick=function(){var n=clean($("name").value,12);if(!n)return;this.disabled=true;if(isTouch)goFull(true);if(joinCode)connect(n,joinCode);else startHost(n).catch(function(){fail("방을 만들지 못했습니다. 다시 시도해 주세요.")})};
+$("go").onclick=function(){var n=clean($("name").value,12);if(!n)return;if(!invited&&!ownsTheme(THEME))return status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다",true);this.disabled=true;if(isTouch)goFull(true);if(joinCode)connect(n,joinCode);else startHost(n).catch(function(){fail("방을 만들지 못했습니다. 다시 시도해 주세요.")})};
 $("alt").onclick=function(){joinCode="";[].forEach.call($("chs").children,function(x){x.classList.remove("on")});this.style.display="none";$("go").textContent="방 만들기";$("go").disabled=!clean($("name").value,12);status("")};
 if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status("초대받은 방: "+joinCode)}else $("go").textContent="방 만들기";
 // 채널: 고정된 방 코드 6개. 정식 서비스에서는 입장 서버가 빈 채널로 자동 배정한다
@@ -1734,12 +1796,24 @@ if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status
 document.title=TNAME[THEME];document.querySelector(".card h1").textContent=TNAME[THEME];$("topleft").firstElementChild.textContent=TNAME[THEME];
 if(RAID)document.querySelector(".card .sub").textContent="이름을 넣으면 그 이름의 개미와 직업이 정해집니다";
 if(!FLOOR)$("entry").style.background="linear-gradient(rgba(8,9,13,.5),rgba(8,9,13,.8)),url(art/keyart-"+THEME+".jpg) center/cover no-repeat";
-// 테마 선택: 방을 만드는 사람이 고른다. 초대 링크에는 테마가 같이 실려 간다
-(function(){var box=$("ths");if(joinCode){box.style.display="none";return}
-  TLIST.forEach(function(id){var b=mk("button",id===THEME?"on":"",TSHORT[id]);
-    b.onclick=function(){if(id===THEME)return;try{var u=new URL(location.href);u.searchParams.set("theme",id);u.hash="";location.href=u.toString()}catch(_){location.search="?theme="+id}};box.appendChild(b)})})();
-(function(){var box=$("thIn");TLIST.forEach(function(id){var b=mk("button","btn alt2",TSHORT[id]);if(id===THEME){b.style.background="var(--amber)";b.style.color="#201600"}
-  b.style.padding="9px 4px";b.onclick=function(){setTheme(id)};box.appendChild(b)})})();
+// 테마 선택: 보유한 테마만 골라서 방을 열 수 있다. 초대 링크로 온 손님은 방장의 테마를 그대로 쓴다
+var invited=!!joinCode;
+(function(){var box=$("ths"),sg=mk("div",null,"");if(invited){box.style.display="none";return}
+  var go2=function(id){try{var u=new URL(location.href);u.searchParams.set("theme",id);u.hash="";location.href=u.toString()}catch(_){location.search="?theme="+id}};
+  var draw=function(){box.textContent="";TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",id===THEME?"on":"",(has?"":"🔒 ")+TSHORT[id]),armed=false;
+      b.onclick=function(){if(!ownsTheme(id)){var pr="🍬"+TPRICE[id].toLocaleString("ko-KR"),hv=" (보유 🍬"+sugar.toLocaleString("ko-KR")+")";
+          if(sugar<TPRICE[id])return status(TSHORT[id]+" 테마는 "+pr+"입니다. 설탕이 부족합니다"+hv,true);
+          if(!armed){armed=true;return status(TSHORT[id]+" 테마를 "+pr+"에 구입할까요? 한 번 더 누르면 구입합니다"+hv)}
+          buyTheme(id)}
+        if(id!==THEME)go2(id);else draw()};box.appendChild(b)});
+    sg.textContent="";sg.appendChild(document.createTextNode("보유 설탕 🍬"+sugar.toLocaleString("ko-KR")+"  "));var ch=mk("button","alt","충전 +500 (시연)");ch.style.margin="0";
+    ch.onclick=function(){sugar+=500;save();draw()};sg.appendChild(ch)};
+  sg.style.cssText="font-size:12px;color:var(--dim);margin-top:8px";box.parentNode.insertBefore(sg,box.nextSibling);draw();
+  if(!ownsTheme(THEME))status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다. 위에서 구입하거나 노멀을 골라 주세요",true)})();
+function paintThemes(){                                                              // 방 안 테마 버튼: 보유하지 않은 테마는 자물쇠
+  var box=$("thIn");box.textContent="";TLIST.forEach(function(id){var b=mk("button","btn alt2",(ownsTheme(id)?"":"🔒 ")+TSHORT[id]);if(id===THEME){b.style.background="var(--amber)";b.style.color="#201600"}
+    b.style.padding="9px 4px";b.onclick=function(){setTheme(id)};box.appendChild(b)})}
+paintThemes();
 // 테마를 바꾸며 넘어온 경우: 같은 이름으로 같은 방에 자동으로 다시 들어간다
 (function(){var a=null;try{a=JSON.parse(sessionStorage.getItem("antauto")||"null");sessionStorage.removeItem("antauto")}catch(_){}
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
