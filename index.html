@@ -627,7 +627,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_KZ;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
   }
   if(FLOOR){B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS)}
-  if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*((RW+5.6)/2),7.2,RD-.14,10.6,6.4,.2,GOLD);B(sx*((RW+5.6)/2),7.2,RD-.2,10.1,5.9,.3,DARK);glowPlane(9.6,5.4,bdTex,1.35,sx*((RW+5.6)/2),7.2,RD-.37,Math.PI)}   // 문 양옆 시세판
+  if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*((RW+5.6)/2),9,RD-.14,9.3,5.8,.2,GOLD);B(sx*((RW+5.6)/2),9,RD-.2,8.8,5.3,.3,DARK);glowPlane(8,4.5,bdTex,1.35,sx*((RW+5.6)/2),9,RD-.37,Math.PI)}   // 문 양옆 시세판
   else if(!BASE){B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI)}            // 뒤쪽 대형 시세판
   if(FLOOR){B(0,.3,zb+1.5,24,.6,3,0x5b4334);B(0,.62,zb+2.9,24,.06,.2,BRASS)}                            // 무대
   B(0,y1+.3,zb+.25,SCR.w+1.2,.6,.5,DARK);B(0,SCR.y0-.3,zb+.25,SCR.w+1.2,.6,.5,DARK);
