@@ -831,9 +831,9 @@ function buildVox(L){
   function part(p,rot,a){var o={p:p,r:rot||[0,0,0],a:a||0,v:[],c:[]};parts.push(o);return o}
   function put(o,x,y,z,c,k){k=(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}
   // 초타원체를 복셀화해서 겉면만 남긴다. paint(mi,j,k,front,i)가 색을 정하고, null이면 그 칸을 비운다.
-  function blob(o,cx,cy,cz,rx,ry,rz,pw,paint){
+  function blob(o,cx,cy,cz,rx,ry,rz,pw,paint,zc){
     var nx=Math.ceil(rx/VS),ny=Math.ceil(ry/VS),nz=Math.ceil(rz/VS),i,j,k;
-    function ins(i,j,k){return Math.pow(Math.abs((i+.5)*VS/rx),pw)+Math.pow(Math.abs((j+.5)*VS/ry),pw)+Math.pow(Math.abs((k+.5)*VS/rz),pw)<=1}
+    function ins(i,j,k){return (zc==null||(k+.5)*VS<=zc)&&Math.pow(Math.abs((i+.5)*VS/rx),pw)+Math.pow(Math.abs((j+.5)*VS/ry),pw)+Math.pow(Math.abs((k+.5)*VS/rz),pw)<=1}
     for(i=-nx;i<nx;i++)for(j=-ny;j<ny;j++)for(k=-nz;k<nz;k++){
       if(!ins(i,j,k))continue;
       if(ins(i+1,j,k)&&ins(i-1,j,k)&&ins(i,j+1,k)&&ins(i,j-1,k)&&ins(i,j,k+1)&&ins(i,j,k-1))continue;
@@ -850,11 +850,11 @@ function buildVox(L){
   blob(H,0,0,0,.35*h,hry,.32*h,CUTE?2.1:3.2,function(mi,j,k,front){
     if(L.acc==="band"&&j===ny-2)return V_RED;
     if(front&&CUTE){                                                                          // 귀요미 얼굴: 머리 표면에 바로 칠한다 (튀어나오는 층 없이). 점 눈, 작은 입, 분홍 볼
-      var fx=(mi+.5)*VS,fy=(j+.5)*VS,gd=Math.max(Math.abs(fx-.3),Math.abs(fy));
-      if(L.acc==="glasses"&&((gd<=.2&&gd>.14)||(fx<.1&&Math.abs(fy)<.03)))return V_BLACK;
-      if(Math.abs(fx-.3)<.058&&Math.abs(fy)<.058)return V_BLACK;                              // 눈: 검은 점
+      var fx=(mi+.5)*VS,fy=(j+.5)*VS,gd=Math.max(Math.abs(fx-.2),Math.abs(fy-.03));
+      if(L.acc==="glasses"&&((gd<=.16&&gd>.105)||(fx<.05&&Math.abs(fy-.03)<.03)))return V_BLACK;
+      if(Math.abs(fx-.2)<.058&&Math.abs(fy-.03)<.058)return V_BLACK;                          // 눈: 검은 점
       if(fx<.058&&fy>-.17&&fy<-.11)return [body[0]*.3,body[1]*.25,body[2]*.25];               // 입: 짧은 선
-      if(fx>.36&&fx<.54&&fy>-.25&&fy<-.08)return [1,.52,.5];                                  // 볼
+      if(fx>.23&&fx<.36&&fy>-.2&&fy<-.085)return [1,.52,.5];                                  // 볼
       return body}
     if(front){
       var eyeTop=big?1:0;
@@ -863,7 +863,7 @@ function buildVox(L){
       if(mi===0&&j===-3)return dark;
     }
     return body;
-  });
+  },CUTE?.32*h*.78:null);                                                                    // 귀요미: 코처럼 튀어나오는 앞쪽 층을 잘라 얼굴을 평평하게
   var top=hry;
   if(L.acc==="hat"||L.acc==="helmet"){var hc=L.acc==="hat"?V_HAT:V_HELM;
     blob(H,0,top-.14,0,.35*h+.09,.26,.32*h+.09,2.4,function(mi,j){return j>=0?hc:null});
@@ -875,7 +875,7 @@ function buildVox(L){
   for(sx=-1;sx<=1;sx+=2){
     var leg=part([sx*.15,.58,-.04],null,sx<0?1:2);for(i=0;i<NV(.56);i++)put(leg,0,-(i+.5)*VS,0,dark);put(leg,0,-(NV(.56)-.5)*VS,VS,dark);
     var arm=part([sx*.27,.93,0],[0,0,sx*.32],sx<0?2:1);for(i=0;i<NV(.42);i++)put(arm,0,-(i+.5)*VS,0,dark);
-    var mid=part([sx*.25,.72,-.08],[0,0,sx*.85]);for(i=0;i<NV(.3);i++)put(mid,0,-(i+.5)*VS,0,dark);
+    var mid=part([sx*.25,.72,-.08],[0,0,sx*.85],sx<0?2:1);for(i=0;i<NV(.3);i++)put(mid,0,-(i+.5)*VS,0,dark);
     var n=NV(.42*L.ant),an=part([sx*.14,HY+top-.04,.12],[-.22,0,-sx*(.24+.14*L.antSpread)],3);an.h=1;
     for(i=0;i<n;i++)put(an,0,(i+.5)*VS,(i/n)*(i/n)*.12,dark);put(an,0,(n+.5)*VS,.12,dark,1.5);put(an,0,(n+.5)*VS,.12+VS,dark,1.5);
     if(CUTE){for(i=0;i<NV(.56);i++){put(leg,sx*VS,-(i+.5)*VS,0,dark);put(leg,0,-(i+.5)*VS,-VS,dark)}put(leg,sx*VS,-(NV(.56)-.5)*VS,VS,dark);                  // 통통한 다리
@@ -2038,7 +2038,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202256";
+var BUILD="B11202258";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
