@@ -306,7 +306,7 @@ function shade(hex,k){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255
 
 /* ───────────── 테마 ─────────────
    normal: 슈카월드풍 메타버스 광장 (기본) · stock: 원본 객장에 정장 차림 · raid: 판타지 공격대 홀 · club: 클럽 라운지 · river: 강변 테라스 */
-var TLIST=["normal","stock","raid","club","river"];
+var TLIST=["normal","stock","raid","river"];   // 클럽 테마는 앱에서 뺐다 (git 브랜치 backup/club-theme 에 보관)
 var THEME=(function(){var t="";try{t=new URLSearchParams(location.search).get("theme")||""}catch(_){}if(t==="floor")t="normal";return TLIST.indexOf(t)<0?"normal":t})();   // 주소의 ?theme= 로 고른다. 기본은 노멀
 var BASE,STOCK,FLOOR,RAID,CLUB,RIVER,YARD;
 function setFlags(t){THEME=t;BASE=t==="normal";STOCK=t==="stock";FLOOR=STOCK;RAID=t==="raid";CLUB=t==="club";RIVER=t==="river";YARD=RAID}
@@ -2190,7 +2190,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11210044";
+var BUILD="B11210052";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
