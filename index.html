@@ -669,12 +669,18 @@ function buildProps(){
     for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.9,z*6*ROOM_KZ,.12,1.8,.12,IRON);B(i*10*ROOM_K,RH-1.9,z*6*ROOM_KZ,1.6,.2,1.6,IRON);
       G(i*10*ROOM_K,RH-1.7,z*6*ROOM_KZ,1.1,.2,1.1,1.7,1.1,.5)}                                                                                                 // 샹들리에
   }
+  if(FLOOR){                                                                                 // 주식시장: 스크린 위 전광판이 같은 높이로 네 벽을 한 바퀴 돈다. 띠 뒤에서 은은한 간접광이 번진다
+    var ftky=SCR.y0+SCR.h+1.25,fl,fcx,ftk=function(len,x,y,z,ry){var t=tkTex.clone();t.repeat.set(len/tkTex.userData.aspect,1);t.needsUpdate=true;tkMore.push(t);glowPlane(len,1,t,2.2,x,y,z,ry)};
+    B(0,ftky,RD-.15,RW*2,1.3,.3,DARK);G(0,ftky,RD-.06,RW*2,1.9,.06,.4,.29,.12);ftk(RW*2-.6,0,ftky,RD-.32,Math.PI);                                             // 뒷벽
+    for(sx=-1;sx<=1;sx+=2){fl=RW-SCR.w/2-.9;fcx=sx*(SCR.w/2+.6+fl/2);B(fcx,ftky,zb+.3,fl,1.3,.6,DARK);G(fcx,ftky,zb+.06,fl,1.9,.06,.4,.29,.12);ftk(fl,fcx,ftky,zb+.62,0);   // 스크린 양옆
+      G(sx*(RW-.06),ftky,0,.06,1.9,RD*2,.4,.29,.12)}                                                                                                          // 옆벽 띠의 간접광
+  }
   if(FLOOR)for(sx=-1;sx<=1;sx+=2){
     for(z=-10*ROOM_KZ;z<=10*ROOM_KZ+.01;z+=10*ROOM_KZ){B(sx*(RW-.6),RH/2,z,1,RH,1,MARBLE);B(sx*(RW-.6),.5,z,1.4,1,1.4,0x8f8878);B(sx*(RW-.6),RH-.6,z,1.5,.8,1.5,BRASS)}
     B(sx*(RW-.12),2,0,.24,4,RD*2,WOOD);B(sx*(RW-.2),4.07,0,.4,.14,RD*2,BRASS);                 // 목재 징두리
     B(sx*SIDE,2,zb+.12,SIDE_W,4,.24,WOOD);B(sx*SIDE,4.07,zb+.2,SIDE_W,.14,.4,BRASS);
-    G(sx*(RW-.3),RH-1.1,0,.12,.12,RD*2-2,2.0,1.55,.9);                                         // 천장 간접등
-    B(sx*(RW-.25),5,0,.3,1.1,RD*2-2.6,DARK);glowPlane(RD*2-3,.8,tkSide,2.2,sx*(RW-.42),5,0,-sx*Math.PI/2);   // 옆벽 띠 전광판
+                                             // 천장 간접등
+    B(sx*(RW-.15),ftky,0,.3,1.3,RD*2,DARK);ftk(RD*2-.6,sx*(RW-.32),ftky,0,-sx*Math.PI/2);   // 옆벽 띠 전광판
     for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2)}  // 시세판
     B(sx*13.4,2.4,zb+1.1,2.4,4.8,1.8,0x191b21);B(sx*13.4,3.6,zb+2.02,1.4,1.4,.1,0x3a3f4b);B(sx*13.4,1.7,zb+2.02,1.8,1.8,.1,0x3a3f4b);  // 스피커
     B(sx*(RW-1.8),.6,zb+4.8,1.3,1.2,1.3,0xb5683c);B(sx*(RW-1.8),1.5,zb+4.8,.3,.8,.3,0x5a3d22);
@@ -1945,7 +1951,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202143";
+var BUILD="B11202150";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
