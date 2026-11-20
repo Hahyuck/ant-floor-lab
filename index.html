@@ -326,8 +326,10 @@ var TYPES=[
   {k:"왕개미",w:5,c:["#3a3f4a","#2f333d","#4a3f52"],acc:["crown"],s:[1.28,1.42]}
 ];
 var SPN=["개미","고양이","곰","고릴라","앵무새","펭귄","토끼","레서판다"],SPI=["🐜","🐱","🐻","🦍","🦜","🐧","🐰","🐾"];   // 고를 수 있는 투자자 동물
-var mySp=0;try{mySp=(+localStorage.getItem("antsp")||0)&7}catch(_){}
-function botSp(name){return hashStr("sp"+name)%10<4?1+hashStr("sq"+name)%7:0}                        // 봇은 열에 넷이 동물
+var SPOK=[0,2,3,5];                                                                                 // 지금 쓰는 동물: 개미 · 곰 · 고릴라 · 펭귄 (나머지 모델은 꺼 둔다)
+function okSp(v){v=(v|0)&7;return SPOK.indexOf(v)<0?0:v}
+var mySp=0;try{mySp=okSp(+localStorage.getItem("antsp")||0)}catch(_){}
+function botSp(name){return hashStr("sp"+name)%10<4?SPOK[1+hashStr("sq"+name)%(SPOK.length-1)]:0}                        // 봇은 열에 넷이 동물
 function lookFor(e){var L=lookOf(e.name);L.sp=e.sp|0;if(L.sp)L.title=L.title.replace(L.type,SPN[L.sp]);return L}   // 이름으로 정한 모습에 고른 동물을 입힌다
 function lookOf(name){
   var r=rng(hashStr("ant:"+name)), tot=0,i,t;
@@ -1316,7 +1318,7 @@ var cam={yaw:0,pitch:.07,dist:14}, keys={}, moveTarget=null, autoWalk=false, las
 var botTarget=60, botSeq=0, pidSeq=0;
 function addEnt(id,name,bot,x,z,r,cos,sp){
   var e={id:id,name:name,bot:!!bot,x:x,z:z,r:r,tx:x,tz:z,tr:r,y:0,vy:0,moving:false,look:lookOf(name),parts:null,say:"",sayT:0,ai:null,cos:cos|0,vote:0,party:hashStr("pt"+name)%4};
-  e.sp=sp!=null?(sp|0)&7:(bot?botSp(name):0);e.look=lookFor(e);
+  e.sp=sp!=null?okSp(sp):(bot?botSp(name):0);e.look=lookFor(e);
   ents[id]=e;order=Object.keys(ents);ants.dirty=true;updateCount();return e;
 }
 function delEnt(id){delete ents[id];order=Object.keys(ents);ants.dirty=true;updateCount()}
@@ -1542,7 +1544,7 @@ function renderInv(){
   var dn=mk("div","don");[100,500,1000].forEach(function(a){var b=mk("button","buy","🍬"+a.toLocaleString("ko-KR"));b.onclick=function(){donate(a)};dn.appendChild(b)});box.appendChild(dn);
 }
 function reSp(e){e.look=lookFor(e);e.parts=null;e.out=null;ants.dirty=true}
-function setSp(v){mySp=v&7;try{localStorage.setItem("antsp",mySp)}catch(_){}if(me){me.sp=mySp;reSp(me)}setPreview(pvName);if(isHost)castAll({t:"sp",id:myId,v:mySp});else if(hostConn)hostConn.send({t:"sp",v:mySp})}
+function setSp(v){mySp=okSp(v);try{localStorage.setItem("antsp",mySp)}catch(_){}if(me){me.sp=mySp;reSp(me)}setPreview(pvName);if(isHost)castAll({t:"sp",id:myId,v:mySp});else if(hostConn)hostConn.send({t:"sp",v:mySp})}
 function setCos(v){myCos=v&3;if(me)me.cos=myCos;save();if(isHost)castAll({t:"cos",id:myId,v:myCos});else if(hostConn)hostConn.send({t:"cos",v:myCos})}
 var donT=0;
 function donate(a){if(!me)return;if(sugar<a)return toast("설탕이 부족합니다");sugar-=a;save();doDon(myId,a);
@@ -1692,7 +1694,7 @@ function hostOnConn(c){
       else if(m.t==="fx"){var fn=Date.now();if(ITEMS[m.k]&&fn-(c.lastFx||0)>700){c.lastFx=fn;applyFx(pid,m.k);castAll({t:"fx",id:pid,k:m.k},pid)}}
       else if(m.t==="c"){var s=clean(m.s,60),now=Date.now(),mg=m.m?1:0;if(s&&now-(c.lastChat||0)>1500){c.lastChat=now;say(pid,s,mg);castAll({t:"c",id:pid,s:s,m:mg})}}
       else if(m.t==="cos"){e2.cos=(m.v|0)&3;castAll({t:"cos",id:pid,v:e2.cos},pid)}
-      else if(m.t==="sp"){e2.sp=(m.v|0)&7;reSp(e2);castAll({t:"sp",id:pid,v:e2.sp},pid)}
+      else if(m.t==="sp"){e2.sp=okSp(m.v);reSp(e2);castAll({t:"sp",id:pid,v:e2.sp},pid)}
       else if(m.t==="don"){var da=+m.a,dn=Date.now();if((da===100||da===500||da===1000)&&dn-(c.lastDon||0)>3000){c.lastDon=dn;doDon(pid,da);castAll({t:"don",id:pid,a:da},pid)}}
       else if(m.t==="theme"){if(TLIST.indexOf(m.v)>=0&&m.v!==THEME&&Date.now()-(c.lastTh||0)>3000){c.lastTh=Date.now();castAll({t:"theme",v:m.v});applyTheme(m.v);toast(e2.name+" 님이 테마를 "+TSHORT[m.v]+"(으)로 바꿨습니다",2600)}}
       else if(m.t==="sg"){if(Date.now()-(c.lastSg||0)>400){c.lastSg=Date.now();takeSugar(m.i|0,pid)}}
@@ -1714,7 +1716,7 @@ function clientOnData(m){
     for(i=0;i<a.length;i+=4){e=ents[a[i]];if(e&&e!==me)pushState(e,hts,a[i+1],a[i+2],a[i+3],hts-(+m.d||netIv))}}
   else if(m.t==="c"){say(m.id,clean(m.s,60),m.m)}
   else if(m.t==="cos"){if(ents[m.id]&&m.id!==myId)ents[m.id].cos=(m.v|0)&3}
-  else if(m.t==="sp"){if(ents[m.id]&&m.id!==myId){ents[m.id].sp=(m.v|0)&7;reSp(ents[m.id])}}
+  else if(m.t==="sp"){if(ents[m.id]&&m.id!==myId){ents[m.id].sp=okSp(m.v);reSp(ents[m.id])}}
   else if(m.t==="don"){if(m.id!==myId)doDon(m.id,+m.a||0)}
   else if(m.t==="rw"){raidWarn(clean(m.s,40))}
   else if(m.t==="rally"){doRally()}
@@ -2058,7 +2060,7 @@ if(isTouch)touchOn();addEventListener("touchstart",touchOn,{once:true,passive:tr
 function paintCute(){$("bCute").textContent=CUTE?"개미: 귀요미":mySp?"캐릭터: "+SPN[mySp]:"개미: 기본";$("bCute").classList.toggle("on",CUTE||mySp>0)}
 function remakeAnts(){for(var k in ents)ents[k].parts=null;ants.dirty=true;pvEnt.parts=null;pvAnts.dirty=true}
 function setCute(on){CUTE=!!on;setVS();try{localStorage.setItem("antcute",CUTE?"1":"0")}catch(_){}remakeAnts();paintCute()}
-function paintSp(){var box=$("spIn");box.textContent="";SPN.forEach(function(nm,i){var b=mk("button","btn"+(!CUTE&&mySp===i?" on":""),""),ic=mk("i",null,SPI[i]);b.appendChild(ic);b.appendChild(document.createTextNode(nm));
+function paintSp(){var box=$("spIn");box.textContent="";SPOK.forEach(function(i){var nm=SPN[i],b=mk("button","btn"+(!CUTE&&mySp===i?" on":""),""),ic=mk("i",null,SPI[i]);b.appendChild(ic);b.appendChild(document.createTextNode(nm));
     b.onclick=function(){if(CUTE)setCute(false);setSp(i);paintCute();paintSp();toast(SPI[i]+" "+nm+" 투자자로 바꿨습니다",2200)};box.appendChild(b)});
   $("spCute").classList.toggle("on",CUTE)}
 $("spCute").onclick=function(){setCute(!CUTE);paintSp();toast(CUTE?"귀요미 개미로 바꿨습니다. 내 화면에서만 바뀝니다":"귀요미 개미를 껐습니다",2600)};
@@ -2184,7 +2186,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11210016";
+var BUILD="B11210020";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
