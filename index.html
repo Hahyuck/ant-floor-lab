@@ -348,9 +348,9 @@ var texFloor,texWall,texWallSide,texGrass;
 function floorK(){return [1,2,3,4,6][((GFX&&GFX.floor)||1)-1]||1}   // 1단계(지금) ~ 5단계(가장 고운 픽셀)
 function genTex(){                                   // 테마에 맞는 바닥·벽 텍스처를 다시 만든다
 if(texFloor){texFloor.dispose();texWall.dispose();texWallSide.dispose()}
-var FK=floorK();                                      // 바닥 픽셀 단계: 무늬는 그대로 두고 알갱이만 잘게 쪼갠다
+var FK=floorK();                                      // 바닥 픽셀 단계: 같은 넓이에 픽셀을 더 많이 깔아 무늬가 촘촘해진다
 texFloor=pixTex(Math.round(RW*4)*FK,Math.round(RD*4)*FK,function(i,j,r){
-  i=Math.floor(i/FK);j=Math.floor(j/FK);var x=-RW+i*.5+.25,z=-RD+j*.5+.25;
+  var x=-RW+(i+.5)*.5/FK,z=-RD+(j+.5)*.5/FK;                                              // 무늬(타일·마루판·줄눈)는 픽셀 단위라 단계가 오르면 촘촘해지고, 융단·통로·무대 자리는 그대로다
   if(BASE){                                                                                  // 기본: 민트빛 유리 타일에 은은한 격자, 가운데 통로
     if(z<ZMIN-.6)return jit([150,170,176],4,r);
     var gl=(i%8===0)||(j%8===0);if(Math.abs(x)<1.5&&!gl)return jit([172,214,207],3,r);
@@ -1939,7 +1939,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202141";
+var BUILD="B11202142";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
