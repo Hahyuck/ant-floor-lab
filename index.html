@@ -345,10 +345,12 @@ function jit(base,n,r){var k=(r()-.5)*2*n;return [base[0]+k,base[1]+k,base[2]+k]
 var texDot=pixTex(4,4,function(x,y,r){var v=215+r()*40;return [v,v,v]});
 // 바닥: 밝은 쪽매널 마루 + 황동 테두리 + 떨어진 주문 전표
 var texFloor,texWall,texWallSide,texGrass;
+function floorK(){return [1,2,3,4,6][((GFX&&GFX.floor)||1)-1]||1}   // 1단계(지금) ~ 5단계(가장 고운 픽셀)
 function genTex(){                                   // 테마에 맞는 바닥·벽 텍스처를 다시 만든다
 if(texFloor){texFloor.dispose();texWall.dispose();texWallSide.dispose()}
-texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
-  var x=-RW+i*.5+.25,z=-RD+j*.5+.25;
+var FK=floorK();                                      // 바닥 픽셀 단계: 무늬는 그대로 두고 알갱이만 잘게 쪼갠다
+texFloor=pixTex(Math.round(RW*4)*FK,Math.round(RD*4)*FK,function(i,j,r){
+  i=Math.floor(i/FK);j=Math.floor(j/FK);var x=-RW+i*.5+.25,z=-RD+j*.5+.25;
   if(BASE){                                                                                  // 기본: 민트빛 유리 타일에 은은한 격자, 가운데 통로
     if(z<ZMIN-.6)return jit([150,170,176],4,r);
     var gl=(i%8===0)||(j%8===0);if(Math.abs(x)<1.5&&!gl)return jit([172,214,207],3,r);
@@ -1044,7 +1046,7 @@ function buildComposer(){
 buildComposer();
 /* ───────────── 그래픽 강도 조절 (테스트용) ─────────────
    효과마다 0~2배로 조절한다. "전체 강도"는 후처리 효과 전부에 곱해진다. 값은 이 브라우저에만 저장된다 */
-var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6},GFX={},FOG0=scene.fog.density,
+var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6,floor:1},GFX={},FOG0=scene.fog.density,
     GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개",glow:"조명 소품 (등불·빛줄)"};
 (function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
 function applyGfx(){
@@ -1054,11 +1056,16 @@ function applyGfx(){
 }
 function renderGfx(){
   var box=$("gfxList"),k;box.textContent="";
-  for(k in GFX_DEF)(function(k){var row=mk("div","gr"),inp=document.createElement("input"),val=mk("span",null,GFX[k].toFixed(2));
+  for(k in GFX_DEF)(function(k){if(k==="floor")return;var row=mk("div","gr"),inp=document.createElement("input"),val=mk("span",null,GFX[k].toFixed(2));
     inp.type="range";inp.min=0;inp.max=2;inp.step=.05;inp.value=GFX[k];
     inp.oninput=function(){GFX[k]=+this.value;val.textContent=GFX[k].toFixed(2);try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}applyGfx()};
     row.appendChild(mk("label",null,GFX_LBL[k]));row.appendChild(inp);row.appendChild(val);box.appendChild(row)})(k);
-  var rs=mk("button","rst","기본값으로");rs.onclick=function(){for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx2")}catch(_){}applyGfx();renderGfx()};box.appendChild(rs);
+  var fl=mk("div",null,""),fb=mk("div",null,""),fi;fl.style.cssText="padding:8px 0 4px";fl.appendChild(mk("label",null,"바닥 픽셀 · 1 저픽셀(기본) → 5 고픽셀"));
+  fb.style.cssText="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px";
+  for(fi=1;fi<=5;fi++)(function(fi){var b=mk("button","rst",String(fi));b.style.margin="0";if(GFX.floor===fi){b.style.background="var(--amber)";b.style.color="#201600";b.style.borderColor="var(--amber)"}
+    b.onclick=function(){if(GFX.floor===fi)return;GFX.floor=fi;try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}buildWorld();renderGfx()};fb.appendChild(b)})(fi);
+  fl.appendChild(fb);box.appendChild(fl);
+  var rs=mk("button","rst","기본값으로");rs.onclick=function(){var of=GFX.floor;for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx2")}catch(_){}if(of!==GFX.floor)buildWorld();applyGfx();renderGfx()};box.appendChild(rs);
 }
 function applyQuality(){
   var hi=quality==="high";
@@ -1932,7 +1939,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202139a";
+var BUILD="B11202141";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
