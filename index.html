@@ -225,7 +225,7 @@
   <div id="toast" class="pill"></div>
   <div id="banner"></div>
   <div id="raid" aria-live="assertive"></div>
-  <div id="gfx"><button class="x" aria-label="닫기">✕</button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출과 안개를 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
+  <div id="gfx"><button class="x" aria-label="닫기">✕</button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출, 안개, 조명 소품을 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
   <div id="exitp"><b>EXIT</b><span>바깥문을 지나 나갈까요?</span><div class="row"><button id="exGo">나가기</button><button id="exNo">머물기</button></div></div>
   <div id="vote"><div class="q"><span id="voteQ"></span><small id="voteT"></small></div><div class="bar"><i id="voteBar"></i></div><div class="row"><button id="vA">🐂 황소</button><button id="vB">곰 🐻</button></div></div>
   <div id="pad">
@@ -699,12 +699,12 @@ function buildProps(){
   // 천장 조명 (은은하게)
   if(FLOOR)for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.25,z*6*ROOM_KZ,3,.5,3,0x1c1f26);G(i*10*ROOM_K,RH-.55,z*6*ROOM_KZ,2.2,.12,2.2,1.5,1.35,1.1)}
 }
-var propMat=new THREE.MeshStandardMaterial({map:texDot,roughness:.8,metalness:0});
+var propMat=new THREE.MeshStandardMaterial({map:texDot,roughness:.8,metalness:0}),glowMesh=null;   // glowMesh: 등불·빛줄 같은 조명 소품 묶음
 function buildInst(){
   var m=new THREE.InstancedMesh(boxGeo,propMat,props.length),t=new THREE.Matrix4(),c=new THREE.Color(),i,p;
   for(i=0;i<props.length;i++){p=props[i];t.makeScale(p[3],p[4],p[5]).setPosition(p[0],p[1],p[2]);m.setMatrixAt(i,t);m.setColorAt(i,c.set(p[6]))}
   m.castShadow=true;m.receiveShadow=true;scene.add(m);
-  var g=new THREE.InstancedMesh(boxGeo,new THREE.MeshBasicMaterial({fog:false}),glows.length);
+  var g=new THREE.InstancedMesh(boxGeo,new THREE.MeshBasicMaterial({fog:false}),glows.length);glowMesh=g;
   for(i=0;i<glows.length;i++){p=glows[i];t.makeScale(p[3],p[4],p[5]).setPosition(p[0],p[1],p[2]);g.setMatrixAt(i,t);g.setColorAt(i,c.setRGB(p[6],p[7],p[8]))}
   scene.add(g);
 }
@@ -1035,13 +1035,13 @@ function buildComposer(){
 buildComposer();
 /* ───────────── 그래픽 강도 조절 (테스트용) ─────────────
    효과마다 0~2배로 조절한다. "전체 강도"는 후처리 효과 전부에 곱해진다. 값은 이 브라우저에만 저장된다 */
-var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25},GFX={},FOG0=scene.fog.density,
-    GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개"};
+var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1},GFX={},FOG0=scene.fog.density,
+    GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개",glow:"조명 소품 (등불·빛줄)"};
 (function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
 function applyGfx(){
   var m=GFX.all,u=finalPass.uniforms;bloom.strength=.7*GFX.bloom*m;flare.uniforms.amt.value=GFX.flare*m;gtao.blendIntensity=clamp(GFX.ao*m,0,1);
   dof.material.uniforms.maxR.value=(dof.baseR||8)*GFX.dof*m;u.uCA.value=GFX.ca*m;u.uVig.value=GFX.vig*m;u.uGrain.value=GFX.grain*m;u.uSat.value=1+.16*GFX.sat;u.uCon.value=GFX.con;
-  scene.fog.density=FOG0*GFX.fog;
+  scene.fog.density=FOG0*GFX.fog;if(glowMesh)glowMesh.material.color.setScalar(GFX.glow);   // 조명 소품은 전체 강도와 별개로 조절한다
 }
 function renderGfx(){
   var box=$("gfxList"),k;box.textContent="";
@@ -1126,7 +1126,7 @@ function buildWorld(){
   try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;
     setDims();genTex();setLayout();buildPlanes();buildProps();buildInst();buildStatues();buildSugar();buildCam()}
   finally{delete scene.add}
-  scene.add(worldRoot);applyLights();placeScreen();setBoss();placeMarks();
+  scene.add(worldRoot);applyLights();placeScreen();setBoss();placeMarks();if(GFX.all!=null&&finalPass)applyGfx();
 }
 buildWorld();
 function tkText(){return TNAME[THEME]+"   ·   새우 공대장과 시황 방송 같이 보는 곳   ·   투자의 책임은 투자자 본인에게 있습니다   ·   "}
