@@ -30,12 +30,16 @@
   #log .ln.big2{font-size:25px}
   #log .ln.big3{font-size:32px}
   #log .ln.sys{background:transparent;color:#8f98a8;font-size:12px;padding:1px 9px}
-  #hot{position:absolute;right:16px;bottom:82px;display:flex;gap:8px}
-  #hot button{position:relative;width:62px;height:62px;border-radius:14px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-  #hot button:hover{border-color:rgba(255,255,255,.35)}
-  #hot .ic{font-style:normal;font-size:28px;line-height:1}
-  #hot .ky{position:absolute;left:6px;top:4px;font-size:11px;color:var(--dim);font-weight:700}
-  #hot .ct{position:absolute;right:6px;bottom:3px;font-size:11px;color:var(--amber);font-weight:700}
+  /* 사용 아이템: 채팅창 바로 옆, 같은 알약 모양 안에 동그란 버튼 셋 */
+  body:not(.touch){--cw:min(720px,calc(100vw - 420px))}
+  body:not(.touch) #chatbar{width:var(--cw);left:calc(50% - 92px)}
+  #hot{position:absolute;left:calc(50% - 92px + var(--cw)/2 + 10px);bottom:18px;display:flex;gap:6px;align-items:center;padding:6px 8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #hot button{position:relative;width:52px;height:38px;border-radius:999px;border:0;background:rgba(255,255,255,.1)}
+  #hot button:hover{background:rgba(255,255,255,.2)}
+  #hot .ic{font-style:normal;font-size:19px;line-height:1}
+  #hot .ky{position:absolute;left:7px;top:3px;font-size:9px;color:var(--dim);font-weight:700}
+  #hot .ct{position:absolute;right:7px;bottom:2px;font-size:10px;color:var(--amber);font-weight:700}
   #hot button.cool,#btns button.cool{opacity:.4}
   #inv{position:absolute;right:14px;top:64px;width:min(360px,calc(100vw - 28px));background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;font-size:13px}
@@ -57,14 +61,26 @@
   #pA{font-size:13px!important}
   @media (max-width:1180px){#inv{top:150px}}
   .x{position:absolute;right:10px;top:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.12);font-size:15px}
-  #bMenu{display:none;position:absolute;right:14px;top:14px;font-weight:700}
-  body.compact #bMenu{display:block}
+  /* 상단: 자주 쓰는 버튼 셋 + 메뉴. 나머지는 메뉴를 눌러야 묶음별로 펼쳐진다 */
+  #quick{position:absolute;right:14px;top:14px;display:flex;gap:8px;z-index:6}
+  #bMenu{font-weight:700}
+  body #topright{display:none;position:absolute;right:14px;left:auto;top:62px;width:300px;max-width:calc(100vw - 28px);grid-template-columns:1fr 1fr;gap:6px;z-index:6;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  body.menu #topright{display:grid}
+  body #topright .pill{border-radius:10px;text-align:left;padding:10px 12px;font-size:13px;background:rgba(255,255,255,.05);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #topright .mh{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--dim);letter-spacing:.04em;padding:6px 4px 0}
+  #topright .mh:first-child{padding-top:0}
+  body.compact #quick .pill{padding:8px 11px;font-size:13px}
+  body.compact #quick{gap:6px}
+  @media (max-width:560px){#quick{top:58px}body #topright{top:104px}}
   body.compact #topright{display:none;top:62px;right:14px;left:auto;flex-direction:column;align-items:stretch;gap:6px;max-width:none;z-index:6;
     background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-  body.compact.menu #topright{display:flex}
+  body.compact.menu #topright{display:grid}
+  @media (max-width:560px){body.compact #topright{top:104px}}
   body.compact #topright .pill{border-radius:10px;text-align:left;padding:11px 16px;font-size:14px;background:rgba(255,255,255,.05)}
   body.compact #pop,body.compact #inv{position:fixed;left:50%;top:50%;right:auto;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 24px));max-height:84vh;overflow:auto;z-index:8}
   body.compact #toast{top:64px}
+  @media (max-width:560px){body.compact #toast{top:106px}}
   #stage{height:100dvh}
   #pad{display:none}
   body.touch #pad{display:block}
@@ -209,22 +225,27 @@
   <div id="fade"></div>
 
   <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small></div>
-  <button class="pill" id="bMenu">메뉴</button>
-  <div id="topright">
-    <button class="pill" id="bFull">전체화면</button>
-    <button class="pill" id="bInvite">초대 링크 복사</button>
+  <div id="quick">
     <button class="pill" id="bSound">소리 켜기</button>
-    <button class="pill" id="bPass" title="켜면 유튜브 화면을 직접 클릭할 수 있습니다">화면 직접 조작</button>
     <button class="pill" id="bFocus">방송 집중</button>
-    <button class="pill" id="bTheme">테마</button>
-    <button class="pill" id="bSrv">서버 이동</button>
-    <button class="pill" id="bCute">개미: 기본</button>
-    <button class="pill" id="bWalk">자동 산책</button>
     <button class="pill" id="bInv">상점·가방</button>
+    <button class="pill" id="bMenu">☰ 메뉴</button>
+  </div>
+  <div id="topright">
+    <div class="mh">꾸미기</div>
+    <button class="pill" id="bCute">개미: 기본</button>
+    <button class="pill" id="bTheme">테마</button>
+    <div class="mh">방</div>
+    <button class="pill" id="bInvite">초대 링크 복사</button>
+    <button class="pill" id="bSrv">서버 이동</button>
+    <button class="pill" id="bSet">방 설정</button>
     <button class="pill" id="bChat">채팅</button>
+    <div class="mh">화면 · 조작</div>
+    <button class="pill" id="bFull">전체화면</button>
+    <button class="pill" id="bPass" title="켜면 유튜브 화면을 직접 클릭할 수 있습니다">화면 직접 조작</button>
+    <button class="pill" id="bWalk">자동 산책</button>
     <button class="pill" id="bQ">그래픽: 고급</button>
     <button class="pill" id="bGfx">그래픽 테스트</button>
-    <button class="pill" id="bSet">방 설정</button>
   </div>
   <div id="pop"><button class="x" aria-label="닫기">✕</button>
     <h3>방 설정</h3>
@@ -2150,7 +2171,8 @@ function closePops(){$("pop").classList.remove("show");$("inv").classList.remove
 function setCompact(){document.body.classList.toggle("compact",isTouch||innerWidth<=760)}
 setCompact();addEventListener("resize",setCompact);
 $("bMenu").onclick=function(){document.body.classList.toggle("menu");closePops()};
-$("topright").addEventListener("click",function(){document.body.classList.remove("menu")});
+$("topright").addEventListener("click",function(ev){if(ev.target.closest("button"))document.body.classList.remove("menu")});
+addEventListener("pointerdown",function(ev){if(document.body.classList.contains("menu")&&!ev.target.closest("#topright,#bMenu"))document.body.classList.remove("menu")},true);
 [].forEach.call(document.querySelectorAll(".x"),function(b){b.onclick=closePops});
 $("name").addEventListener("input",function(){var n=clean(this.value,12);$("go").disabled=!n;
   setPreview(n);$("pvtitle").textContent=n?pvEnt.look.title:""});
@@ -2192,7 +2214,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11210056";
+var BUILD="B11210105";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
