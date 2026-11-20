@@ -456,7 +456,8 @@ function glowPlane(w,h,tex,k,x,y,z,ry){
 /* 고정 소품: 상자 조립 */
 var boxGeo=new THREE.BoxGeometry(1,1,1);
 var props=[], glows=[], fires=[], drift=[], riverT=null, bobs=[];   // bobs: 둥실 떠 있는 소품 (기본 테마)   // drift: 색이 천천히 흐르는 조명 (클럽)
-var POSTS=[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ]}), STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ,p[2]]});
+var POSTS=RAID?[[-1,-.03],[1,-.03],[-1,.47],[1,.47]].map(function(p){return [p[0]*(RW+3)/2,p[1]*RD]})   // 게임 테마: 앞쪽 동상과 뒷문 사이를 고르게 나눈 자리, 좌우는 융단과 벽의 중간
+  :[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ]}), STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ,p[2]]});
 var OBST=POSTS.map(function(p){return [p[0],p[1],2.2]}).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
