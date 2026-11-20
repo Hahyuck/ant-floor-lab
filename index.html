@@ -875,10 +875,10 @@ function buildVox(L){
   for(sx=-1;sx<=1;sx+=2){
     var leg=part([sx*.15,.58,-.04],null,sx<0?1:2);for(i=0;i<NV(.56);i++)put(leg,0,-(i+.5)*VS,0,dark);put(leg,0,-(NV(.56)-.5)*VS,VS,dark);
     var arm=part([sx*.27,.93,0],[0,0,sx*.32],sx<0?2:1);for(i=0;i<NV(.42);i++)put(arm,0,-(i+.5)*VS,0,dark);
-    var mid=part([sx*.25,.72,-.08],[0,0,sx*.85],sx<0?2:1);for(i=0;i<NV(.3);i++)put(mid,0,-(i+.5)*VS,0,dark);
+    var mid=part([sx*.33,.58,-.27],[0,0,sx*.1],sx<0?2:1);for(i=0;i<NV(.56);i++)put(mid,0,-(i+.5)*VS,0,dark);put(mid,0,-(NV(.56)-.5)*VS,VS,dark);   // 뒷다리: 앞다리와 엇박으로 걷는다
     var n=NV(.42*L.ant),an=part([sx*.14,HY+top-.04,.12],[-.22,0,-sx*(.24+.14*L.antSpread)],3);an.h=1;
     for(i=0;i<n;i++)put(an,0,(i+.5)*VS,(i/n)*(i/n)*.12,dark);put(an,0,(n+.5)*VS,.12,dark,1.5);put(an,0,(n+.5)*VS,.12+VS,dark,1.5);
-    if(CUTE){for(i=0;i<NV(.56);i++){put(leg,sx*VS,-(i+.5)*VS,0,dark);put(leg,0,-(i+.5)*VS,-VS,dark)}put(leg,sx*VS,-(NV(.56)-.5)*VS,VS,dark);                  // 통통한 다리
+    if(CUTE){for(i=0;i<NV(.56);i++){put(leg,sx*VS,-(i+.5)*VS,0,dark);put(leg,0,-(i+.5)*VS,-VS,dark);put(mid,sx*VS,-(i+.5)*VS,0,dark);put(mid,0,-(i+.5)*VS,-VS,dark)}put(mid,sx*VS,-(NV(.56)-.5)*VS,VS,dark);put(leg,sx*VS,-(NV(.56)-.5)*VS,VS,dark);                  // 통통한 다리
       for(i=0;i<NV(.42);i++)put(arm,0,-(i+.5)*VS,VS,dark);put(arm,sx*VS,-(NV(.42)-.5)*VS,0,body);put(arm,sx*VS,-(NV(.42)-.5)*VS,VS,body);                     // 뭉툭한 손
       for(i=0;i<2;i++)for(var cj=0;cj<2;cj++)for(var ck=0;ck<2;ck++)put(an,(i-.5)*VS,(n+1+cj)*VS,.12+(ck-.5)*VS,body,1.25)}                                    // 더듬이 끝 공
   }
@@ -970,40 +970,48 @@ setBoss();
 var bossG=new THREE.Group();BOSS.on=0;BOSS.until=0;BOSS.sc=0;   // 평소에는 숨어 있다가 연설할 때 나타나고, 끝나면 뽕~ 하고 사라진다
 var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT:0,megaT:0,look:{title:"공대장 · 대역 캐릭터",scale:1,color:"#f0826a"}};
 (function(){
-  // 개미와 같은 방식: 작은 복셀로 둥근 덩어리를 빚고 겉면만 남긴다
-  var P=[],C=[],r=rng(4242),PK=lin(0xf0826a),LT=lin(0xf9b09a),DK=lin(0xb9432f),CR=lin(0xffe9d6),CAPE=lin(0xa81f2a),GREY=lin(0x8d8f96),JEWEL=lin(0xd9362f),i,j,t,sx,a,u,v;
-  function put(x,y,z,c,k){k=(k||1)*(1+(r()-.5)*.08);P.push(x,y,z);C.push(c[0]*k,c[1]*k,c[2]*k)}
+  // 개미와 같은 방식: 작은 복셀로 둥근 덩어리를 빚고 겉면만 남긴다. 크기는 그대로 두고 복셀만 곱게 (0.05) 써서 디테일을 올린다
+  var VS=.05,P=[],C=[],r=rng(4242),PK=lin(0xf0826a),LT=lin(0xf9b09a),DK=lin(0xb9432f),CR=lin(0xfbe9d8),CAPE=lin(0xa81f2a),CAPE2=lin(0x7d1620),GREY=lin(0x8d8f96),JEWEL=lin(0xd9362f),i,j,t,sx,a,u,v,n;
+  function put(x,y,z,c,k){k=(k||1)*(1+(r()-.5)*.07);P.push(x,y,z);C.push(c[0]*k,c[1]*k,c[2]*k)}
+  function N(len){return Math.max(2,Math.ceil(len/VS))}
+  function line(x0,y0,z0,x1,y1,z1,c,th,bend){var n=N(Math.hypot(x1-x0,y1-y0,z1-z0)),q,w,e,f;th=th||1;                   // 두 점을 잇는 선 (th: 굵기, bend: 위로 휘는 정도)
+    for(q=0;q<=n;q++){w=q/n;for(e=0;e<th;e++)for(f=0;f<th;f++)put(x0+(x1-x0)*w+e*VS,y0+(y1-y0)*w+(bend||0)*Math.sin(w*3.1416)+f*VS,z0+(z1-z0)*w,c)}}
   function blob(cx,cy,cz,rx,ry,rz,pw,paint){
     var nx=Math.ceil(rx/VS),ny=Math.ceil(ry/VS),nz=Math.ceil(rz/VS),i,j,k;
     function ins(i,j,k){return Math.pow(Math.abs((i+.5)*VS/rx),pw)+Math.pow(Math.abs((j+.5)*VS/ry),pw)+Math.pow(Math.abs((k+.5)*VS/rz),pw)<=1}
     for(i=-nx;i<nx;i++)for(j=-ny;j<ny;j++)for(k=-nz;k<nz;k++){
       if(!ins(i,j,k))continue;
       if(ins(i+1,j,k)&&ins(i-1,j,k)&&ins(i,j+1,k)&&ins(i,j-1,k)&&ins(i,j,k+1)&&ins(i,j,k-1))continue;
-      var col=paint(i>=0?i:-i-1,j,k,ny,nz);if(!col)continue;
+      var col=paint(Math.abs((i+.5)*VS),(j+.5)*VS,(k+.5)*VS,ry,rz);if(!col)continue;
       put(cx+(i+.5)*VS,cy+(j+.5)*VS,cz+(k+.5)*VS,col,.86+.2*(j+ny)/(2*ny))}
   }
-  // 몸통 마디: 아래로 갈수록 가늘어지며 앞으로 말린다. 마디 경계는 어둡게, 배 쪽은 밝게
-  var SEG=[[1.92,-.04,.56,.40,.56],[1.48,-.14,.52,.36,.52],[1.08,-.18,.46,.33,.46],[.74,-.09,.40,.29,.40],[.48,.14,.33,.24,.35]];
-  for(i=0;i<SEG.length;i++)(function(s,base){blob(0,s[0],s[1],s[2],s[3],s[4],2.4,function(mi,j,k,ny,nz){
-    if(j<=-ny+1)return DK;if(k>nz*.35&&mi<3)return CR;return base})})(SEG[i],i&1?LT:PK);
-  blob(0,.34,.58,.52,.1,.34,2,function(mi,j,k){return (mi+k)&1?DK:PK});                              // 꼬리 부채
-  blob(0,2.58,.06,.62,.6,.7,2.8,function(mi,j,k,ny,nz){                                              // 머리: 입과 볼을 겉면에 칠한다
-    if(k>nz*.5){if(mi<=1&&j===-3)return DK;if((mi===4||mi===5)&&(j===-2||j===-1))return LT}return PK});
+  // 몸통 마디 일곱 개: 아래로 갈수록 가늘어지며 앞으로 말린다. 등은 붉고, 배는 밝고, 마디 사이는 짙은 띠
+  var SEG=[[2.0,-.04,.56,.36,.56],[1.68,-.12,.55,.33,.54],[1.38,-.18,.52,.31,.5],[1.1,-.2,.47,.29,.46],[.84,-.14,.42,.27,.42],[.62,.0,.36,.24,.37],[.46,.2,.3,.2,.32]];
+  for(i=0;i<SEG.length;i++)(function(s,base){blob(0,s[0],s[1],s[2],s[3],s[4],2.3,function(ax,y,z,ry,rz){
+    if(y<-ry+VS*1.6)return DK;if(z>rz*.3&&ax<s[2]*.62)return (Math.floor((y+ry)/(VS*2.2))&1)?CR:[CR[0]*.9,CR[1]*.84,CR[2]*.8];   // 배: 가로 주름
+    if(z<-rz*.55&&ax<VS*1.2)return DK;return base})})(SEG[i],i&1?LT:PK);
+  for(sx=-1;sx<=1;sx+=2){for(i=-3;i<=3;i++)blob(sx*(.08+Math.abs(i)*.012)+i*.11,.3,.62+Math.abs(i)*-.03,.09,.07,.3,2,function(ax,y,z){return z>.12?LT:(i&1?DK:PK)});   // 꼬리 부채
+    for(j=0;j<5;j++)line(sx*.3,1.52-j*.2,.34-j*.02,sx*.44,1.3-j*.2,.56-j*.02,DK,1)}                                       // 배다리
+  blob(0,2.6,.06,.6,.58,.7,2.6,function(ax,y,z,ry,rz){                                                                    // 머리: 눈가와 볼, 입
+    if(z>rz*.45){if(ax<.09&&y>-.3&&y<-.24)return DK;if(ax>.34&&ax<.52&&y>-.3&&y<-.14)return LT}
+    if(z<-rz*.3&&ax<VS*1.2)return DK;return y>ry*.55?[PK[0]*.92,PK[1]*.88,PK[2]*.86]:PK});
+  blob(0,2.74,.78,.12,.1,.3,2,function(){return DK});line(0,2.8,.9,0,3.0,1.5,DK,2,0);                                     // 이마뿔
   for(sx=-1;sx<=1;sx+=2){
-    blob(sx*.36,2.86,.68,.15,.17,.13,2,function(mi,j,k){return (j>=0&&k>=0&&mi===0)?V_WHITE:V_BLACK});   // 눈
-    for(i=0;i<32;i++){t=i/31;put(sx*(.2+.55*t),3.02+1.7*t-.55*t*t,.5-1.35*t,DK)}                         // 긴 더듬이
-    for(i=0;i<8;i++){t=i/7;put(sx*(.12+.1*t),2.95+.25*t,.74+.4*t,DK)}                                    // 짧은 더듬이
-    for(j=0;j<3;j++)for(i=0;i<8;i++){t=i/7;put(sx*(.46+.16*t),1.75-j*.36-.3*t,.3+.45*t,DK)}              // 다리
-    for(i=0;i<8;i++){t=i/7;put(sx*.5,2.05-.22*t,.4+.48*t,DK)}                                            // 신문 든 팔
+    blob(sx*.34,2.9,.66,.15,.17,.14,2,function(ax,y,z){return (y>.03&&z>.02&&ax<.08)?V_WHITE:V_BLACK});                   // 눈: 흰 하이라이트
+    line(sx*.2,3.02,.5,sx*.78,4.62,-.9,DK,2,.35);line(sx*.12,3.0,.56,sx*.5,4.2,-1.3,DK,1,.3);                             // 긴 더듬이 두 쌍
+    line(sx*.12,2.95,.74,sx*.24,3.2,1.16,DK,1,0);                                                                         // 짧은 더듬이
+    for(j=0;j<3;j++){line(sx*.44,1.74-j*.34,.3,sx*.62,1.5-j*.34,.62,DK,2,0);line(sx*.62,1.5-j*.34,.62,sx*.56,1.28-j*.34,.82,DK,1,0)}   // 꺾인 걷는다리
+    line(sx*.5,2.08,.38,sx*.52,1.84,.9,DK,2,0);blob(sx*.52,1.82,.94,.09,.08,.1,2,function(){return LT});                   // 신문 든 팔과 집게
   }
-  for(i=0;i<8;i++){t=i/7;put(0,3.0+.12*t,.74+.55*t,DK);if(i<5)put(0,3.0+.12*t+VS,.74+.55*t,DK)}         // 뿔
-  for(i=0;i<28;i++){a=i/28*6.283;u=Math.cos(a)*.36;v=.06+Math.sin(a)*.36;                                // 왕관
-    put(u,3.2,v,V_GOLD);put(u,3.2+VS,v,V_GOLD);if(i%4<2){put(u,3.2+VS*2,v,V_GOLD);if(i%4===0)put(u,3.2+VS*3,v,V_GOLD)}}
-  put(0,3.2+VS,.06+.36+VS*.7,JEWEL,1.7);
-  for(i=-10;i<=10;i++)for(j=0;j<24;j++){u=i/10;v=j/23;                                                   // 망토: 아래로 갈수록 넓어지는 곡면, 금테
-    put(u*(.6+.32*v),2.25-1.95*v,-.72-.1*(1-u*u)-.22*v,(i===-10||i===10||j===23)?V_GOLD:CAPE,.8+.3*(1-v))}
-  for(i=0;i<44;i++){a=i/44*6.283;put(Math.cos(a)*.6,2.22,-.02+Math.sin(a)*.6,V_GOLD)}                    // 깃
-  for(i=-6;i<6;i++)for(j=0;j<9;j++)put((i+.5)*VS,1.42+j*VS,.9-j*.03,(j%2===1&&i>-5&&i<4&&(i+j)%7!==0)?GREY:V_WHITE);   // 신문
+  for(i=0,n=N(6.283*.38);i<n;i++){a=i/n*6.283;u=Math.cos(a)*.38;v=.06+Math.sin(a)*.38;t=(i*5/n)%1;                         // 왕관: 다섯 봉우리
+    for(j=0;j<3+Math.round((1-Math.abs(t-.5)*2)*4);j++)put(u,3.18+j*VS,v,j===0?[V_GOLD[0]*.8,V_GOLD[1]*.8,V_GOLD[2]*.8]:V_GOLD)}
+  for(i=0;i<5;i++){a=(i+.5)/5*6.283;blob(Math.cos(a)*.38,3.18+VS*7.5,.06+Math.sin(a)*.38,.05,.05,.05,2,function(){return i%2?JEWEL:V_GOLD})}
+  for(i=-N(1.9)/2;i<=N(1.9)/2;i++)for(j=0;j<N(2.05);j++){u=i/(N(1.9)/2);v=j/(N(2.05)-1);                                   // 망토: 넓어지는 곡면, 금테와 세로 주름
+    put(u*(.62+.34*v),2.26-2.0*v,-.72-.1*(1-u*u)-.24*v+Math.sin(u*9)*.03*v,(Math.abs(u)>.93||v>.96)?V_GOLD:(Math.sin(u*9)>.5?CAPE2:CAPE),.8+.3*(1-v))}
+  for(i=0,n=N(6.283*.6);i<n;i++){a=i/n*6.283;put(Math.cos(a)*.6,2.22,-.02+Math.sin(a)*.6,V_GOLD);put(Math.cos(a)*.6,2.22+VS,-.02+Math.sin(a)*.6,V_GOLD)}   // 깃
+  for(sx=-1;sx<=1;sx+=2)for(i=0;i<N(.58);i++)for(j=0;j<N(.9);j++){u=i*VS;v=j*VS;                                           // 신문: 가운데가 접힌 두 면, 제목 줄과 사진 칸
+    t=(j>N(.9)-4)?GREY:(j%3===1&&i>1&&i<N(.58)-2)?GREY:(i>2&&i<N(.58)*.55&&j>3&&j<N(.9)*.45)?[GREY[0]*.8,GREY[1]*.8,GREY[2]*.8]:V_WHITE;
+    put(sx*(.03+u),1.42+v,.96-u*.32-v*.03,t)}
   var n=P.length/3,m=new THREE.InstancedMesh(boxGeo,antMat,n),M=new THREE.Matrix4(),s=VS*1.02;
   for(i=0;i<n;i++){M.makeScale(s,s,s).setPosition(P[i*3],P[i*3+1],P[i*3+2]);m.setMatrixAt(i,M)}
   m.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(C),3);
@@ -2038,7 +2046,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202258";
+var BUILD="B11202302";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
