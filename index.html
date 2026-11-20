@@ -479,7 +479,8 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_K;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
   }
   if(!RAID){B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS)}
-  B(0,RAID?15.1:9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,RAID?15.1:9,RD-.37,Math.PI);            // 뒤쪽 대형 시세판
+  if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*13.5,7.2,RD-.14,10.6,6.4,.2,GOLD);B(sx*13.5,7.2,RD-.2,10.1,5.9,.3,DARK);glowPlane(9.6,5.4,bdTex,1.35,sx*13.5,7.2,RD-.37,Math.PI)}   // 문 양옆 시세판
+  else{B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI)}            // 뒤쪽 대형 시세판
   if(!RAID){B(0,.3,zb+1.5,24,.6,3,0x5b4334);B(0,.62,zb+2.9,24,.06,.2,BRASS)}                            // 무대
   B(0,y1+.3,zb+.25,SCR.w+1.2,.6,.5,DARK);B(0,SCR.y0-.3,zb+.25,SCR.w+1.2,.6,.5,DARK);
   B(-SCR.w/2-.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);B(SCR.w/2+.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);
@@ -1145,7 +1146,8 @@ function hostOnConn(c){
       castAll({t:"join",p:pack(e)},pid);toast(nm+" 님이 들어왔습니다");logSys(nm+" 님이 들어왔습니다");
     }else if(pid&&ents[pid]){
       c.last=Date.now();var e2=ents[pid];
-      if(m.t==="m"){e2.tx=clamp(+m.x||0,-XMAX,XMAX);e2.tz=clamp(+m.z||0,ZMIN,RD-.8);e2.tr=+m.r||0}
+      if(m.t==="m"){var mn=performance.now(),ct=+m.ts||mn,cd=mn-ct;c.off=c.off==null?cd:Math.min(cd,c.off+2);e2.off=c.off;        // 참가자 시계와 내 시계의 차이
+        pushState(e2,ct,clamp(+m.x||0,-XMAX,XMAX),clamp(+m.z||0,ZMIN,RD-.8),+m.r||0,ct-100)}
       else if(m.t==="j"){jump(e2);castAll({t:"j",id:pid},pid)}
       else if(m.t==="fx"){var fn=Date.now();if(ITEMS[m.k]&&fn-(c.lastFx||0)>700){c.lastFx=fn;applyFx(pid,m.k);castAll({t:"fx",id:pid,k:m.k},pid)}}
       else if(m.t==="c"){var s=clean(m.s,60),now=Date.now(),mg=m.m?1:0;if(s&&now-(c.lastChat||0)>1500){c.lastChat=now;say(pid,s,mg);castAll({t:"c",id:pid,s:s,m:mg})}}
@@ -1164,7 +1166,9 @@ function clientOnData(m){
     me=ents[myId];if((m.vid||"")!==video||!ytFrame)setVideo(m.vid||"",true);if(m.vt)vsync=mkSync(m.vt);enterRoom();
   }else if(m.t==="join"){var q=m.p;if(!ents[q[0]]){addEnt(q[0],q[1],q[2],q[3],q[4],q[5],q[6]);if(!q[2])logSys(q[1]+" 님이 들어왔습니다")}}
   else if(m.t==="left"){if(m.id!==myId){if(ents[m.id]&&!ents[m.id].bot)logSys(ents[m.id].name+" 님이 나갔습니다");delEnt(m.id)}}
-  else if(m.t==="s"){var a=m.a;for(i=0;i<a.length;i+=4){e=ents[a[i]];if(e&&e!==me){e.tx=a[i+1];e.tz=a[i+2];e.tr=a[i+3]}}}
+  else if(m.t==="s"){var a=m.a,sn=performance.now(),hts=+m.ts||sn,sd=sn-hts;netOff=netOff==null?sd:Math.min(sd,netOff+2);          // 방장 시계와 내 시계의 차이
+    if(lastHts&&hts>lastHts)netIv=netIv*.8+clamp(hts-lastHts,40,1600)*.2;lastHts=hts;
+    for(i=0;i<a.length;i+=4){e=ents[a[i]];if(e&&e!==me)pushState(e,hts,a[i+1],a[i+2],a[i+3],hts-(+m.d||netIv))}}
   else if(m.t==="c"){say(m.id,clean(m.s,60),m.m)}
   else if(m.t==="cos"){if(ents[m.id]&&m.id!==myId)ents[m.id].cos=(m.v|0)&3}
   else if(m.t==="don"){if(m.id!==myId)doDon(m.id,+m.a||0)}
@@ -1179,25 +1183,40 @@ function clientOnData(m){
   else if(m.t==="vt"){vsync=mkSync(m)}
   else if(m.t==="full"){fail("방이 가득 찼습니다.")}
 }
+/* 원격 개미 보간: 보낸 쪽 시계로 찍힌 위치를 쌓아 두고, 조금 과거(약 0.2초 전) 시점을 두 기록 사이에서 찾아 그린다.
+   도착 시각이 들쭉날쭉해도 화면의 속도는 일정하다. pt는 "그 직전까지는 가만히 있었다"는 시각 (바뀐 것만 보내기 때문에 필요) */
+function pushState(e,t,x,z,r,pt){var b=e.buf||(e.buf=[]),l=b[b.length-1];if(l&&pt!=null&&l[0]<pt-1)b.push([pt,l[1],l[2],l[3]]);
+  b.push([t,x,z,r]);if(b.length>8)b.splice(0,b.length-8);e.tx=x;e.tz=z;e.tr=r}
+function sample(e,t){var b=e.buf;if(!b||!b.length)return;while(b.length>2&&b[1][0]<=t)b.shift();var a=b[0],c=b[1];
+  if(!c||t<=a[0]){e.x=a[1];e.z=a[2];e.r=a[3];e.moving=false;return}
+  var k=clamp((t-a[0])/(c[0]-a[0]),0,1);e.x=a[1]+(c[1]-a[1])*k;e.z=a[2]+(c[2]-a[2])*k;e.r=a[3]+Math.atan2(Math.sin(c[3]-a[3]),Math.cos(c[3]-a[3]))*k;
+  e.moving=k<1&&Math.hypot(c[1]-a[1],c[2]-a[2])>.02}
+var netIv=90,netOff=null,lastHts=0;
 function say(id,s,mg){var e=ents[id];if(e){e.say=s;e.sayT=performance.now()+5500;e.megaT=mg?e.sayT:0;if(mg)tickerSay("📣 "+e.name+": "+s,"#7fd4ff",12000);logChat(e,s)}}
 
 /* 방장 시뮬레이션·중계: 탭이 뒤로 가도 돌도록 setInterval */
-var simLast=0,botSayT=0,sendT=0;
+var simLast=0,botSayT=0,sendT=0,tickIv=90,snapN=0,lastM=0,lmx=0,lmz=0,lmr=0;
 function tick(){
   var now=performance.now(),dt=Math.min(1,(now-simLast)/1000);simLast=now;ytPoll(now);
   if(isHost){
-    for(var i=0;i<order.length;i++){var e=ents[order[i]];if(e.bot)wander(e,dt,2.1)}
+    var i,e,ox,oz,orr;tickIv=tickIv*.8+clamp(dt*1000,40,1500)*.2;
+    for(i=0;i<order.length;i++){e=ents[order[i]];if(!e.bot)continue;                // 봇의 실제 위치(sx,sz)는 틱마다 계산하고, 화면에는 그 사이를 보간해서 그린다
+      if(e.sx==null){e.sx=e.x;e.sz=e.z;e.sr=e.r}ox=e.x;oz=e.z;orr=e.r;e.x=e.sx;e.z=e.sz;e.r=e.sr;wander(e,dt,2.1);e.sx=e.x;e.sz=e.z;e.sr=e.r;e.x=ox;e.z=oz;e.r=orr;
+      if(e.sx!==e.tx||e.sz!==e.tz||e.sr!==e.tr||!e.buf)pushState(e,now,e.sx,e.sz,e.sr,now-dt*1000)}
     if(now>botSayT){botSayT=now+2500+Math.random()*5000;
       var bots=order.filter(function(id){return ents[id].bot});
       if(bots.length){var b=bots[(Math.random()*bots.length)|0],s=BOTSAY[(Math.random()*BOTSAY.length)|0];say(b,s);castAll({t:"c",id:b,s:s})}}
-    var a=[];for(i=0;i<order.length;i++){e=ents[order[i]];a.push(e.id,+e.x.toFixed(2),+e.z.toFixed(2),+e.r.toFixed(2))}
-    castAll({t:"s",a:a});
+    var a=[],full=(++snapN%20===0),rem,vx,vz,vr;                                   // 바뀐 개미만 보내고, 20번에 한 번은 전부 보낸다
+    for(i=0;i<order.length;i++){e=ents[order[i]];rem=e!==me;vx=+(rem?e.tx:e.x).toFixed(2);vz=+(rem?e.tz:e.z).toFixed(2);vr=+(rem?e.tr:e.r).toFixed(2);
+      if(full||vx!==e.lsx||vz!==e.lsz||vr!==e.lsr){e.lsx=vx;e.lsz=vz;e.lsr=vr;a.push(e.id,vx,vz,vr)}}
+    if(a.length||full)castAll({t:"s",a:a,ts:Math.round(now),d:Math.round(dt*1000)});
     if(now-vtLast>3000){vtLast=now;var vm=vtMsg();if(vm)castAll(vm)}
     if(Math.random()<.03&&order.length){var jb=ents[order[(Math.random()*order.length)|0]];if(jb.bot&&jb.y<=.001){jump(jb);castAll({t:"j",id:jb.id})}}
     if(voteEnd>now&&order.length){var vb=ents[order[(Math.random()*order.length)|0]];if(vb.bot&&!vb.vote){vb.vote=Math.random()<.58?1:2;castAll({t:"rv",id:vb.id,v:vb.vote})}}   // 봇도 투표한다
     var t=Date.now();for(var k in conns)if(t-conns[k].last>20000&&conns[k].onclose)conns[k].onclose();
   }else if(hostConn&&me){
-    hostConn.send({t:"m",x:+me.x.toFixed(2),z:+me.z.toFixed(2),r:+me.r.toFixed(2)});
+    var qx=+me.x.toFixed(2),qz=+me.z.toFixed(2),qr=+me.r.toFixed(2);
+    if(qx!==lmx||qz!==lmz||qr!==lmr||now-lastM>1000){lmx=qx;lmz=qz;lmr=qr;lastM=now;hostConn.send({t:"m",x:qx,z:qz,r:qr,ts:Math.round(now)})}
     if(lastSnap&&Date.now()-lastSnap>12000)hostLost();
   }
 }
@@ -1307,9 +1326,8 @@ function frame(ts){
   for(i=0;i<order.length;i++){e=ents[order[i]];list.push(e);
     if(e.vy||e.y>0){e.vy-=24*dt;e.y+=e.vy*dt;if(e.y<=0){e.y=0;e.vy=0}}       // 점프
     if(e.cos&1&&e.moving&&Math.random()<dt*16)spawn(e.x+(Math.random()-.5)*.5,.12+Math.random()*.5,e.z+(Math.random()-.5)*.5,0,.6+Math.random(),0,.7,.09,2.8,2.1,.6,0,0);   // 반짝이 발자국
-    if(e===me||(isHost&&e.bot))continue;
-    var ddx=e.tx-e.x,ddz=e.tz-e.z,D=Math.hypot(ddx,ddz),kk=Math.min(1,dt*9);
-    e.moving=D>.06;e.x+=ddx*kk;e.z+=ddz*kk;var dr=Math.atan2(Math.sin(e.tr-e.r),Math.cos(e.tr-e.r));e.r+=dr*Math.min(1,dt*10)}
+    if(e===me)continue;
+    if(isHost)sample(e,ts-(e.off||0)-(e.bot?clamp(tickIv*2.2,150,2500):220));else if(netOff!=null)sample(e,ts-netOff-clamp(netIv*2.2,150,2500))}
   // 카메라 (방 안에 머물도록 제한)
   if(me)_T.set(me.x,5.6,me.z);else _T.set(0,5,4);
   var cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
@@ -1458,7 +1476,9 @@ function enterRoom(){
   $("popNote").textContent=isHost
     ?(useBC?"지금은 같은 브라우저의 탭끼리만 연결되는 시험 모드입니다.":"방장이 이 탭을 닫으면 방이 사라집니다. 탭을 화면에 띄워 두세요.")
     :"방송 주소와 봇 수는 방장만 바꿀 수 있습니다.";
-  if(!simLast){simLast=performance.now();setInterval(tick,110)}
+  if(!simLast){simLast=performance.now();
+    try{var tw=new Worker(URL.createObjectURL(new Blob(["setInterval(function(){postMessage(0)},90)"],{type:"text/javascript"})));tw.onmessage=function(){tick()}}   // 가려진 탭의 타이머는 1초로 늦춰지지만 워커는 아니다
+    catch(_){setInterval(tick,90)}}
   if(location.protocol==="file:")toast("파일로 직접 열면 유튜브가 재생되지 않을 수 있습니다. 웹에 올려서 열어 주세요.",6000);
 }
 var curPeer=null,reconn=false,myName="";
@@ -1483,7 +1503,7 @@ function startHost(name,code,migr){
 function connect(name,code,migr,tries){
   myName=name;roomCode=code;tries=tries||0;if(!migr)status("방에 들어가는 중...");
   (useBC?bcJoin(code):pjJoin(code)).then(function(c){
-    reconn=false;isHost=false;hostConn=c;c.ondata=clientOnData;c.onclose=hostLost;lastSnap=Date.now();c.send({t:"hi",n:name,cos:myCos});
+    reconn=false;isHost=false;netOff=null;lastHts=0;hostConn=c;c.ondata=clientOnData;c.onclose=hostLost;lastSnap=Date.now();c.send({t:"hi",n:name,cos:myCos});
   },function(err){
     var ty=err&&err.type;
     if(ty==="peer-unavailable"||(err&&err.message==="no-room")){                  // 방장이 없다 → 내가 연다
