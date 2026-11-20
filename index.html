@@ -134,6 +134,14 @@
   #vote .row{display:flex;gap:8px}
   #vote .row button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.07);font-weight:800;font-size:14px}
   #vote .row button.on{border-color:var(--amber);color:var(--amber)}
+  #exitp{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:min(340px,calc(100vw - 28px));display:none;padding:14px;border-radius:16px;text-align:center;
+    background:var(--panel);border:1px solid rgba(255,207,90,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:6}
+  #exitp.show{display:block}
+  #exitp b{display:block;font-size:17px;color:#ffcf5a;letter-spacing:.08em}
+  #exitp span{display:block;color:var(--dim);font-size:13px;margin:4px 0 10px}
+  #exitp .row{display:flex;gap:8px}
+  #exitp button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.07);font-weight:800;font-size:14px}
+  #exitp #exGo{background:var(--amber);color:#201600;border-color:var(--amber)}
   #chs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
   #chs button{padding:9px 0;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:13px;font-weight:700}
   #chs button.on{border-color:var(--amber);color:var(--amber)}
@@ -197,6 +205,7 @@
   <div id="toast" class="pill"></div>
   <div id="banner"></div>
   <div id="raid" aria-live="assertive"></div>
+  <div id="exitp"><b>EXIT</b><span>문을 지나 홀에서 나갈까요?</span><div class="row"><button id="exGo">나가기</button><button id="exNo">머물기</button></div></div>
   <div id="vote"><div class="q"><span id="voteQ"></span><small id="voteT"></small></div><div class="bar"><i id="voteBar"></i></div><div class="row"><button id="vA">🐂 황소</button><button id="vB">곰 🐻</button></div></div>
   <div id="pad">
     <div id="joy"><div id="knob"></div></div>
@@ -431,6 +440,27 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     [[-1,0],[1,0],[-1,1],[1,1],[0,1]].forEach(function(p){var m=new THREE.Mesh(new THREE.OctahedronGeometry(.5),new THREE.MeshBasicMaterial({color:new THREE.Color(.6,1.6,2.1),fog:false}));
       m.position.set(p[0]*(SCR.w/2+.5),p[1]?y1+.5:SCR.y0-.5,zb+.7);scene.add(m)});                                                                           // 모서리 수정
     B(0,1.5,RD-.12,RW*2,3,.24,STD);
+    // 뒷벽의 거대한 문: 돌 아치, 안쪽으로 활짝 열린 나무 문짝, 빛나는 출구
+    var WD=0x5a3a22,WD2=0x452b18,dz=RD-.5;
+    for(sx=-1;sx<=1;sx+=2){
+      B(sx*4.1,4.8,dz,1.6,9.6,1.2,STL);B(sx*4.1,.5,dz-.1,2,1,1.5,STD);B(sx*4.1,9.9,dz-.1,2,.6,1.5,ST);                      // 문기둥
+      B(sx*3.15,4.5,RD-2,.45,9,3,WD);B(sx*3.15,8.9,RD-2,.5,.25,3.05,GOLD);                                                  // 열린 문짝
+      for(n=0;n<3;n++){B(sx*2.9,1.6+n*2.9,RD-2,.08,.36,3.05,IRON);B(sx*2.88,1.6+n*2.9,RD-3.2,.1,.2,.2,GOLD);B(sx*2.88,1.6+n*2.9,RD-.9,.1,.2,.2,GOLD)}   // 쇠띠 · 징
+      B(sx*2.86,4.4,RD-3.2,.12,.7,.3,GOLD);B(sx*3.15,4.5,RD-2,.47,8.6,.12,WD2);                                             // 손잡이
+      torch(sx*5.6,5,RD-1.1,1.3);B(sx*5.6,4.8,RD-.6,.16,.16,1,IRON);
+      G(sx*2.78,4.5,RD-.42,.12,9,.12,.9,1.4,2.1);                                                                           // 출구 빛 테두리
+    }
+    B(0,10.4,dz,9.8,1.2,1.2,ST);B(0,11.3,dz,7.2,.8,1.2,STL);B(0,11.95,dz,4.2,.6,1.2,ST);B(0,10.4,dz-.64,1.3,1.5,.12,GOLD);   // 계단식 아치 · 금 쐐기돌
+    G(0,9.06,RD-.42,5.7,.12,.12,.9,1.4,2.1);
+    (function(){
+      var c=document.createElement("canvas"),g,gr,t;c.width=64;c.height=128;g=c.getContext("2d");                          // 출구: 푸른빛이 새어 나온다
+      gr=g.createRadialGradient(32,72,4,32,64,84);gr.addColorStop(0,"#ffffff");gr.addColorStop(.35,"#9fdcff");gr.addColorStop(1,"#2748c8");g.fillStyle=gr;g.fillRect(0,0,64,128);
+      t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;glowPlane(5.6,9,t,1.5,0,4.5,RD-.3,Math.PI);
+      c=document.createElement("canvas");c.width=256;c.height=96;g=c.getContext("2d");g.fillStyle="#0b0810";g.fillRect(0,0,256,96);                                   // EXIT 표지
+      g.strokeStyle="#d9a82e";g.lineWidth=4;g.strokeRect(4,4,248,88);g.fillStyle="#ffcf5a";g.textAlign="center";g.textBaseline="middle";g.font="900 52px "+FONT;g.fillText("EXIT",128,40);
+      g.font="700 17px "+FONT;g.fillStyle="#c9b78a";g.fillText("나가는 문",128,76);
+      t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;B(0,10.4,dz-.72,4.6,1.7,.08,DARK);glowPlane(4.3,1.6,t,1.5,0,10.4,dz-.78,Math.PI);
+    })();
     B(0,.3,zb+1.5,RW*2-4,.6,3,STD);B(0,.75,zb+1.5,8,.3,2.8,ST);B(0,1.05,zb+1.4,6,.3,2.4,STL);B(0,1.21,zb+1.4,2.4,.02,2.4,0xa8262e);                           // 무대 · 공대장 단상
     B(0,.2,zb+3.3,4.4,.4,.6,STL);B(0,.41,zb+3.3,2,.02,.6,0xa8262e);                                                                                           // 계단
     for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.9,z*6*ROOM_K,.12,1.8,.12,IRON);B(i*10*ROOM_K,RH-1.9,z*6*ROOM_K,1.6,.2,1.6,IRON);
@@ -449,7 +479,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_K;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
   }
   if(!RAID){B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS)}
-  B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI);            // 뒤쪽 대형 시세판
+  B(0,RAID?15.1:9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,RAID?15.1:9,RD-.37,Math.PI);            // 뒤쪽 대형 시세판
   if(!RAID){B(0,.3,zb+1.5,24,.6,3,0x5b4334);B(0,.62,zb+2.9,24,.06,.2,BRASS)}                            // 무대
   B(0,y1+.3,zb+.25,SCR.w+1.2,.6,.5,DARK);B(0,SCR.y0-.3,zb+.25,SCR.w+1.2,.6,.5,DARK);
   B(-SCR.w/2-.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);B(SCR.w/2+.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);
@@ -1300,6 +1330,7 @@ function frame(ts){
   $("ytwrap").style.visibility=ok?"visible":"hidden";holeMesh.visible=ok;phMesh.visible=!ok;
   BOSS.hit*=Math.pow(.02,dt);BOSS.hop*=Math.pow(.05,dt);
   bossG.position.y=BOSS.y+Math.abs(Math.sin(time*1.6))*.06+BOSS.hop*Math.abs(Math.sin(time*9))*.7;bossG.rotation.z=Math.sin(time*23)*.14*BOSS.hit;bossG.rotation.y=BOSS.ry+Math.sin(time*.7)*.12;
+  var ez=!!(RAID&&me&&Math.abs(me.x)<2.6&&me.z>RD-2.4);if(ez!==exIn){exIn=ez;$("exitp").classList.toggle("show",ez)}   // 문 앞에 서면 나갈지 묻는다
   if(BOSS.on&&performance.now()>BOSS.until){BOSS.on=0;bossPoof();popSound();bossEnt.say="뽕~";bossEnt.sayT=performance.now()+1300}
   BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
   bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
@@ -1380,6 +1411,10 @@ $("rwText").addEventListener("keydown",function(ev){if(ev.key==="Enter")$("rwGo"
 $("bellGo").onclick=function(){if(!isHost)return;doBell();castAll({t:"bell"});closePops()};
 $("rallyGo").onclick=function(){if(!isHost)return;doRally();castAll({t:"rally"});closePops()};
 $("rcGo").onclick=function(){if(!isHost)return;var q="오늘 장, 황소냐 곰이냐";startVote(q);castAll({t:"rc",q:q});closePops()};
+var exIn=false;
+$("exNo").onclick=function(){$("exitp").classList.remove("show")};
+$("exGo").onclick=function(){try{if(hostConn)hostConn.close();if(curPeer)curPeer.destroy()}catch(_){}                 // 문을 나서면 입장 화면으로 돌아간다
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(_){}location.reload()};
 $("vA").onclick=function(){castVote(1)};$("vB").onclick=function(){castVote(2)};
 $("bSet").onclick=function(){$("link").value=inviteLink();$("pop").classList.toggle("show");$("inv").classList.remove("show")};
 $("ytGo").onclick=function(){var raw=$("yt").value,id=ytId(raw);
