@@ -516,6 +516,11 @@ var spins=[];   // 계속 도는 것 (지구 둘레의 달)
 var stars=[],starMesh=null;function S(x,y,z,sz,r,g,b){stars.push([x,y,z,sz,r,g,b,Math.random()*6.283,.7+Math.random()*2.2])}   // 반짝이는 별: 위치, 크기, 색, 위상, 빠르기
 function buildProps(){
   var i,sx,z,y1=SCR.y0+SCR.h,zb=-RD,WOOD=0x4d3221,BRASS=0xb9903c,MARBLE=0xb7ae9b,DARK=0x0c0d11,GOLD=0xd9a82e;
+  if(BASE||RIVER)(function(){                                                                // 밤하늘: 지평선은 밝고, 위로 갈수록 깊고 어두워진다
+    var c=document.createElement("canvas"),g=c.getContext("2d"),gr,t,m;c.width=4;c.height=256;gr=g.createLinearGradient(0,0,0,256);
+    [[0,"#02050d"],[.16,"#050f20"],[.32,"#0b2138"],[.44,RIVER?"#173a58":"#17405a"],[.5,RIVER?"#245478":"#27607a"],[.56,RIVER?"#173a58":"#17405a"],[1,"#07182a"]].forEach(function(st){gr.addColorStop(st[0],st[1])});
+    g.fillStyle=gr;g.fillRect(0,0,4,256);t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+    m=new THREE.Mesh(new THREE.SphereGeometry(255,24,20),new THREE.MeshBasicMaterial({map:t,side:THREE.BackSide,fog:false,depthWrite:false}));m.renderOrder=-10;scene.add(m)})();
   if(BASE){                                                                                  // 기본 테마: 슈카월드 타이틀의 소품이 떠 있는 메타버스 광장
     var STN=0xb9c4c8,STN2=0x8fa0a6,GRS=0x8ccf6a,MINT=0x79dbc9,CORAL=0xef7667,AMB=0xf2bd56,q,k,gl,br=rng(44),L,d,a,cxs;
     var tkb=function(len,x,y,z,ry){var t=tkTex.clone();t.repeat.set(len/(.5*tkTex.userData.aspect),1);t.needsUpdate=true;tkMore.push(t);glowPlane(len,.5,t,1.9,x,y,z,ry)};   // 전광판 띠 한 줄
@@ -2036,7 +2041,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202245";
+var BUILD="B11202247";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
