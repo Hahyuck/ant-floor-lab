@@ -561,7 +561,7 @@ function buildVox(L){
     for(i=0;i<n;i++)put(an,0,(i+.5)*VS,(i/n)*(i/n)*.12,dark);put(an,0,(n+.5)*VS,.12,dark,1.5);put(an,0,(n+.5)*VS,.12+VS,dark,1.5);
   }
   if(RAID&&L.cls!=null){                                                                     // 직업 복장: 망토 · 머리 장비 · 손에 든 것
-    var cl=L.cls,fc=L.fac,CC=fc?lin(0x2f4fa8):lin(0xa8262e),TRIM=fc?V_GOLD:lin(0xe8dcc0),HEMC=fc?V_GOLD:lin(0x1a1418),HOOD=cl===1?lin(0xf1ece0):fc?lin(0x1c2748):lin(0x2a1a1a),STEEL=fc?lin(0x9aa6bc):lin(0x4a4650),sp,rb=part([0,0,-.04]),lv,nL=cl===3?6:cl===1?11:8,rr,np,q,ang,a2,b2,it;
+    var cl=L.cls,fc=L.fac,CC=fc?lin(0x2f4fa8):lin(0xa8262e),TRIM=fc?V_GOLD:lin(0xe8dcc0),HEMC=fc?V_GOLD:lin(0x1a1418),HOOD=cl===1?lin(0xf1ece0):fc?lin(0x1c2748):lin(0x2a1a1a),STEEL=fc?lin(0x9aa6bc):lin(0x4a4650),sp,rb=part([0,0,-.04]),lv,nL=cl===3?6:8,rr,np,q,ang,a2,b2,it;
     for(lv=0;lv<nL;lv++){rr=.27+lv*.02;np=Math.ceil(6.283*rr/VS);for(q=0;q<np;q++){ang=q/np*6.283;put(rb,Math.cos(ang)*rr,1.02-lv*VS,Math.sin(ang)*rr,lv===nL-1?HEMC:CC)}}
     for(sx=-1;sx<=1;sx+=2){sp=part([sx*.3,1.0,-.02]);for(a2=-1;a2<=1;a2++)for(b2=0;b2<2;b2++)for(q=-1;q<=1;q++)put(sp,a2*VS,b2*VS,q*VS,fc?V_GOLD:STEEL);   // 어깨 갑옷
       if(!fc){put(sp,sx*VS*1.5,VS*2,0,TRIM);put(sp,sx*VS*2.4,VS*3,0,TRIM);put(sp,0,VS*2,VS,TRIM)}}                                                          // 군단은 가시가 돋는다
