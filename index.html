@@ -819,7 +819,8 @@ function placeScreen(){var cy=SCR.y0+SCR.h/2;scrPos[1]=cy;holeMesh.position.y=cy
 /* ───────────── 복셀 개미: 작은 복셀로 빚은 둥근 몸 ───────────── */
 var VS=.085, VMAX=3000, MAXA=132;
 var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
-function setVS(){VS=CUTE?.068:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
+var CS=.85;   // 귀요미 개미 전체 배율: 머리가 커진 만큼 줄여서 기본 개미와 키를 맞춘다
+function setVS(){VS=CUTE?.056:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
 //   // 개미 스타일: 기본 / 귀요미 (내 화면에서만 바뀐다)
 function NV(len){return Math.max(1,Math.round(len/VS))}
 var antMat=new THREE.MeshStandardMaterial({roughness:.72,metalness:0});
@@ -846,7 +847,7 @@ function buildVox(L){
   blob(part([0,.80,-.04]),0,0,0,.22,.23,.2,2.3,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=-NV(.2)&&j<=1)?V_RED:body});
   // 머리: 얼굴을 겉면에 그린다
   var H=part([0,HY,.06],null,4),big=L.eye>1.02,hry=.32*h,ny=Math.ceil(hry/VS);H.h=1;
-  blob(H,0,0,0,.35*h,hry,.32*h,3.2,function(mi,j,k,front){
+  blob(H,0,0,0,.35*h,hry,.32*h,CUTE?2.1:3.2,function(mi,j,k,front){
     if(L.acc==="band"&&j===ny-2)return V_RED;
     if(front&&CUTE){                                                                          // 귀요미 얼굴: 분홍 볼 (눈과 입은 아래에서 고운 복셀로 따로 그린다)
       var fx=(mi+.5)*VS,fy=(j+.5)*VS,gd=Math.max(Math.abs(fx-.34),Math.abs(fy));
@@ -863,10 +864,10 @@ function buildVox(L){
   });
   var top=hry;
   if(CUTE){                                                                                  // 고운 얼굴: 절반 크기 복셀로 둥근 눈동자, 하이라이트, 작은 입
-    var F=part([0,HY,.06],null,4),fu=VS/2,fz=(Math.floor(.32*h/VS-.5)+1)*VS+fu*.5,ER=.14,en=Math.ceil(ER/fu),ex,ey,dx,dy,d2;F.h=1;F.s=.5;
+    var F=part([0,HY,.06],null,4),fu=VS/2,fz=function(x,y){return .32*h*Math.pow(Math.max(.02,1-Math.pow(Math.abs(x)/(.35*h),2.1)-Math.pow(Math.abs(y)/hry,2.1)),1/2.1)+fu*.2},ER=.14,en=Math.ceil(ER/fu),ex,ey,dx,dy,d2;F.h=1;F.s=.5;
     for(sx=-1;sx<=1;sx+=2)for(ex=-en;ex<=en;ex++)for(ey=-en;ey<=en;ey++){dx=ex*fu;dy=ey*fu;d2=dx*dx+dy*dy;if(d2>ER*ER)continue;
-      put(F,sx*.34+dx,dy,fz,(dy>.025&&dx*sx<-.025&&d2<ER*ER*.55)?V_WHITE:(d2>ER*ER*.78?[.22,.12,.1]:V_BLACK),1)}                                               // 눈: 둥근 눈동자, 안쪽 위에 흰 하이라이트
-    for(dx=-.085;dx<=.0851;dx+=fu)put(F,dx,-.238+(Math.abs(dx)>.06?fu:0),fz,[.3,.12,.1],1);                                                                    // 입: 살짝 올라간 선
+      put(F,sx*.34+dx,dy,fz(sx*.34+dx,dy),(dy>.025&&dx*sx<-.025&&d2<ER*ER*.55)?V_WHITE:(d2>ER*ER*.78?[.22,.12,.1]:V_BLACK),1)}                                               // 눈: 둥근 눈동자, 안쪽 위에 흰 하이라이트
+    for(dx=-.085;dx<=.0851;dx+=fu)put(F,dx,-.238+(Math.abs(dx)>.06?fu:0),fz(dx,-.238),[.3,.12,.1],1);                                                                    // 입: 살짝 올라간 선
   }
   if(L.acc==="hat"||L.acc==="helmet"){var hc=L.acc==="hat"?V_HAT:V_HELM;
     blob(H,0,top-.14,0,.35*h+.09,.26,.32*h+.09,2.4,function(mi,j){return j>=0?hc:null});
@@ -939,7 +940,7 @@ AntMesh.prototype.update=function(list,time){
   for(i=0;i<list.length;i++){e=list[i];if(e.deadT>now||(e.blinkT>now&&((now/110|0)&1)===1))sig+=i+1}
   if(sig!==this.sig){this.sig=sig;dirty=true}                                  // 숨은 개미가 바뀌면 색 버퍼를 다시 채운다
   for(i=0;i<list.length;i++){
-    e=list[i];L=e.look;s=L.scale;if(!e.parts)e.parts=buildVox(L);P=e.parts;if(idx+P.n>cap)break;
+    e=list[i];L=e.look;s=L.scale*(CUTE?CS:1);if(!e.parts)e.parts=buildVox(L);P=e.parts;if(idx+P.n>cap)break;
     if(e.deadT>now||(e.blinkT>now&&((now/110|0)&1)===1))continue;      // 자폭 후 숨김·점멸
     hk=e.bigT?bigK(e,now):1;hb=P.hb;
     walk=e.moving?Math.sin(time*11+L.phase):0;bob=e.moving?Math.abs(Math.sin(time*11+L.phase))*.07:Math.sin(time*2+L.phase)*.012;
@@ -961,7 +962,7 @@ AntMesh.prototype.update=function(list,time){
   m.count=idx;m.instanceMatrix.clearUpdateRanges();m.instanceMatrix.addUpdateRange(0,idx*16);m.instanceMatrix.needsUpdate=true;
   if(dirty){m.instanceColor.needsUpdate=true;this.dirty=false}
 };
-function antTop(e){var L=e.look,hh=.32*L.head*(CUTE?1.6:1);return ((CUTE?.92+hh:1.33)+hh+.44*L.ant+.3)*L.scale}
+function antTop(e){var L=e.look,hh=.32*L.head*(CUTE?1.6:1);return ((CUTE?.92+hh:1.33)+hh+.44*L.ant+.3)*L.scale*(CUTE?CS:1)}
 var ants=new AntMesh(MAXA);scene.add(ants.mesh);
 
 /* ───────────── 새우 공대장 (대역 캐릭터) ─────────────
@@ -2041,7 +2042,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202247";
+var BUILD="B11202253";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
