@@ -607,7 +607,11 @@ function buildProps(){
     }
     B(0,tky,RD-.15,RW*2,1.3,.3,DARK);tkw(RW*2-.6,0,tky,RD-.32,Math.PI);                                                                                       // 뒷벽 전광판
     for(sx=-1;sx<=1;sx+=2){dm(.14,SCR.h+1.14,.14,sx*(SCR.w/2+.5),SCR.y0+SCR.h/2,zb+.56,sx*.4,1.15);                                                          // 스크린의 빛나는 테두리: 색이 천천히 흐른다
-      dm(.42,.42,.42,sx*(SCR.w/2+.5),SCR.y0-.5,zb+.6,sx*.4+.5,1.5);dm(.42,.42,.42,sx*(SCR.w/2+.5),y1+.5,zb+.6,sx*.4-.5,1.5)}                                   // 모서리 보석
+      [[SCR.y0-.5,1,.5],[y1+.5,-1,-.5]].forEach(function(c){var cx=sx*(SCR.w/2+.5),cy=c[0],vy=c[1],ph=sx*.4+c[2],dia=function(sz,x,y,k){var m=dm(sz,sz,sz*.6,x,y,zb+.62,ph,k);m.rotation.z=Math.PI/4;return m};
+        dia(.46,cx,cy,1.6);dia(.2,cx,cy,2.6).position.z=zb+.8;                                                                                                     // 모서리 장식: 큰 마름모 보석과 속 알
+        dia(.24,cx-sx*.62,cy,1.35);dia(.14,cx-sx*1.05,cy,1.15);dia(.09,cx-sx*1.36,cy,1);                                                                           // 가로 변을 따라 작아지는 마름모
+        dia(.24,cx,cy+vy*.62,1.35);dia(.14,cx,cy+vy*1.05,1.15);dia(.09,cx,cy+vy*1.36,1);                                                                           // 세로 변을 따라 작아지는 마름모
+        dia(.16,cx+sx*.5,cy-vy*.5,1.3);dm(.05,.5,.05,cx+sx*.5,cy-vy*.5,zb+.6,ph,1).rotation.z=sx*vy*Math.PI/4})}                                   // 모서리 보석
     dm(SCR.w+1.14,.14,.14,0,SCR.y0-.5,zb+.56,.2,1.15);dm(SCR.w+1.14,.14,.14,0,y1+.5,zb+.56,-.2,1.15);
     B(0,.25,zb+1.5,RW*2-6,.5,3,0x513d3a);                                                                                                                     // 무대
     B(-11.3,1.1,zb+3.25,4.4,1.2,.5,0x302733);dm(4.2,.1,.06,-11.3,1.5,zb+3.53,2);B(-12.4,1.78,zb+3.25,1.1,.14,.44,0x15141a);B(-10.2,1.78,zb+3.25,1.1,.14,.44,0x15141a);   // DJ 부스
@@ -2186,7 +2190,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11210031";
+var BUILD="B11210044";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
