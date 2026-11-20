@@ -345,7 +345,7 @@ function pixTex(w,h,fn,rx,ry){
 function jit(base,n,r){var k=(r()-.5)*2*n;return [base[0]+k,base[1]+k,base[2]+k]}
 var texDot=pixTex(4,4,function(x,y,r){var v=215+r()*40;return [v,v,v]});
 // 바닥: 밝은 쪽매널 마루 + 황동 테두리 + 떨어진 주문 전표
-var texFloor,texWall,texWallSide,texGrass,floorPx;
+var texFloor,texWall,texWallSide,texGrass,floorPx,texOut,texFar;
 var DENS=[.5,1,2,3,4,6,8];                                    // 밀도 −3 ~ +3. 가운데(0)가 기본이고 예전 3단계와 같다
 function floorK(){var d=GFX&&GFX.dens;return DENS[d==null?3:d]||3}
 function genTex(){                                   // 테마에 맞는 바닥·벽 텍스처를 다시 만든다
@@ -361,7 +361,7 @@ floorPx=function(i,j,r,FK){                            // 바닥의 한 픽셀 �
     if(z<ZMIN-.6)return jit([28,25,34],4,r);
     return jit((i%4===0||j%4===0)?[24,22,30]:Math.abs(x)<2?[46,41,54]:(((i>>2)+(j>>2))&1?[33,30,40]:[38,34,45]),4,r)}
   if(RIVER){                                                                                 // 한강 고수부지: 잔디밭, 보행로, 자전거 도로
-    if(z<ZMIN-.6)return jit([126,124,118],5,r);
+    if(z<ZMIN-.6&&z>-RD)return jit([126,124,118],5,r);
     var gx=RW-x;                                                                             // 강가에서 떨어진 거리
     if(gx<.9)return jit([156,156,150],4,r);                                                  // 경계석
     if(gx<5){if(Math.abs(gx-3)<.11&&Math.floor(z/1.6+50)%2===0)return [222,190,72];          // 자전거 도로: 붉은 포장에 노란 점선
@@ -604,9 +604,15 @@ function buildProps(){
     var q,k,n,rr=rng(12),d,ang,by,bz,bh,bx,fl2,cols,cz,GRASS=0x3f6f3c;
     var tree=function(x,z,s,pink){B(x,1.2*s,z,.5*s,2.4*s,.5*s,0x5a4030);B(x,3.3*s,z,2.6*s,2*s,2.6*s,pink?0xf0a9c8:0x3f7d45);B(x+.4*s,4.5*s,z-.3*s,1.8*s,1.4*s,1.8*s,pink?0xf8c6dc:0x4c9150)};
     // 땅: 방 밖으로 이어지는 잔디, 강가의 계단식 호안
-    B(-RW-40,-.28,0,80,.5,700,GRASS);B(0,-.28,RD+165,RW*2,.5,330,GRASS);B(0,-.28,-RD-165,RW*2,.5,330,GRASS);
-    B(RW+.9,-.45,0,1.8,.9,700,0x8c8e89);B(RW+2.4,-.95,0,1.4,.9,700,0x7c7e7a);B(RW+3.6,-1.45,0,1.4,.9,700,0x6c6e6a);
-    for(q=-44;q<56;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,0x424a49);B(RW-.3,1.15,0,.3,.14,440,0x695b4b);                                                       // 난간
+    (function(){var KF=Math.min(floorK(),3),PU=2*KF,EX=64,HZ=[30,58,66],W=Math.round((RW*2+EX)*PU),H=Math.round((RD*2+EX*2)*PU),o=EX*PU;   // 방 바닥 무늬(잔디·보행로·자전거 도로)가 밖으로 번지다가 밤빛으로 스르륵 잦아든다
+      if(texOut){texOut.dispose();texFar.dispose()}
+      texOut=pixTex(W,H,function(i,j,r){var x=-RW+(i-o+.5)/PU,z=-RD+(j-o+.5)/PU,c=floorPx(i-o,j-o,r,KF),d=Math.hypot(Math.max(0,-RW-x),Math.max(0,Math.abs(z)-RD)),
+        t=Math.min(1,Math.max(0,(d-16)/38));t=t*t*(3-2*t);t=Math.min(1,Math.max(0,t+(r()-.5)*.3*Math.sin(t*3.1416)));
+        return [c[0]+(HZ[0]-c[0])*t,c[1]+(HZ[1]-c[1])*t,c[2]+(HZ[2]-c[2])*t]});
+      texFar=pixTex(2,2,function(){return HZ});
+      plane(RW*2+EX,RD*2+EX*2,texOut,-EX/2,-.03,0,-Math.PI/2,0).material.roughness=.85;plane(RW*2+500,900,texFar,-250,-.07,0,-Math.PI/2,0).material.roughness=1})();
+    B(RW+2.15,-1.3,0,4.3,.9,700,0x1e3a42);B(RW+.9,-.45,0,1.8,.9,RD*2+70,0x8c8e89);B(RW+2.4,-.95,0,1.4,.9,RD*2+70,0x7c7e7a);B(RW+3.6,-1.45,0,1.4,.9,RD*2+70,0x6c6e6a);
+    for(q=-8;q<18;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,0x424a49);B(RW-.3,1.15,0,.3,.14,RD*2+68,0x695b4b);                                                       // 난간
     // 강물: 물결이 흐르는 셰이더
     (function(){var m=new THREE.Mesh(new THREE.PlaneGeometry(112,700),new THREE.ShaderMaterial({uniforms:{time:{value:0},x0:{value:RW+4}},
       vertexShader:"varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}",
@@ -635,9 +641,9 @@ function buildProps(){
       for(k=0;k<fl2;k++){by=1.2+k*2;if(!dim)B(bx-3.62,by-.72,bz,.22,.16,bw,0x7a8ea4);
         for(n=0;n<cols;n++){cz=bz-(cols-1)*1.2+n*2.4;if(Math.abs(cz-bz)<1.3)continue;
           if(rr()<(dim?.38:.55))G(bx-3.62,by+.1,cz,.12,.95,1.5,(rr()<.7?1.25:.75)*dk,(rr()<.7?1.02:.95)*dk,(rr()<.7?.6:1.15)*dk)}}};
-    for(q=0;q<12;q++)apt(RW+122+(q%2)*7,-242+q*44+((q*13)%7),22,30+((q*7)%4)*6,false);                                                                        // 앞줄
-    for(q=0;q<15;q++)apt(RW+147+rr()*9,-262+q*36+rr()*14,13+rr()*15,36+rr()*30,true);                                                                         // 가운데 줄: 크기가 제각각
-    for(q=0;q<12;q++)apt(RW+174+rr()*9,-250+q*43+rr()*16,15+rr()*15,46+rr()*38,true);                                                                         // 뒷줄: 더 높고 드문드문
+    for(q=0;q<6;q++)apt(RW+122+(q%2)*7,-160+q*62+((q*13)%7),22,30+((q*7)%4)*6,false);                                                                        // 앞줄
+    for(q=0;q<5;q++)apt(RW+147+rr()*9,-140+q*66+rr()*20,13+rr()*15,36+rr()*30,true);                                                                         // 가운데 줄: 크기가 제각각
+    for(q=0;q<3;q++)apt(RW+174+rr()*9,-110+q*95+rr()*24,15+rr()*15,46+rr()*38,true);                                                                         // 뒷줄: 더 높고 드문드문
     for(q=0;q<52;q++){z=-255+q*10;B(RW+112.5,1,z,.14,2.4,.14,0x2a2e33);G(RW+112.3,2.3,z,.42,.28,.42,1.5,1.2,.7)}                                               // 건너편 강변의 작은 가로등
     // 꿈동산 밤하늘: 별, 별자리, 달, 옅은 구름
     for(q=0;q<230;q++){d=75+rr()*70;ang=rr()*6.283;k=rr();S(Math.cos(ang)*d,4+rr()*90,Math.sin(ang)*d,.36,k<.2?1.7:1.35,k<.2?1.25:k<.4?1.2:1.45,k<.4?1.15:1.75)}
@@ -647,13 +653,11 @@ function buildProps(){
         c.position.set(RW+86-5.2,58+cr[1],-52+cr[0]);c.scale.x=.35;scene.add(c)})})();                                             // 보름달
     [[RW+70,40,-110,.30,.24,.42],[RW+95,50,30,.26,.3,.46],[-60,46,-70,.34,.24,.38],[-80,38,60,.24,.3,.44],[20,60,120,.3,.26,.44]].forEach(function(c){
       G(c[0],c[1],c[2],16,3,7,c[3],c[4],c[5]);G(c[0]+6,c[1]+2,c[2]+1,10,3,6,c[3]*1.15,c[4]*1.15,c[5]*1.1);G(c[0]-7,c[1]+1.2,c[2]-1,9,2.4,5,c[3],c[4],c[5])});   // 파스텔 구름
-    // 산책로: 방 밖으로 강을 따라 쭉 이어진다 (경계석, 자전거 도로, 흰 선, 보행로)
-    for(sx=-1;sx<=1;sx+=2){z=sx*(RD+165);B(RW-.45,-.25,z,.9,.5,330,0x9c9c96);B(RW-2.95,-.25,z,4.1,.5,330,0x763e36);B(RW-5.15,-.25,z,.3,.5,330,0xd8d8ce);B(RW-7,-.25,z,3.4,.5,330,0x94948f);B(RW-8.85,-.25,z,.3,.5,330,0x9c9c96);
-      for(q=0;q<60;q++)B(RW-3,-.24,sx*(RD+1.6+q*3.2),.22,.5,.8,0xdebe48);                                                                                     // 자전거 도로의 노란 점선
-      for(q=1;q<16;q++){k=sx*(RD+q*12);B(RW-5.15,2.2,k,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,k,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,k,.5,.3,.5,1.6,1.3,.8)}}           // 길을 따라 이어지는 가로등
-    // 나무: 방 밖 잔디에 크기와 종류를 섞어 흩뿌린다
-    for(q=0;q<150;q++){var tx_,tz_;if(rr()<.55){tx_=-RW-2.5-rr()*80;tz_=-200+rr()*400}else{tx_=-RW+rr()*(RW*2-11);tz_=(rr()<.5?-1:1)*(RD+4+rr()*190)}
-      k=rr();if(k<.12){B(tx_,.35,tz_,1.4+rr(),.7,1.4+rr(),0x356b3c)}else tree(tx_,tz_,.9+rr()*1.1,k<.36)}                                                      // 열에 하나는 낮은 덤불
+    // 산책로: 길 무늬는 바닥 텍스처가 잇고, 가로등만 가까운 데까지 선다
+    for(sx=-1;sx<=1;sx+=2)for(q=1;q<4;q++){k=sx*(RD+q*11);B(RW-5.15,2.2,k,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,k,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,k,.5,.3,.5,1.6,1.3,.8)}
+    // 나무: 방 둘레에 듬성듬성, 멀어질수록 드물게
+    for(q=0;q<34;q++){var tx_,tz_,td_=4+rr()*rr()*40;if(rr()<.5){tx_=-RW-td_;tz_=-RD-20+rr()*(RD*2+40)}else{tx_=-RW-15+rr()*(RW*2+4);tz_=(rr()<.5?-1:1)*(RD+td_)}
+      k=rr();if(k<.15){B(tx_,.35,tz_,1.4+rr(),.7,1.4+rr(),0x356b3c)}else tree(tx_,tz_,.9+rr()*1.1,k<.36)}
     // 양과 강아지: 잔디밭과 바깥 풀밭을 어슬렁거린다 (보는 사람마다 따로 움직인다)
     var mkC=function(sheep,rg){var g=new THREE.Group(),M=function(c){return new THREE.MeshStandardMaterial({color:c,map:texDot,roughness:.9})},legs=[],a,b2,i,x,z,
         P=function(mat,w,h,d,px,py,pz){var m=new THREE.Mesh(boxGeo,mat);m.scale.set(w,h,d);m.position.set(px,py,pz);m.castShadow=true;g.add(m);return m};
@@ -663,7 +667,7 @@ function buildProps(){
         P(a,.12,.22,.1,.17,1.2,.55);P(a,.12,.22,.1,-.17,1.2,.55);P(a,.1,.4,.1,0,.95,-.55);for(i=0;i<4;i++)legs.push(P(a,.13,.4,.13,i%2?.17:-.17,.2,i<2?.38:-.38))}
       x=rg[0]+rr()*(rg[1]-rg[0]);z=rg[2]+rr()*(rg[3]-rg[2]);g.position.set(x,0,z);g.rotation.y=rr()*6.28;scene.add(g);
       critters.push({g:g,legs:legs,x:x,z:z,tx:x,tz:z,wait:rr()*5,sp:sheep?.8:2.1,ph:rr()*6.28,r:rg})};
-    var RIN=[-RW+2.5,RW-10.5,ZMIN+1.5,RD-2],ROUT=[-RW-36,-RW-3,-40,60],RBACK=[-RW+2,RW-11,RD+3,RD+50];
+    var RIN=[-RW+2.5,RW-10.5,ZMIN+1.5,RD-2],ROUT=[-RW-28,-RW-3,-30,30],RBACK=[-RW+2,RW-11,RD+3,RD+28];
     for(q=0;q<3;q++){mkC(true,RIN);mkC(true,ROUT)}mkC(true,RBACK);for(q=0;q<2;q++){mkC(false,RIN);mkC(false,ROUT)}mkC(false,RBACK);
     // 공원: 가로등, 나무, 돗자리, 텐트, 벤치, 야외 시세판
     for(q=0;q<5;q++){z=-RD+5+q*((RD*2-8)/4);B(RW-5.15,2.2,z,.2,4.4,.2,0x2a2e33);B(RW-5.6,4.4,z,1.1,.14,.2,0x2a2e33);G(RW-6.1,4.25,z,.5,.3,.5,1.6,1.3,.8)}
@@ -2077,7 +2081,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202331";
+var BUILD="B11202338";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
