@@ -311,7 +311,7 @@ function lookOf(name){
 
 
 /* ───────────── 방 크기 ───────────── */
-var ROOM_K=1, RW=18*ROOM_K, RD=15*ROOM_K, RH=RAID?19:15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 원래 크기 대비 배율)
+var ROOM_K=1, ROOM_KZ=1.3, RW=18*ROOM_K, RD=15*ROOM_KZ, RH=RAID?19:15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 가로 배율, ROOM_KZ: 세로 깊이 배율)
 var SIDE=(RW+10.4)/2, SIDE_W=RW-10.4;                    // 스크린 옆 벽면의 중심과 너비
 var SCR={w:19.2,h:10.8,y0:RAID?5.2:2.6};       // 뒷벽(z=-RD) 스크린
 var SCREEN_C={x:0,z:-RD};
@@ -348,7 +348,7 @@ var texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
     var rw=j>>2,sm=(j&3)===0||((i+(rw&1)*2)&3)===0,tn=((((i+(rw&1)*2)>>2)*7+rw*13)%5)*5;
     return jit(sm?[62,57,66]:[98+tn,92+tn,100+tn],6,r)}
   if(z<ZMIN-.6)return jit([96,70,50],7,r);
-  var K=ROOM_K,inC=Math.abs(x)<14*K&&z>-10.5*K&&z<7.5*K, edge=inC&&(Math.abs(x)>14*K-.5||z<-10.5*K+.5||z>7.5*K-.5);
+  var K=ROOM_K,KZ=ROOM_KZ,inC=Math.abs(x)<14*K&&z>-10.5*KZ&&z<7.5*KZ, edge=inC&&(Math.abs(x)>14*K-.5||z<-10.5*KZ+.5||z>7.5*KZ-.5);
   if(edge)return jit([196,152,66],10,r);
   if(r()<.014)return [236,234,222];
   var row=j>>1, seam=(i+(row&1)*3)%6===0||(j&1)===1&&false;
@@ -382,8 +382,8 @@ var sc=sun.shadow.camera;sc.left=-RW-4;sc.right=RW+4;sc.top=RD+5;sc.bottom=-RD-5
 var fill=new THREE.DirectionalLight(0xffe0bd,.85);fill.position.set(0,9,RD+13);fill.target.position.set(0,2,-8);scene.add(fill,fill.target);
 var screenLight=new THREE.RectAreaLight(0x9fc6ff,4.2,SCR.w,SCR.h);
 screenLight.position.set(0,SCR.y0+SCR.h/2,-RD+.3);screenLight.lookAt(0,SCR.y0+SCR.h/2,0);scene.add(screenLight);
-var warm=new THREE.PointLight(0xffb060,130,40,2);warm.position.set(-11*ROOM_K,6,9*ROOM_K);scene.add(warm);
-var cool=new THREE.PointLight(0xffd9a0,130,40,2);cool.position.set(11*ROOM_K,6,9*ROOM_K);scene.add(cool);
+var warm=new THREE.PointLight(0xffb060,130,40,2);warm.position.set(-11*ROOM_K,6,9*ROOM_KZ);scene.add(warm);
+var cool=new THREE.PointLight(0xffd9a0,130,40,2);cool.position.set(11*ROOM_K,6,9*ROOM_KZ);scene.add(cool);
 if(RAID){                                                                                    // 횃불빛: 보랏빛 안개 속의 따뜻한 주황
   scene.fog.color.set(0x2a2030);scene.fog.density=.011;renderer.setClearColor(0x0b0810,1);
   hemi.color.set(0x8a7fb0);hemi.groundColor.set(0xd09a6a);hemi.intensity=.7;sun.color.set(0xffe2c4);sun.intensity=1.9;
@@ -456,7 +456,7 @@ function glowPlane(w,h,tex,k,x,y,z,ry){
 /* 고정 소품: 상자 조립 */
 var boxGeo=new THREE.BoxGeometry(1,1,1);
 var props=[], glows=[], fires=[], drift=[], riverT=null, bobs=[];   // bobs: 둥실 떠 있는 소품 (기본 테마)   // drift: 색이 천천히 흐르는 조명 (클럽)
-var POSTS=[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_K]}), STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_K,p[2]]});
+var POSTS=[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ]}), STATUES=(RAID?[[-12.7,-10.4,1],[12.7,-10.4,-1]]:FLOOR?[[-13.2,11.6,1],[13.2,11.6,-1]]:[]).map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_KZ,p[2]]});
 var OBST=POSTS.map(function(p){return [p[0],p[1],2.2]}).concat(STATUES.map(function(p){return [p[0],p[1],RAID?4.4:2.3]}));
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
@@ -507,7 +507,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     for(sx=-1;sx<=1;sx+=2){
       for(q=0;q<3;q++){z=2+q*5.5;B(sx*(RW-5.2),.35,z,8,.3,1.6,PLD);B(sx*(RW-5.2),.7,z,8,.5,1.6,PL);B(sx*(RW-5.2),1.25,z+.65,8,.9,.3,PL);dm(7.6,.06,.06,sx*(RW-5.2),.24,z-.8,q*.7+sx);   // 벨벳 소파 · 발밑 조명
         B(sx*(RW-10.3),.5,z,1.1,.12,1.1,WAL);B(sx*(RW-10.3),.25,z,.3,.5,.3,PLD)}                                                                                          // 작은 테이블
-      for(q=0;q<5;q++){z=-13+q*7;B(sx*(RW-.2),7,z,.2,5,1.6,FELT);B(sx*(RW-.2),7,z+1.8,.2,5,1.6,0x3b323f);B(sx*(RW-.2),7,z+3.6,.2,5,1.6,FELT)}                  // 흡음 패널
+      for(q=0;q<Math.floor((RD*2-4)/7);q++){z=-RD+3+q*7;B(sx*(RW-.2),7,z,.2,5,1.6,FELT);B(sx*(RW-.2),7,z+1.8,.2,5,1.6,0x3b323f);B(sx*(RW-.2),7,z+3.6,.2,5,1.6,FELT)}                  // 흡음 패널
       B(sx*(RW-.15),tky,0,.3,1.3,RD*2,DARK);tkw(RD*2-.6,sx*(RW-.32),tky,0,-sx*Math.PI/2);                                                                     // 옆벽 전광판
       tkl=RW-SCR.w/2-.9;B(sx*(SCR.w/2+.6+tkl/2),tky,zb+.3,tkl,1.3,.6,DARK);tkw(tkl,sx*(SCR.w/2+.6+tkl/2),tky,zb+.62,0);                                      // 스크린 양옆으로 이어지는 전광판
       B(sx*(SCR.w/2+2.4),1.9,zb+1.4,1.6,3,1.6,0x211f26);B(sx*(SCR.w/2+2.4),2.3,zb+2.22,1.1,1.1,.06,0x302c34);                                                 // 무대 스피커
@@ -539,7 +539,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
       B(RW-1.6,7.1,4,3.4,1.9,.2,DARK);glowPlane(3.1,1.55,tex,1.2,RW-1.72,7.1,4,-Math.PI/2);glowPlane(3.1,1.55,tex,1.2,RW-1.6,7.1,4.12,0);
       riverT={col:col,bulb:bulb,cv:cv,tex:tex,t:0,temp:13,near:false}})();
     B(0,.25,zb+1.5,RW*2-6,.5,3,0x65574b);
-    for(z=-5*ROOM_K;z<=5*ROOM_K+.01;z+=10*ROOM_K){B(-(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.2,-(RW-.37),9,z,Math.PI/2)}                          // 왼쪽 벽 시세판
+    for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(-(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.2,-(RW-.37),9,z,Math.PI/2)}                          // 왼쪽 벽 시세판
   }
   if(RAID){                                                                                  // 판타지 공격대 홀
     var ST=0x7d7684,STD=0x5a5462,STL=0x9a93a0,IRON=0x1c1a20,BC=[0xa8262e,0x7d1c26,0x2f4fa8,0x243a80],n,cx,ch,cy;
@@ -550,10 +550,10 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
         B(side*(RW-.28),y+.6,u,.06,.16,w*.5,GOLD);B(side*(RW-.28),y+.1,u,.06,.16,w*.34,GOLD);B(side*(RW-.28),y-.4,u,.06,.16,w*.18,GOLD)}};
     var torch=function(x,y,z,s){B(x,y,z,.4*s,.5*s,.4*s,IRON);G(x,y+.4*s,z,.3*s,.3*s,.3*s,1.9,1,.3);fires.push([x,y+.6*s,z,s])};
     for(sx=-1;sx<=1;sx+=2){
-      for(z=-10*ROOM_K;z<=10*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.6),RH/2,z,1.4,RH,1.4,ST);B(sx*(RW-.6),.6,z,2,1.2,2,STD);B(sx*(RW-.6),RH-.6,z,2,.9,2,STL);   // 돌기둥
+      for(z=-10*ROOM_KZ;z<=10*ROOM_KZ+.01;z+=10*ROOM_KZ){B(sx*(RW-.6),RH/2,z,1.4,RH,1.4,ST);B(sx*(RW-.6),.6,z,2,1.2,2,STD);B(sx*(RW-.6),RH-.6,z,2,.9,2,STL);   // 돌기둥
         B(sx*(RW-1.45),5,z,.5,.14,.14,IRON);torch(sx*(RW-1.8),5.2,z,1)}                                                                                      // 기둥 횃불
       B(sx*(RW-.12),1.5,0,.3,3,RD*2,STD);B(sx*SIDE,1.5,zb+.12,SIDE_W,3,.24,STD);                                                                              // 돌 굽도리
-      for(z=-5*ROOM_K;z<=5*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.14),9,z,.2,5.8,9.3,GOLD);B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);
+      for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(sx*(RW-.14),9,z,.2,5.8,9.3,GOLD);B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);
         glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2);bn(sx,z,15.2,BC[(sx>0?2:0)+(z>0?1:0)])}                                                     // 마법 시세판 · 깃발
       for(n=0;n<(RW>20?3:2);n++)bn(0,sx*(12.3+n*(RW>20?3.5:3)),13.2,BC[(sx>0?2:0)+(n&1)]);                                                                                        // 뒷벽 깃발
       for(n=0;n<Math.floor((RW-12.6)/1.22);n++){cx=sx*(12.4+n*1.22);ch=.6+((n*7+3)%5)*.45;cy=5+((n*5+2)%4)*.55;B(cx,cy,zb+.14,.5,ch,.14,STL);B(cx,cy,zb+.14,.1,ch+.8,.1,STL)}          // 벽에 새긴 캔들 문양
@@ -610,20 +610,20 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
     (function(){var yl=new THREE.PointLight(0x9fb4ff,170,48,2);yl.position.set(0,12,yz);scene.add(yl)})();
     B(0,.3,zb+1.5,RW*2-4,.6,3,STD);B(0,.75,zb+1.5,8,.3,2.8,ST);B(0,1.05,zb+1.4,6,.3,2.4,STL);B(0,1.21,zb+1.4,2.4,.02,2.4,0xa8262e);                           // 무대 · 공대장 단상
     B(0,.2,zb+3.3,4.4,.4,.6,STL);B(0,.41,zb+3.3,2,.02,.6,0xa8262e);                                                                                           // 계단
-    for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.9,z*6*ROOM_K,.12,1.8,.12,IRON);B(i*10*ROOM_K,RH-1.9,z*6*ROOM_K,1.6,.2,1.6,IRON);
-      G(i*10*ROOM_K,RH-1.7,z*6*ROOM_K,1.1,.2,1.1,1.7,1.1,.5)}                                                                                                 // 샹들리에
+    for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.9,z*6*ROOM_KZ,.12,1.8,.12,IRON);B(i*10*ROOM_K,RH-1.9,z*6*ROOM_KZ,1.6,.2,1.6,IRON);
+      G(i*10*ROOM_K,RH-1.7,z*6*ROOM_KZ,1.1,.2,1.1,1.7,1.1,.5)}                                                                                                 // 샹들리에
   }
   if(FLOOR)for(sx=-1;sx<=1;sx+=2){
-    for(z=-10*ROOM_K;z<=10*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.6),RH/2,z,1,RH,1,MARBLE);B(sx*(RW-.6),.5,z,1.4,1,1.4,0x8f8878);B(sx*(RW-.6),RH-.6,z,1.5,.8,1.5,BRASS)}
+    for(z=-10*ROOM_KZ;z<=10*ROOM_KZ+.01;z+=10*ROOM_KZ){B(sx*(RW-.6),RH/2,z,1,RH,1,MARBLE);B(sx*(RW-.6),.5,z,1.4,1,1.4,0x8f8878);B(sx*(RW-.6),RH-.6,z,1.5,.8,1.5,BRASS)}
     B(sx*(RW-.12),2,0,.24,4,RD*2,WOOD);B(sx*(RW-.2),4.07,0,.4,.14,RD*2,BRASS);                 // 목재 징두리
     B(sx*SIDE,2,zb+.12,SIDE_W,4,.24,WOOD);B(sx*SIDE,4.07,zb+.2,SIDE_W,.14,.4,BRASS);
     G(sx*(RW-.3),RH-1.1,0,.12,.12,RD*2-2,2.0,1.55,.9);                                         // 천장 간접등
     B(sx*(RW-.25),5,0,.3,1.1,RD*2-2.6,DARK);glowPlane(RD*2-3,.8,tkSide,2.2,sx*(RW-.42),5,0,-sx*Math.PI/2);   // 옆벽 띠 전광판
-    for(z=-5*ROOM_K;z<=5*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2)}  // 시세판
+    for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2)}  // 시세판
     B(sx*13.4,2.4,zb+1.1,2.4,4.8,1.8,0x191b21);B(sx*13.4,3.6,zb+2.02,1.4,1.4,.1,0x3a3f4b);B(sx*13.4,1.7,zb+2.02,1.8,1.8,.1,0x3a3f4b);  // 스피커
     B(sx*(RW-1.8),.6,zb+4.8,1.3,1.2,1.3,0xb5683c);B(sx*(RW-1.8),1.5,zb+4.8,.3,.8,.3,0x5a3d22);
     B(sx*(RW-1.8),2.4,zb+4.8,1.6,1,1.6,0x3f9a4a);B(sx*(RW-1.8),3.2,zb+4.8,1,.8,1,0x55b85c);B(sx*(RW-2.4),2.9,zb+5.4,.8,.8,.8,0x2f7d3c);
-    for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_K;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
+    for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_KZ;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
   }
   if(FLOOR){B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS)}
   if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*((RW+5.6)/2),7.2,RD-.14,10.6,6.4,.2,GOLD);B(sx*((RW+5.6)/2),7.2,RD-.2,10.1,5.9,.3,DARK);glowPlane(9.6,5.4,bdTex,1.35,sx*((RW+5.6)/2),7.2,RD-.37,Math.PI)}   // 문 양옆 시세판
@@ -654,7 +654,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
   for(i=-1;i<=1;i+=2){B(x+d*.1,4.15,zz+i*.4,.3,.3,.3,BR);B(x+d*.7,2.9,zz+i*.75,1,.34,.34,BR);B(x+d*1.2,3.2,zz+i*.75,.34,.6,.34,BR);B(x,1.2,zz+i*.36,.5,.5,.44,BR)}
   }
   // 천장 조명 (은은하게)
-  if(FLOOR)for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.25,z*6*ROOM_K,3,.5,3,0x1c1f26);G(i*10*ROOM_K,RH-.55,z*6*ROOM_K,2.2,.12,2.2,1.5,1.35,1.1)}
+  if(FLOOR)for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.25,z*6*ROOM_KZ,3,.5,3,0x1c1f26);G(i*10*ROOM_K,RH-.55,z*6*ROOM_KZ,2.2,.12,2.2,1.5,1.35,1.1)}
 })();
 var propMat=new THREE.MeshStandardMaterial({map:texDot,roughness:.8,metalness:0});
 (function(){
@@ -1049,7 +1049,7 @@ function spawnPos(){for(var t=0;t<12;t++){var p=[(Math.random()*2-1)*(XMAX-2),2+
 function blocked(x,z){for(var i=0;i<OBST.length;i++)if(Math.hypot(x-OBST[i][0],z-OBST[i][1])<OBST[i][2]+.4)return true;return false}
 function pickSpot(){
   for(var t=0;t<12;t++){
-    var p=Math.random()<.7?[(Math.random()*2-1)*13*ROOM_K,ZMIN+1.8+Math.random()*16*ROOM_K]:[(Math.random()*2-1)*XMAX,ZMIN+Math.random()*(RD-.8-ZMIN)];
+    var p=Math.random()<.7?[(Math.random()*2-1)*13*ROOM_K,ZMIN+1.8+Math.random()*16*ROOM_KZ]:[(Math.random()*2-1)*XMAX,ZMIN+Math.random()*(RD-.8-ZMIN)];
     if(!blocked(p[0],p[1]))return p}
   return [0,4];
 }
@@ -1229,7 +1229,7 @@ function doDon(id,a){
   var e=ents[id];if(!e)return;var s="🍬 "+e.name+" 님이 설탕 "+a.toLocaleString("ko-KR")+"개 후원!",b=$("banner"),n=a>=1000?14:a>=500?8:4,i;
   b.textContent=s;b.classList.add("show");clearTimeout(donT);donT=setTimeout(function(){b.classList.remove("show")},4500);
   tickerSay(s,"#ffe27a",12000);logSys(s);
-  for(i=0;i<n;i++)spawn((Math.random()*2-1)*13*ROOM_K,.5,(-8+Math.random()*16)*ROOM_K,(Math.random()-.5)*1.5,11+Math.random()*2,(Math.random()-.5)*1.5,.45+Math.random()*1.5,.16,3,2.4,1.2,7,1);
+  for(i=0;i<n;i++)spawn((Math.random()*2-1)*13*ROOM_K,.5,(-8+Math.random()*16)*ROOM_KZ,(Math.random()-.5)*1.5,11+Math.random()*2,(Math.random()-.5)*1.5,.45+Math.random()*1.5,.16,3,2.4,1.2,7,1);
 }
 
 /* ───────────── 공대장 명령: 경보 · 집결 · 준비 확인 ─────────────
