@@ -187,8 +187,8 @@
       <label for="yt">가운데 화면에 틀 유튜브 주소 (실시간 방송·일반 영상). 들어오는 사람 모두 같은 시점을 봅니다</label>
       <div class="row"><input type="text" id="yt" placeholder="비우고 적용하면 방송을 끕니다"><button class="btn" id="ytGo">적용</button></div>
       <div class="row" style="margin-top:6px"><button class="btn alt2" id="ytDef">슈카월드 최신 영상</button><button class="btn alt2" id="ytLive">슈카월드 실시간</button></div>
-      <label for="bots">자리 채우는 봇 개미 수: <b id="botsN">60</b></label>
-      <input type="range" id="bots" min="0" max="100" value="60">
+      <label for="bots">자리 채우는 봇 개미 수: <b id="botsN">80</b></label>
+      <input type="range" id="bots" min="0" max="100" value="80">
     </div>
     <p id="popNote"></p>
     <label>초대 링크</label>
@@ -271,7 +271,8 @@ function lookOf(name){
 
 
 /* ───────────── 방 크기 ───────────── */
-var RW=18, RD=15, RH=15.5;             // 반폭, 반깊이, 높이
+var ROOM_K=1.3, RW=18*ROOM_K, RD=15*ROOM_K, RH=15.5;   // 반폭, 반깊이, 높이 (ROOM_K: 원래 크기 대비 배율)
+var SIDE=(RW+10.4)/2, SIDE_W=RW-10.4;                    // 스크린 옆 벽면의 중심과 너비
 var SCR={w:19.2,h:10.8,y0:2.6};       // 뒷벽(z=-RD) 스크린
 var SCREEN_C={x:0,z:-RD};
 var ZMIN=-RD+3.6;                      // 무대 앞까지만 걸어갈 수 있음
@@ -288,10 +289,10 @@ function pixTex(w,h,fn,rx,ry){
 function jit(base,n,r){var k=(r()-.5)*2*n;return [base[0]+k,base[1]+k,base[2]+k]}
 var texDot=pixTex(4,4,function(x,y,r){var v=215+r()*40;return [v,v,v]});
 // 바닥: 밝은 쪽매널 마루 + 황동 테두리 + 떨어진 주문 전표
-var texFloor=pixTex(RW*4,RD*4,function(i,j,r){
+var texFloor=pixTex(Math.round(RW*4),Math.round(RD*4),function(i,j,r){
   var x=-RW+i*.5+.25,z=-RD+j*.5+.25;
   if(z<ZMIN-.6)return jit([96,70,50],7,r);
-  var inC=Math.abs(x)<14&&z>-10.5&&z<7.5, edge=inC&&(Math.abs(x)>13.5||z<-10||z>7);
+  var K=ROOM_K,inC=Math.abs(x)<14*K&&z>-10.5*K&&z<7.5*K, edge=inC&&(Math.abs(x)>14*K-.5||z<-10.5*K+.5||z>7.5*K-.5);
   if(edge)return jit([196,152,66],10,r);
   if(r()<.014)return [236,234,222];
   var row=j>>1, seam=(i+(row&1)*3)%6===0||(j&1)===1&&false;
@@ -320,12 +321,12 @@ RectAreaLightUniformsLib.init();
 var hemi=new THREE.HemisphereLight(0x6f7c9c,0xc4a57c,.75);scene.add(hemi);
 var sun=new THREE.DirectionalLight(0xfff0dc,2.5);sun.position.set(3,32,6);sun.target.position.set(0,0,-1);
 sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0004;sun.shadow.normalBias=.03;
-var sc=sun.shadow.camera;sc.left=-22;sc.right=22;sc.top=20;sc.bottom=-20;sc.near=4;sc.far=60;scene.add(sun,sun.target);
-var fill=new THREE.DirectionalLight(0xffe0bd,.85);fill.position.set(0,9,28);fill.target.position.set(0,2,-8);scene.add(fill,fill.target);
+var sc=sun.shadow.camera;sc.left=-RW-4;sc.right=RW+4;sc.top=RD+5;sc.bottom=-RD-5;sc.near=4;sc.far=60;scene.add(sun,sun.target);
+var fill=new THREE.DirectionalLight(0xffe0bd,.85);fill.position.set(0,9,RD+13);fill.target.position.set(0,2,-8);scene.add(fill,fill.target);
 var screenLight=new THREE.RectAreaLight(0x9fc6ff,4.2,SCR.w,SCR.h);
 screenLight.position.set(0,SCR.y0+SCR.h/2,-RD+.3);screenLight.lookAt(0,SCR.y0+SCR.h/2,0);scene.add(screenLight);
-var warm=new THREE.PointLight(0xffb060,90,30,2);warm.position.set(-11,6,9);scene.add(warm);
-var cool=new THREE.PointLight(0xffd9a0,90,30,2);cool.position.set(11,6,9);scene.add(cool);
+var warm=new THREE.PointLight(0xffb060,130,40,2);warm.position.set(-11*ROOM_K,6,9*ROOM_K);scene.add(warm);
+var cool=new THREE.PointLight(0xffd9a0,130,40,2);cool.position.set(11*ROOM_K,6,9*ROOM_K);scene.add(cool);
 
 function plane(w,h,tex,x,y,z,rx,ry){
   var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:tex,roughness:.9,metalness:0}));
@@ -383,23 +384,23 @@ function glowPlane(w,h,tex,k,x,y,z,ry){
 /* 고정 소품: 상자 조립 */
 var boxGeo=new THREE.BoxGeometry(1,1,1);
 var props=[], glows=[];
-var POSTS=[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]], STATUES=[[-13.2,11.6,1],[13.2,11.6,-1]];
+var POSTS=[[-9.5,-2.5],[9.5,-2.5],[-9.5,5.5],[9.5,5.5]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_K]}), STATUES=[[-13.2,11.6,1],[13.2,11.6,-1]].map(function(p){return [p[0]*ROOM_K,p[1]*ROOM_K,p[2]]});
 var OBST=POSTS.map(function(p){return [p[0],p[1],2.2]}).concat(STATUES.map(function(p){return [p[0],p[1],2.3]}));
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
 (function(){
   var i,sx,z,y1=SCR.y0+SCR.h,zb=-RD,WOOD=0x4d3221,BRASS=0xb9903c,MARBLE=0xb7ae9b,DARK=0x0c0d11,GOLD=0xd9a82e;
   for(sx=-1;sx<=1;sx+=2){
-    for(z=-10;z<=10;z+=10){B(sx*(RW-.6),RH/2,z,1,RH,1,MARBLE);B(sx*(RW-.6),.5,z,1.4,1,1.4,0x8f8878);B(sx*(RW-.6),RH-.6,z,1.5,.8,1.5,BRASS)}
+    for(z=-10*ROOM_K;z<=10*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.6),RH/2,z,1,RH,1,MARBLE);B(sx*(RW-.6),.5,z,1.4,1,1.4,0x8f8878);B(sx*(RW-.6),RH-.6,z,1.5,.8,1.5,BRASS)}
     B(sx*(RW-.12),2,0,.24,4,RD*2,WOOD);B(sx*(RW-.2),4.07,0,.4,.14,RD*2,BRASS);                 // 목재 징두리
-    B(sx*14.2,2,zb+.12,7.6,4,.24,WOOD);B(sx*14.2,4.07,zb+.2,7.6,.14,.4,BRASS);
+    B(sx*SIDE,2,zb+.12,SIDE_W,4,.24,WOOD);B(sx*SIDE,4.07,zb+.2,SIDE_W,.14,.4,BRASS);
     G(sx*(RW-.3),RH-1.1,0,.12,.12,RD*2-2,2.0,1.55,.9);                                         // 천장 간접등
     B(sx*(RW-.25),5,0,.3,1.1,RD*2-2.6,DARK);glowPlane(RD*2-3,.8,tkSide,2.2,sx*(RW-.42),5,0,-sx*Math.PI/2);   // 옆벽 띠 전광판
-    for(z=-5;z<=5;z+=10){B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2)}  // 시세판
+    for(z=-5*ROOM_K;z<=5*ROOM_K+.01;z+=10*ROOM_K){B(sx*(RW-.2),9,z,.3,5.3,8.8,DARK);glowPlane(8,4.5,bdTex,1.35,sx*(RW-.37),9,z,-sx*Math.PI/2)}  // 시세판
     B(sx*13.4,2.4,zb+1.1,2.4,4.8,1.8,0x191b21);B(sx*13.4,3.6,zb+2.02,1.4,1.4,.1,0x3a3f4b);B(sx*13.4,1.7,zb+2.02,1.8,1.8,.1,0x3a3f4b);  // 스피커
-    B(sx*16.2,.6,zb+4.8,1.3,1.2,1.3,0xb5683c);B(sx*16.2,1.5,zb+4.8,.3,.8,.3,0x5a3d22);
-    B(sx*16.2,2.4,zb+4.8,1.6,1,1.6,0x3f9a4a);B(sx*16.2,3.2,zb+4.8,1,.8,1,0x55b85c);B(sx*15.6,2.9,zb+5.4,.8,.8,.8,0x2f7d3c);
-    for(i=-1;i<=1;i+=2){var bz=i*5;B(sx*16.7,.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*16.7,.3,bz-1.8,1,.6,.3,0x22252c);B(sx*16.7,.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
+    B(sx*(RW-1.8),.6,zb+4.8,1.3,1.2,1.3,0xb5683c);B(sx*(RW-1.8),1.5,zb+4.8,.3,.8,.3,0x5a3d22);
+    B(sx*(RW-1.8),2.4,zb+4.8,1.6,1,1.6,0x3f9a4a);B(sx*(RW-1.8),3.2,zb+4.8,1,.8,1,0x55b85c);B(sx*(RW-2.4),2.9,zb+5.4,.8,.8,.8,0x2f7d3c);
+    for(i=-1;i<=1;i+=2){var bz=i*5*ROOM_K;B(sx*(RW-1.3),.75,bz,1.3,.3,4.4,0x2f6a4f);B(sx*(RW-1.3),.3,bz-1.8,1,.6,.3,0x22252c);B(sx*(RW-1.3),.3,bz+1.8,1,.6,.3,0x22252c)}  // 초록 가죽 벤치
   }
   B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS);
   B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI);            // 뒤쪽 대형 시세판
@@ -408,11 +409,11 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
   B(-SCR.w/2-.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);B(SCR.w/2+.3,SCR.y0+SCR.h/2,zb+.25,.6,SCR.h,.5,DARK);
   B(0,y1+1.25,zb+.3,SCR.w+1.2,1.3,.6,DARK);
   // 개장 종 발코니 (왼쪽) · 시계 (오른쪽)
-  B(-14.2,6.4,zb+1.3,5.2,.3,2.6,WOOD);B(-14.2,7,zb+2.5,5.2,.12,.12,BRASS);
-  for(i=-2;i<=2;i++)B(-14.2+i*1.25,6.75,zb+2.5,.12,.6,.12,BRASS);
-  B(-14.2,10.6,zb+.9,.3,.3,1.6,DARK);B(-14.2,10.2,zb+1.5,.14,.6,.14,DARK);
-  B(-14.2,9.75,zb+1.5,.7,.3,.7,GOLD);B(-14.2,9.3,zb+1.5,1.1,.6,1.1,GOLD);B(-14.2,8.85,zb+1.5,1.5,.3,1.5,GOLD);B(-14.2,8.6,zb+1.5,.24,.3,.24,0x3a2a12);
-  B(14.2,9.4,zb+.25,4.8,2.2,.4,DARK);glowPlane(4.2,1.6,ckTex,1.5,14.2,9.4,zb+.47,0);
+  B(-SIDE,6.4,zb+1.3,5.2,.3,2.6,WOOD);B(-SIDE,7,zb+2.5,5.2,.12,.12,BRASS);
+  for(i=-2;i<=2;i++)B(-SIDE+i*1.25,6.75,zb+2.5,.12,.6,.12,BRASS);
+  B(-SIDE,10.6,zb+.9,.3,.3,1.6,DARK);B(-SIDE,10.2,zb+1.5,.14,.6,.14,DARK);
+  B(-SIDE,9.75,zb+1.5,.7,.3,.7,GOLD);B(-SIDE,9.3,zb+1.5,1.1,.6,1.1,GOLD);B(-SIDE,8.85,zb+1.5,1.5,.3,1.5,GOLD);B(-SIDE,8.6,zb+1.5,.24,.3,.24,0x3a2a12);
+  B(SIDE,9.4,zb+.25,4.8,2.2,.4,DARK);glowPlane(4.2,1.6,ckTex,1.5,SIDE,9.4,zb+.47,0);
   // 거래 포스트
   for(i=0;i<POSTS.length;i++){var px=POSTS[i][0],pz=POSTS[i][1];
     B(px,.55,pz,2.6,1.1,2.6,0x5c3c27);B(px,1.16,pz,3,.12,3,0x23262c);B(px,2.2,pz,.8,2,.8,0x1b1d23);B(px,3.55,pz,2.5,1.1,2.5,DARK);B(px,4.16,pz,2.7,.12,2.7,BRASS);
@@ -427,7 +428,7 @@ function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
   B(x,2.2,zz,1.3,2,1.2,BR);B(x+d*.15,3.6,zz,1,.9,1,BR);B(x+d*.7,3.5,zz,.5,.4,.5,0x9a6c44);
   for(i=-1;i<=1;i+=2){B(x+d*.1,4.15,zz+i*.4,.3,.3,.3,BR);B(x+d*.7,2.9,zz+i*.75,1,.34,.34,BR);B(x+d*1.2,3.2,zz+i*.75,.34,.6,.34,BR);B(x,1.2,zz+i*.36,.5,.5,.44,BR)}
   // 천장 조명 (은은하게)
-  for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10,RH-.25,z*6,3,.5,3,0x1c1f26);G(i*10,RH-.55,z*6,2.2,.12,2.2,1.5,1.35,1.1)}
+  for(i=-1;i<=1;i++)for(z=-1;z<=1;z+=2){B(i*10*ROOM_K,RH-.25,z*6*ROOM_K,3,.5,3,0x1c1f26);G(i*10*ROOM_K,RH-.55,z*6*ROOM_K,2.2,.12,2.2,1.5,1.35,1.1)}
 })();
 var propMat=new THREE.MeshStandardMaterial({map:texDot,roughness:.8,metalness:0});
 (function(){
@@ -692,11 +693,11 @@ function drawPreview(t){
 }
 
 /* ───────────── 상태 ───────────── */
-var XMAX=15.2;
+var XMAX=RW-2.8;
 var DEFAULT_VIDEO="list:UUsJ6RuBiTVWRX156FVbeaGg";   // 슈카월드 채널 업로드 목록(최신 영상부터)
 var ents={}, order=[], me=null, myId=null, isHost=false, roomCode="", video="";
 var cam={yaw:0,pitch:.07,dist:14}, keys={}, moveTarget=null, autoWalk=false, lastInput=0;
-var botTarget=60, botSeq=0, pidSeq=0;
+var botTarget=80, botSeq=0, pidSeq=0;
 function addEnt(id,name,bot,x,z,r,cos){
   var e={id:id,name:name,bot:!!bot,x:x,z:z,r:r,tx:x,tz:z,tr:r,y:0,vy:0,moving:false,look:lookOf(name),parts:null,say:"",sayT:0,ai:null,cos:cos|0,vote:0,party:hashStr("pt"+name)%4};
   ents[id]=e;order=Object.keys(ents);ants.dirty=true;updateCount();return e;
@@ -711,7 +712,7 @@ function spawnPos(){for(var t=0;t<12;t++){var p=[(Math.random()*2-1)*(XMAX-2),2+
 function blocked(x,z){for(var i=0;i<OBST.length;i++)if(Math.hypot(x-OBST[i][0],z-OBST[i][1])<OBST[i][2]+.4)return true;return false}
 function pickSpot(){
   for(var t=0;t<12;t++){
-    var p=Math.random()<.7?[(Math.random()*2-1)*13,-9.6+Math.random()*16]:[(Math.random()*2-1)*XMAX,ZMIN+Math.random()*(RD-.8-ZMIN)];
+    var p=Math.random()<.7?[(Math.random()*2-1)*13*ROOM_K,ZMIN+1.8+Math.random()*16*ROOM_K]:[(Math.random()*2-1)*XMAX,ZMIN+Math.random()*(RD-.8-ZMIN)];
     if(!blocked(p[0],p[1]))return p}
   return [0,4];
 }
@@ -875,7 +876,7 @@ function doDon(id,a){
   var e=ents[id];if(!e)return;var s="🍬 "+e.name+" 님이 설탕 "+a.toLocaleString("ko-KR")+"개 후원!",b=$("banner"),n=a>=1000?14:a>=500?8:4,i;
   b.textContent=s;b.classList.add("show");clearTimeout(donT);donT=setTimeout(function(){b.classList.remove("show")},4500);
   tickerSay(s,"#ffe27a",12000);logSys(s);
-  for(i=0;i<n;i++)spawn((Math.random()*2-1)*13,.5,-8+Math.random()*16,(Math.random()-.5)*1.5,11+Math.random()*2,(Math.random()-.5)*1.5,.45+Math.random()*1.5,.16,3,2.4,1.2,7,1);
+  for(i=0;i<n;i++)spawn((Math.random()*2-1)*13*ROOM_K,.5,(-8+Math.random()*16)*ROOM_K,(Math.random()-.5)*1.5,11+Math.random()*2,(Math.random()-.5)*1.5,.45+Math.random()*1.5,.16,3,2.4,1.2,7,1);
 }
 
 /* ───────────── 공대장 명령: 경보 · 집결 · 준비 확인 ─────────────
@@ -893,8 +894,8 @@ function bellSound(){try{actx=actx||new (window.AudioContext||window.webkitAudio
   for(var n=0;n<3;n++)[880,1318,1760,2637].forEach(function(f,j){var o=actx.createOscillator(),g=actx.createGain(),t=t0+n*.55;o.type="sine";o.frequency.value=f;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16/(j+1),t+.01);g.gain.exponentialRampToValueAtTime(.0005,t+1.4);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+1.5)})}catch(_){}}
 function doBell(){                                                                                          // 개장 종: 종소리와 함께 전표가 흩날린다
-  raidWarn("🔔 개장! 오늘도 성투하세요",4500);bellSound();flash(-14.2,9.3,-RD+1.5,3,2.4,1,200);
-  for(var i=0;i<260;i++)spawn((Math.random()*2-1)*15,RH-1-Math.random()*3,-10+Math.random()*22,(Math.random()-.5)*1.5,-.6-Math.random(),(Math.random()-.5)*1.5,3+Math.random()*2.5,.13,1.5,1.45,1.3,1.2,0);
+  raidWarn("🔔 개장! 오늘도 성투하세요",4500);bellSound();flash(-SIDE,9.3,-RD+1.5,3,2.4,1,200);
+  for(var i=0;i<400;i++)spawn((Math.random()*2-1)*(RW-3),RH-1-Math.random()*3,-RD+5+Math.random()*(RD*2-8),(Math.random()-.5)*1.5,-.6-Math.random(),(Math.random()-.5)*1.5,3+Math.random()*2.5,.13,1.5,1.45,1.3,1.2,0);
 }
 function startVote(q){
   voteEnd=performance.now()+20000;for(var i=0;i<order.length;i++)ents[order[i]].vote=0;
@@ -1233,7 +1234,7 @@ addEventListener("blur",function(){keys={}});
       if(_ray.ray.intersectPlane(_floor,_hit)&&Math.abs(_hit.x)<RW+3&&Math.abs(_hit.z)<RD+3){moveTarget=[clamp(_hit.x,-XMAX,XMAX),clamp(_hit.z,ZMIN,RD-.8)];lastInput=performance.now();if(me.ai)me.ai.wait=0}}
     down=null});
   cv.addEventListener("pointercancel",function(){down=null});
-  cv.addEventListener("wheel",function(ev){ev.preventDefault();cam.dist=clamp(cam.dist*(ev.deltaY>0?1.1:.9),4,34)},{passive:false});
+  cv.addEventListener("wheel",function(ev){ev.preventDefault();cam.dist=clamp(cam.dist*(ev.deltaY>0?1.1:.9),4,44)},{passive:false});
 })();
 var toastT=0;
 function toast(s,ms){var t=$("toast");t.textContent=s;t.classList.add("show");clearTimeout(toastT);if((ms||2600)<1e8)toastT=setTimeout(function(){t.classList.remove("show")},ms||2600)}
