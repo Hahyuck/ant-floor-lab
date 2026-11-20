@@ -429,7 +429,7 @@ if(CLUB){                                                                       
   scene.fog.color.set(0x211e2a);scene.fog.density=.006;renderer.setClearColor(0x0a090e,1);
   hemi.color.set(0x858199);hemi.groundColor.set(0x382c35);hemi.intensity=.55;sun.color.set(0xffdbbc);sun.intensity=1.1;fill.intensity=.5;warm.intensity=cool.intensity=170}
 if(RIVER){                                                                                   // 밤 강변: 서늘한 하늘빛에 따뜻한 전구
-  scene.fog.color.set(0x16304a);scene.fog.density=.0024;renderer.setClearColor(0x0d2038,1);
+  scene.fog.color.set(0x1f4a6b);scene.fog.density=.0046;renderer.setClearColor(0x0d2038,1);
   hemi.color.set(0x889faf);hemi.groundColor.set(0x47413b);hemi.intensity=.95;sun.color.set(0xf2d8b4);sun.intensity=1.8;
   warm.color.set(0xffc27a);cool.color.set(0xffc27a);warm.intensity=cool.intensity=120}
 if(BASE){                                                                                    // 밤하늘 아래 밝고 가벼운 광장
@@ -603,11 +603,11 @@ function buildProps(){
     var q,k,n,rr=rng(12),d,ang,by,bz,bh,bx,fl2,cols,cz,GRASS=0x3f6f3c;
     var tree=function(x,z,s,pink){B(x,1.2*s,z,.5*s,2.4*s,.5*s,0x5a4030);B(x,3.3*s,z,2.6*s,2*s,2.6*s,pink?0xf0a9c8:0x3f7d45);B(x+.4*s,4.5*s,z-.3*s,1.8*s,1.4*s,1.8*s,pink?0xf8c6dc:0x4c9150)};
     // 땅: 방 밖으로 이어지는 잔디, 강가의 계단식 호안
-    B(-RW-40,-.28,0,80,.5,RD*2+200,GRASS);B(0,-.28,RD+50,RW*2,.5,100,GRASS);B(0,-.28,-RD-50,RW*2,.5,100,GRASS);
-    B(RW+.9,-.45,0,1.8,.9,RD*2+200,0x8c8e89);B(RW+2.4,-.95,0,1.4,.9,RD*2+200,0x7c7e7a);B(RW+3.6,-1.45,0,1.4,.9,RD*2+200,0x6c6e6a);
+    B(-RW-40,-.28,0,80,.5,700,GRASS);B(0,-.28,RD+165,RW*2,.5,330,GRASS);B(0,-.28,-RD-165,RW*2,.5,330,GRASS);
+    B(RW+.9,-.45,0,1.8,.9,700,0x8c8e89);B(RW+2.4,-.95,0,1.4,.9,700,0x7c7e7a);B(RW+3.6,-1.45,0,1.4,.9,700,0x6c6e6a);
     for(q=0;q<10;q++)B(RW-.3,.55,-RD+2+q*4.1,.25,1.1,.25,0x424a49);B(RW-.3,1.15,0,.3,.14,RD*2,0x695b4b);                                                       // 난간
     // 강물: 물결이 흐르는 셰이더
-    (function(){var m=new THREE.Mesh(new THREE.PlaneGeometry(112,340),new THREE.ShaderMaterial({uniforms:{time:{value:0},x0:{value:RW+4}},
+    (function(){var m=new THREE.Mesh(new THREE.PlaneGeometry(112,700),new THREE.ShaderMaterial({uniforms:{time:{value:0},x0:{value:RW+4}},
       vertexShader:"varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}",
       fragmentShader:[
         "uniform float time,x0;varying vec3 vW;",
@@ -620,18 +620,24 @@ function buildProps(){
         " float col=smoothstep(0.52,0.9,n(vec2(p.y*0.42,7.0)));float sh=0.5+0.5*sin(p.x*1.1+w*9.0+time*1.8);",
         " c+=col*sh*vec3(1.0,0.76,0.42)*0.22*smoothstep(0.12,0.85,d);",                                                           // 건너편 불빛이 길게 비친다
         " c+=exp(-pow((p.y+52.0)/9.0,2.0))*crest*vec3(0.85,0.9,1.0)*0.55;",                                                       // 달빛 윤슬
+        " c=mix(c,vec3(0.035,0.11,0.2),smoothstep(110.0,300.0,abs(vW.z)));",                                                     // 멀어질수록 지평선 색으로 스르륵 녹아든다
         " gl_FragColor=vec4(c,1.0);",
         " #include <tonemapping_fragment>",
         " #include <colorspace_fragment>",
         "}"].join("\n")}));
       m.rotation.x=-Math.PI/2;m.position.set(RW+4+56,-1.7,0);scene.add(m);riverMat=m.material})();
-    // 건너편: 강둑과 아파트 단지
-    B(RW+130,-1.3,0,36,1.2,340,0x2e4a3c);B(RW+113,-.9,0,2.5,1.8,340,0x55605c);
-    for(q=0;q<7;q++){bz=-132+q*44+((q*13)%7);bh=30+((q*7)%4)*6;bx=RW+122+(q%2)*7;cols=9;fl2=Math.floor((bh-3)/2);
-      B(bx,bh/2-1,bz,7,bh,22,q%2?0x51657a:0x5b6f84);B(bx-3.6,bh/2-1,bz,.3,bh,2.2,0x3a4a5a);                                                                     // 판상형 몸체 · 계단실
-      B(bx,bh-.4,bz-5,4,1.4,3,0x47596b);B(bx,bh-.2,bz+6,3,1,2.4,0x47596b);B(bx-3.56,bh-1.7,bz,.2,1.1,22,0x8fa3b8);                                             // 옥탑 · 옥상 띠
-      for(k=0;k<fl2;k++){by=1.2+k*2;B(bx-3.62,by-.72,bz,.22,.16,22,0x7a8ea4);                                                                                  // 층마다 발코니 난간
-        for(n=0;n<cols;n++){cz=bz-9.6+n*2.4;if(Math.abs(cz-bz)<1.3)continue;if(rr()<.55)G(bx-3.62,by+.1,cz,.12,.95,1.5,rr()<.7?1.25:.75,rr()<.7?1.02:.95,rr()<.7?.6:1.15)}}}
+    // 건너편: 강둑, 가로등, 겹겹이 선 아파트 단지
+    B(RW+160,-1.3,0,96,1.2,700,0x2e4a3c);B(RW+113,-.9,0,2.5,1.8,700,0x55605c);
+    var apt=function(bx,bz,bw,bh,dim){var cols=Math.floor(bw/2.4),fl2=Math.floor((bh-3)/2),k,n,cz,by,dk=dim?.55:1;                                             // dim: 뒤쪽 겹의 아파트는 어둡고 창도 흐리다
+      B(bx,bh/2-1,bz,7,bh,bw,rr()<.5?(dim?0x3f5266:0x51657a):(dim?0x47596c:0x5b6f84));B(bx-3.6,bh/2-1,bz,.3,bh,2.2,0x3a4a5a);
+      B(bx,bh-.4,bz-bw*.22,4,1.4,3,0x47596b);B(bx-3.56,bh-1.7,bz,.2,1.1,bw,dim?0x6f8297:0x8fa3b8);
+      for(k=0;k<fl2;k++){by=1.2+k*2;if(!dim)B(bx-3.62,by-.72,bz,.22,.16,bw,0x7a8ea4);
+        for(n=0;n<cols;n++){cz=bz-(cols-1)*1.2+n*2.4;if(Math.abs(cz-bz)<1.3)continue;
+          if(rr()<(dim?.38:.55))G(bx-3.62,by+.1,cz,.12,.95,1.5,(rr()<.7?1.25:.75)*dk,(rr()<.7?1.02:.95)*dk,(rr()<.7?.6:1.15)*dk)}}};
+    for(q=0;q<12;q++)apt(RW+122+(q%2)*7,-242+q*44+((q*13)%7),22,30+((q*7)%4)*6,false);                                                                        // 앞줄
+    for(q=0;q<15;q++)apt(RW+147+rr()*9,-262+q*36+rr()*14,13+rr()*15,36+rr()*30,true);                                                                         // 가운데 줄: 크기가 제각각
+    for(q=0;q<12;q++)apt(RW+174+rr()*9,-250+q*43+rr()*16,15+rr()*15,46+rr()*38,true);                                                                         // 뒷줄: 더 높고 드문드문
+    for(q=0;q<52;q++){z=-255+q*10;B(RW+112.5,1,z,.14,2.4,.14,0x2a2e33);G(RW+112.3,2.3,z,.42,.28,.42,1.5,1.2,.7)}                                               // 건너편 강변의 작은 가로등
     // 꿈동산 밤하늘: 별, 별자리, 달, 옅은 구름
     for(q=0;q<230;q++){d=75+rr()*70;ang=rr()*6.283;k=rr();S(Math.cos(ang)*d,4+rr()*90,Math.sin(ang)*d,.36,k<.2?1.7:1.35,k<.2?1.25:k<.4?1.2:1.45,k<.4?1.15:1.75)}
     [[60,70,-40,74,82,-52],[74,82,-52,90,76,-60],[90,76,-60,96,88,-78],[-70,64,20,-82,74,34],[-82,74,34,-78,86,52]].forEach(function(L){for(k=1;k<9;k++)G(L[0]+(L[3]-L[0])*k/9,L[1]+(L[4]-L[1])*k/9,L[2]+(L[5]-L[2])*k/9,.14,.14,.14,.6,.8,1)});
@@ -2048,7 +2054,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202313";
+var BUILD="B11202323";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
