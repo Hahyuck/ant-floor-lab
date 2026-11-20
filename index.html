@@ -512,6 +512,7 @@ OBST=(BASE||RIVER?[]:POSTS.map(function(p){return [p[0],p[1],2.2]})).concat(STAT
 setLayout();
 function B(x,y,z,w,h,d,c){props.push([x,y,z,w,h,d,c])}
 function G(x,y,z,w,h,d,r,g,b){glows.push([x,y,z,w,h,d,r,g,b])}
+var spins=[];   // 계속 도는 것 (지구 둘레의 달)
 var stars=[],starMesh=null;function S(x,y,z,sz,r,g,b){stars.push([x,y,z,sz,r,g,b,Math.random()*6.283,.7+Math.random()*2.2])}   // 반짝이는 별: 위치, 크기, 색, 위상, 빠르기
 function buildProps(){
   var i,sx,z,y1=SCR.y0+SCR.h,zb=-RD,WOOD=0x4d3221,BRASS=0xb9903c,MARBLE=0xb7ae9b,DARK=0x0c0d11,GOLD=0xd9a82e;
@@ -545,7 +546,10 @@ function buildProps(){
     for(q=0;q<7;q++){gl=glowPlane(2.6,3.4,texDot,.5,(br()<.5?-1:1)*(RW+2+br()*6),5+br()*7,-14+br()*30,br()*3);gl.material.transparent=true;gl.material.opacity=.22;gl.material.color.setRGB(.5,1.3,1.2)}   // 홀로그램 패널
     // 슈카월드 타이틀의 소품들
     L=[];for(i=-4;i<4;i++)for(q=-4;q<4;q++)for(k=-4;k<4;k++){d=Math.hypot(i+.5,q+.5,k+.5);if(d<4&&d>3)L.push([(i+.5)*.42,(q+.5)*.42,(k+.5)*.42,.42,.42,.42,br()<.36?0x6fc46a:0x4f8fd0])}
-    grp(L,-16.8,11.2,zb+3,0,1);                                                                                                                                   // 지구본
+    (function(){var earth=grp(L,-16.8,11.2,zb+3,0,1),M=[],a,b,c,d2,tilt=new THREE.Group(),spin=new THREE.Group(),mm,t=new THREE.Matrix4(),col=new THREE.Color(),u,pp;   // 지구본과 그 둘레를 도는 달
+      for(a=-3;a<3;a++)for(b=-3;b<3;b++)for(c=-3;c<3;c++){d2=Math.hypot(a+.5,b+.5,c+.5);if(d2<3&&d2>2)M.push([(a+.5)*.22,(b+.5)*.22,(c+.5)*.22,((a*7+b*13+c*5)&7)===0?0xb9b39a:0xeee9d2])}
+      mm=new THREE.InstancedMesh(boxGeo,bmat,M.length);for(u=0;u<M.length;u++){pp=M[u];t.makeScale(.22,.22,.22).setPosition(pp[0]+3.1,pp[1],pp[2]);mm.setMatrixAt(u,t);mm.setColorAt(u,col.set(pp[3]))}
+      mm.castShadow=true;spin.add(mm);tilt.rotation.z=.38;tilt.add(spin);earth.add(tilt);spins.push(spin)})();                                                                                                                                   // 지구본
     L=[];[[-1.3,2],[0,4],[1.3,6]].forEach(function(st,si){for(q=0;q<st[1];q++)L.push([st[0],q*.27,(si-1)*.35,1.15,.22,1.15,q%2?0xe0a53c:0xf2bd56])});grp(L,-12.9,12.6,zb+2.4,1.3,1);   // 동전 탑
     grp([[0,0,0,2.5,.42,1.7,0xd9584c],[.06,0,.04,2.3,.3,1.6,0xf6e9ce],[.1,.5,-.05,2.4,.42,1.6,0x4f8f96],[.16,.5,-.02,2.2,.3,1.5,0xf6e9ce],[-.05,1,0,2.3,.42,1.6,0x6aa05a],[.02,1,.04,2.1,.3,1.5,0xf6e9ce]],-17.6,6.4,zb+3.2,2.1,1);   // 책
     L=[[0,0,.6,3.1,.16,2,0xaecbc7],[0,1.1,-.42,3.1,2.1,.14,0x8fa6a8],[0,1.1,-.34,2.8,1.8,.06,0x1c2f3a]];
@@ -1224,7 +1228,7 @@ function buildWorld(){
   if(worldRoot){scene.remove(worldRoot);worldRoot.traverse(function(o){if(o.isInstancedMesh)o.dispose();if(o.geometry&&o.geometry!==boxGeo)o.geometry.dispose();
     if(o.material&&o.material!==antMat&&o.material!==propMat&&o.material.dispose)o.material.dispose()})}
   worldRoot=new THREE.Group();scene.add=function(){worldRoot.add.apply(worldRoot,arguments);return scene};          // 짓는 동안 scene.add는 worldRoot로 들어간다
-  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;riverMat=null;stars.length=0;starMesh=null;
+  try{props.length=0;glows.length=0;fires.length=0;drift.length=0;drift.ball=null;bobs.length=0;beams.length=0;tkMore.length=0;riverT=null;riverMat=null;stars.length=0;starMesh=null;spins.length=0;
     setDims();genTex();setLayout();buildPlanes();buildProps();buildInst();buildStatues();buildSugar();buildCam()}
   finally{delete scene.add}
   scene.add(worldRoot);applyLights();placeScreen();setBoss();placeMarks();if(GFX.all!=null&&finalPass)applyGfx();
@@ -1779,6 +1783,7 @@ function frame(ts){
   if(BOSS.on&&performance.now()>BOSS.until){BOSS.on=0;bossPoof();popSound();bossEnt.say="뽕~";bossEnt.sayT=performance.now()+1300}
   BOSS.sc+=((BOSS.on?1:0)-BOSS.sc)*Math.min(1,dt*14);bossG.visible=BOSS.sc>.03;
   bossG.scale.set(1.2*BOSS.sc*(1+BOSS.hit*.12),1.2*BOSS.sc*(1-BOSS.hit*.15),1.2*BOSS.sc*(1+BOSS.hit*.12));
+  for(i=0;i<spins.length;i++)spins[i].rotation.y=time*.55;
   if(riverMat)riverMat.uniforms.time.value=time;
   if(starMesh){var sc_=starMesh.instanceColor.array,st_,sk_;for(i=0;i<stars.length;i++){st_=stars[i];sk_=.5+.5*Math.sin(time*st_[8]+st_[7]);sk_=.3+.9*sk_*sk_;           // 별마다 다른 박자로 밝아졌다 어두워진다
       sc_[i*3]=st_[4]*sk_;sc_[i*3+1]=st_[5]*sk_;sc_[i*3+2]=st_[6]*sk_}starMesh.instanceColor.needsUpdate=true}
@@ -2031,7 +2036,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202241";
+var BUILD="B11202245";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
