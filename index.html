@@ -1035,9 +1035,9 @@ function buildComposer(){
 buildComposer();
 /* ───────────── 그래픽 강도 조절 (테스트용) ─────────────
    효과마다 0~2배로 조절한다. "전체 강도"는 후처리 효과 전부에 곱해진다. 값은 이 브라우저에만 저장된다 */
-var GFX_DEF={all:1,bloom:1,dof:1,flare:0,ao:1,ca:1,vig:1,grain:1,sat:1,con:1,exp:1,fog:1},GFX={},FOG0=scene.fog.density,
+var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25},GFX={},FOG0=scene.fog.density,
     GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개"};
-(function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
+(function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
 function applyGfx(){
   var m=GFX.all,u=finalPass.uniforms;bloom.strength=.7*GFX.bloom*m;flare.uniforms.amt.value=GFX.flare*m;gtao.blendIntensity=clamp(GFX.ao*m,0,1);
   dof.material.uniforms.maxR.value=(dof.baseR||8)*GFX.dof*m;u.uCA.value=GFX.ca*m;u.uVig.value=GFX.vig*m;u.uGrain.value=GFX.grain*m;u.uSat.value=1+.16*GFX.sat;u.uCon.value=GFX.con;
@@ -1047,9 +1047,9 @@ function renderGfx(){
   var box=$("gfxList"),k;box.textContent="";
   for(k in GFX_DEF)(function(k){var row=mk("div","gr"),inp=document.createElement("input"),val=mk("span",null,GFX[k].toFixed(2));
     inp.type="range";inp.min=0;inp.max=2;inp.step=.05;inp.value=GFX[k];
-    inp.oninput=function(){GFX[k]=+this.value;val.textContent=GFX[k].toFixed(2);try{localStorage.setItem("antgfx",JSON.stringify(GFX))}catch(_){}applyGfx()};
+    inp.oninput=function(){GFX[k]=+this.value;val.textContent=GFX[k].toFixed(2);try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}applyGfx()};
     row.appendChild(mk("label",null,GFX_LBL[k]));row.appendChild(inp);row.appendChild(val);box.appendChild(row)})(k);
-  var rs=mk("button","rst","기본값으로");rs.onclick=function(){for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx")}catch(_){}applyGfx();renderGfx()};box.appendChild(rs);
+  var rs=mk("button","rst","기본값으로");rs.onclick=function(){for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx2")}catch(_){}applyGfx();renderGfx()};box.appendChild(rs);
 }
 function applyQuality(){
   var hi=quality==="high";
@@ -1224,7 +1224,8 @@ var COS={trail:{n:"반짝이 발자국",i:"✨",b:1,p:300,d:"걸을 때 반짝�
 var inv={fw:5,big:5,boom:2,egg:5,tom:5,mega:1},sugar=1000,own={},myCos=0,megaArmed=false,bind=["egg","tom","fw"],cdUntil={};
 try{var sv=JSON.parse(localStorage.getItem("antv2")||"null");if(sv){sugar=+sv.s||0;for(var ik in inv)if(sv.i&&sv.i[ik]>=0)inv[ik]=sv.i[ik]|0;own=sv.o||{};myCos=(sv.c|0)&3}}catch(_){}
 var TPRICE={normal:0,stock:500,raid:1500,club:1000,river:1000};
-function ownsTheme(id){return !TPRICE[id]||!!own["t_"+id]}
+var TEST_UNLOCK=true;   // 테스트 기간: 모든 테마 해금. 판매를 켜려면 false로
+function ownsTheme(id){return TEST_UNLOCK||!TPRICE[id]||!!own["t_"+id]}
 function buyTheme(id){if(ownsTheme(id))return true;if(sugar<TPRICE[id])return false;sugar-=TPRICE[id];own["t_"+id]=1;save();return true}
 function save(){try{localStorage.setItem("antv2",JSON.stringify({s:sugar,i:inv,o:own,c:myCos}))}catch(_){}var sh=$("sugarHud");if(sh)sh.textContent="· 🍬 "+sugar.toLocaleString("ko-KR")}
 try{var sb=JSON.parse(localStorage.getItem("antbind2")||"null");if(sb&&sb.length===3)bind=sb.map(function(k){return ITEMS[k]?k:null})}catch(_){}
