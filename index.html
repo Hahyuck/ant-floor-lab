@@ -849,10 +849,12 @@ function buildVox(L){
   var H=part([0,HY,.06],null,4),big=L.eye>1.02,hry=.32*h,ny=Math.ceil(hry/VS);H.h=1;
   blob(H,0,0,0,.35*h,hry,.32*h,CUTE?2.1:3.2,function(mi,j,k,front){
     if(L.acc==="band"&&j===ny-2)return V_RED;
-    if(front&&CUTE){                                                                          // 귀요미 얼굴: 분홍 볼 (눈과 입은 아래에서 고운 복셀로 따로 그린다)
-      var fx=(mi+.5)*VS,fy=(j+.5)*VS,gd=Math.max(Math.abs(fx-.34),Math.abs(fy));
-      if(L.acc==="glasses"&&((gd<=.215&&gd>.15)||(fx<.13&&Math.abs(fy)<.04)))return V_BLACK;
-      if(fx>.43&&fx<.6&&fy>-.28&&fy<-.12)return [1,.5,.5];
+    if(front&&CUTE){                                                                          // 귀요미 얼굴: 머리 표면에 바로 칠한다 (튀어나오는 층 없이). 점 눈, 작은 입, 분홍 볼
+      var fx=(mi+.5)*VS,fy=(j+.5)*VS,gd=Math.max(Math.abs(fx-.3),Math.abs(fy));
+      if(L.acc==="glasses"&&((gd<=.2&&gd>.14)||(fx<.1&&Math.abs(fy)<.03)))return V_BLACK;
+      if(Math.abs(fx-.3)<.058&&Math.abs(fy)<.058)return V_BLACK;                              // 눈: 검은 점
+      if(fx<.058&&fy>-.17&&fy<-.11)return [body[0]*.3,body[1]*.25,body[2]*.25];               // 입: 짧은 선
+      if(fx>.36&&fx<.54&&fy>-.25&&fy<-.08)return [1,.52,.5];                                  // 볼
       return body}
     if(front){
       var eyeTop=big?1:0;
@@ -863,12 +865,6 @@ function buildVox(L){
     return body;
   });
   var top=hry;
-  if(CUTE){                                                                                  // 고운 얼굴: 절반 크기 복셀로 둥근 눈동자, 하이라이트, 작은 입
-    var F=part([0,HY,.06],null,4),fu=VS/2,fz=function(x,y){return .32*h*Math.pow(Math.max(.02,1-Math.pow(Math.abs(x)/(.35*h),2.1)-Math.pow(Math.abs(y)/hry,2.1)),1/2.1)+fu*.2},ER=.14,en=Math.ceil(ER/fu),ex,ey,dx,dy,d2;F.h=1;F.s=.5;
-    for(sx=-1;sx<=1;sx+=2)for(ex=-en;ex<=en;ex++)for(ey=-en;ey<=en;ey++){dx=ex*fu;dy=ey*fu;d2=dx*dx+dy*dy;if(d2>ER*ER)continue;
-      put(F,sx*.34+dx,dy,fz(sx*.34+dx,dy),(dy>.025&&dx*sx<-.025&&d2<ER*ER*.55)?V_WHITE:(d2>ER*ER*.78?[.22,.12,.1]:V_BLACK),1)}                                               // 눈: 둥근 눈동자, 안쪽 위에 흰 하이라이트
-    for(dx=-.085;dx<=.0851;dx+=fu)put(F,dx,-.238+(Math.abs(dx)>.06?fu:0),fz(dx,-.238),[.3,.12,.1],1);                                                                    // 입: 살짝 올라간 선
-  }
   if(L.acc==="hat"||L.acc==="helmet"){var hc=L.acc==="hat"?V_HAT:V_HELM;
     blob(H,0,top-.14,0,.35*h+.09,.26,.32*h+.09,2.4,function(mi,j){return j>=0?hc:null});
     if(L.acc==="hat")for(i=-NV(.33*h);i<NV(.33*h);i++){put(H,(i+.5)*VS,top-.08,.32*h+.12,hc);put(H,(i+.5)*VS,top-.08,.32*h+.23,hc)}}
@@ -2042,7 +2038,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11202253";
+var BUILD="B11202256";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
