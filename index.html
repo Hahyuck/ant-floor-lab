@@ -2349,7 +2349,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211446";
+var BUILD="B11211448";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2407,7 +2407,10 @@ function startEditor(){
       if(!localStorage.getItem(KEY+"_paper2")){localStorage.setItem(KEY+"_paper2","1");                              // 처음 넣어 준 납작한 신문을 손대지 않았으면 접힌 신문으로 바꾼다 (옮기고 돌린 값은 그대로)
         var zs={};pp=model.parts.bPaper;if(pp&&pp.length===336&&model.sub.bPaper){pp.forEach(function(v){zs[v[2]]=1});if(Object.keys(zs).length===2)model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper))}}
       if(!localStorage.getItem(KEY+"_paper3")){localStorage.setItem(KEY+"_paper3","1");pp=model.parts.bPaper;         // 먼저 넣어 준 신문(납작한 것 336개 · 한쪽만 접힌 것 300개)을 손대지 않았으면 펼쳐 든 모양으로 바꾼다
-        if(pp&&(pp.length===336||pp.length===300)&&model.sub.bPaper)model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper))}}catch(_){}})();   // 꼬리 부채는 좌우를 따로 움직인다 (대칭으로 함께 움직이지 않는다)                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
+        if(pp&&(pp.length===336||pp.length===300)&&model.sub.bPaper)model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper))}
+      if(!localStorage.getItem(KEY+"_paper4")){localStorage.setItem(KEY+"_paper4","1");pp=model.parts.bPaper;         // 요청: 저장본의 신문을 펼쳐 든 모양으로 한 번 바꾼다. 지웠거나 고친 신문도 바꾸되 예전 것은 따로 보관하고, 옮기고 돌린 값은 그대로 둔다
+        if(BASE0.parts.bPaper&&JSON.stringify(pp)!==JSON.stringify(BASE0.parts.bPaper)){if(pp)localStorage.setItem(KEY+"_paperOld",JSON.stringify(pp));
+          model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper));if(!model.sub.bPaper)model.sub.bPaper=JSON.parse(JSON.stringify(BASE0.sub.bPaper))}}}catch(_){}})();   // 꼬리 부채는 좌우를 따로 움직인다 (대칭으로 함께 움직이지 않는다)                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
                                          // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
   // ── 화면
