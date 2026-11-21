@@ -432,6 +432,33 @@ body.compact #topright .tipb::after,body.compact #topright #thbar button::after{
 .card .go{border-radius:999px;height:50px;padding:0;color:#17191d;font-weight:700;margin-top:12px}
 .card .go:not(:disabled):hover{background:#e2c05a;transform:translateY(-2px)}
 .card .go:disabled{background:var(--panel2);color:var(--dim);opacity:1}
+/* PC: 위쪽을 한 줄 헤더 바로. 왼쪽 방 이름 · 가운데 테마/캐릭터 · 오른쪽 도구. 휴대폰(compact)은 그대로 */
+#hdr{display:none}
+body:not(.compact) #hdr{display:block;position:absolute;left:0;right:0;top:0;height:48px;background:#101012;border-bottom:1px solid var(--line)}
+body:not(.compact) #topleft{left:0;top:0;height:48px;padding:0 16px;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:15px;white-space:nowrap}
+body:not(.compact) #topleft #bFull{margin:0 0 0 2px}
+body:not(.compact) #quick{right:8px;top:0;height:48px;align-items:center;gap:2px}
+body:not(.compact) #quick .pill{background:transparent;border-color:transparent;box-shadow:none;border-radius:9px;padding:7px 10px;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap}
+body:not(.compact) #quick .pill.ic{padding:7px 9px;font-size:15px}
+body:not(.compact) #quick button.pill:hover{background:var(--hover)}
+body:not(.compact) #quick .pill.on{background:var(--asoft);color:var(--amber)}
+body:not(.compact) #quick .pill.lead{background:var(--asoft);border-color:var(--abd);color:var(--amber);font-weight:700}
+body:not(.compact) #quick #bgmBox{padding:0 6px;height:34px}
+body:not(.compact) #thbar{top:5px;gap:10px}
+body:not(.compact) #thbar .grp{background:transparent;border:0;box-shadow:none;padding:2px;gap:4px}
+body:not(.compact) #thbar button{width:34px;height:34px;border-radius:9px}
+body:not(.compact) #thbar button .ic2{width:18px;height:18px}
+body:not(.compact) #thbar .grp+.grp{border-left:1px solid var(--line);border-radius:0;padding-left:12px}
+body:not(.compact) #topright{top:54px;right:8px}
+body:not(.compact) #pop,body:not(.compact) #inv,body:not(.compact) #gfx,body:not(.compact) .ppx,body:not(.compact) #thp{top:56px;right:8px}
+body:not(.compact) #inv,body:not(.compact) #gfx{max-height:calc(100dvh - 72px)}
+body:not(.compact) #toast{top:62px}
+body:not(.compact) #banner{top:112px}
+/* 창이 좁아 가운데 묶음이 양옆과 겹칠 때는 헤더 바로 아래에 띄운다 */
+@media (max-width:1420px){body:not(.compact) #thbar{top:56px}
+  body:not(.compact) #thbar .grp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  body:not(.compact) #thbar .grp+.grp{border-left:1px solid var(--line);border-radius:12px;padding-left:3px}
+  body:not(.compact) #toast{top:108px}body:not(.compact) #banner{top:156px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -443,6 +470,7 @@ body.compact #topright .tipb::after,body.compact #topright #thbar button::after{
   <canvas id="cv"></canvas>
   <canvas id="lb"></canvas>
   <div id="fade"></div>
+  <div id="hdr"></div>
 
   <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small><button id="bFull" class="tipb" data-tip="전체화면" aria-label="전체화면" data-ic="full"></button></div>
   <div id="thbar" role="group" aria-label="테마 고르기"></div>
@@ -2697,7 +2725,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11212035";
+var BUILD="B11212039";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
