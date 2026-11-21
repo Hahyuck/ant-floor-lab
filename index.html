@@ -455,10 +455,28 @@ body:not(.compact) #inv,body:not(.compact) #gfx{max-height:calc(100dvh - 72px)}
 body:not(.compact) #toast{top:62px}
 body:not(.compact) #banner{top:112px}
 /* 창이 좁아 가운데 묶음이 양옆과 겹칠 때는 헤더 바로 아래에 띄운다 */
+/* 헤더 가운데: 테마 묶음과 캐릭터 묶음을 각각 옅은 받침에 담고 사이를 띄운다 */
+body:not(.compact) #thbar{top:6px;gap:18px}
+body:not(.compact) #thbar .grp,body:not(.compact) #thbar .grp+.grp{background:#1c1c1f;border:1px solid #2c2b2f;border-radius:11px;padding:2px;gap:2px}
+body:not(.compact) #thbar button{width:36px;height:30px;border-radius:8px}
+body:not(.compact) #thbar button.on{background:#34343a;box-shadow:none;color:#fff}
+body:not(.compact) #thbar .grp~.grp button.on{background:var(--asoft);color:var(--amber);box-shadow:inset 0 0 0 1px var(--abd)}
 @media (max-width:1420px){body:not(.compact) #thbar{top:56px}
   body:not(.compact) #thbar .grp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;box-shadow:0 8px 30px rgba(0,0,0,.3)}
   body:not(.compact) #thbar .grp+.grp{border-left:1px solid var(--line);border-radius:12px;padding-left:3px}
   body:not(.compact) #toast{top:108px}body:not(.compact) #banner{top:156px}}
+/* PC: 대화 기록은 대화 입력 바와 같은 바닥선에 (넓은 화면). 서버 이동은 버튼 바로 위에 뜨는 목록 */
+@media (min-width:1500px){body:not(.touch) #log{bottom:18px;width:min(340px,calc(50vw - 92px - var(--cw)/2 - 22px))}
+  body:not(.touch).chatting #log{width:min(430px,calc(50vw - 92px - var(--cw)/2 - 22px))}}
+body:not(.compact) #svp.drop{right:auto;top:auto;width:172px;padding:6px;border-radius:12px;z-index:10}
+#svp.drop h3,#svp.drop p,#svp.drop .x{display:none}
+#svp.drop .row{grid-template-columns:1fr;gap:2px}
+#svp.drop .btn{border:1px solid transparent;border-radius:9px;text-align:left;padding:9px 12px;font-size:13.5px;font-weight:500;background:transparent}
+#svp.drop .btn:hover{transform:none;background:var(--hover);border-color:transparent}
+#svp.drop .btn.on{background:var(--asoft);border-color:var(--abd);color:var(--amber)}
+#svp.drop .btn.on::after{content:"지금";float:right;font-size:11px;opacity:.8}
+#svp.drop .btn{animation:uiRow .3s var(--ease) both}
+#svp.drop .btn:nth-child(2){animation-delay:.02s}#svp.drop .btn:nth-child(3){animation-delay:.04s}#svp.drop .btn:nth-child(4){animation-delay:.06s}#svp.drop .btn:nth-child(5){animation-delay:.08s}#svp.drop .btn:nth-child(6){animation-delay:.1s}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2588,7 +2606,7 @@ function paintSp(){var box=$("spIn");box.textContent="";SPOK.forEach(function(i)
 
 paintCute();
 // 서버 이동: 채널을 골라 그 자리에서 옮겨 간다 (이름은 그대로 들고 간다)
-$("bSrv").onclick=function(){var on=!$("svp").classList.contains("show");closePops();if(!on)return;var box=$("svIn");box.textContent="";
+$("bSrv").onclick=function(){var on=!$("svp").classList.contains("show");closePops();if(!on)return;var box=$("svIn"),sv=$("svp"),rc;box.textContent="";if(!document.body.classList.contains("touch")){rc=this.getBoundingClientRect();sv.classList.add("drop");sv.style.left=Math.max(8,rc.left)+"px";sv.style.bottom=(innerHeight-rc.top+10)+"px"}else{sv.classList.remove("drop");sv.style.left=sv.style.bottom=""}
   for(var i=1;i<=6;i++)(function(i){var cur=roomCode==="chan0"+i,b=mk("button","btn"+(cur?" on":""),"채널 "+i);
     b.onclick=function(){if(cur)return toast("지금 있는 채널입니다",1800);try{sessionStorage.setItem("antgo",myName||"")}catch(_){}location.hash="room-chan0"+i;location.reload()};box.appendChild(b)})(i);
   $("svp").classList.add("show")};
@@ -2663,6 +2681,8 @@ function goFull(on){var el=document.documentElement;try{
 function fullCh(){var ft=isFull()?"전체화면 끄기":"전체화면";$("bFull").setAttribute("data-tip",ft);$("bFull").setAttribute("aria-label",ft);$("bFull").classList.toggle("on",isFull());setTimeout(resize,60)}
 document.addEventListener("fullscreenchange",fullCh);document.addEventListener("webkitfullscreenchange",fullCh);
 $("bFull").onclick=function(){if(!goFull(!isFull()))toast("이 브라우저는 전체화면을 지원하지 않습니다. 크롬이나 삼성 인터넷에서 열어 주세요",5000)};
+$("svp").addEventListener("mousedown",function(ev){if(this.classList.contains("drop"))ev.preventDefault()});
+addEventListener("pointerdown",function(ev){var sv=$("svp");if(sv.classList.contains("drop")&&sv.classList.contains("show")&&!sv.contains(ev.target)&&!$("bSrv").contains(ev.target))sv.classList.remove("show")},true);
 function closePops(){$("pop").classList.remove("show");$("inv").classList.remove("show");$("gfx").classList.remove("show");$("spp").classList.remove("show");$("svp").classList.remove("show")}
 function setCompact(){document.body.classList.toggle("compact",isTouch||innerWidth<=760);layoutMenu()}
 // 휴대폰 · 좁은 화면: 위쪽 버튼(테마 · 캐릭터 · 소리 · 음악 · 방송 집중 · 상점 · 공대장 메뉴)을 모두 오른쪽 위 메뉴 하나에 넣어 한 줄씩 늘어놓는다. 넓은 화면에서는 제자리로 돌려놓는다
@@ -2725,7 +2745,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11212039";
+var BUILD="B11212058";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
