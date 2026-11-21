@@ -2270,7 +2270,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211308";
+var BUILD="B11211315";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2419,7 +2419,7 @@ function startEditor(){
       before=snapStr();strokeId++;linePts(lineA,h).forEach(function(q){mt(lineA.nm,q).forEach(function(w){var M=model.parts[w.nm];if(find(M,w.pos[0],w.pos[1],w.pos[2])<0)M.push([w.pos[0],w.pos[1],w.pos[2],cur])})});
       lineA=null;commit(before);rebuild();paint();return}
     if(tool==="move"){
-      if(whole)sels=model.parts[h.nm].map(function(v){return {nm:h.nm,v:v}});
+      if(whole||(model.sub[h.nm]&&!multi&&!(ev&&(ev.shiftKey||ev.ctrlKey||ev.metaKey)))){if(!whole&&isPart()&&sels[0].nm===h.nm)sels=[];else sels=model.parts[h.nm].map(function(v){return {nm:h.nm,v:v}})}   // 분리한 조각은 한 덩어리로 집힌다 (다시 누르면 풀린다)
       else if(multi||(ev&&(ev.shiftKey||ev.ctrlKey||ev.metaKey))){i=inSel(h.v);if(i>=0)sels.splice(i,1);else sels.push({nm:h.nm,v:h.v})}   // 다중 선택: 누를 때마다 더하거나 뺀다
       else if(sels.length===1&&sels[0].v===h.v)sels=[];
       else sels=[{nm:h.nm,v:h.v}];
@@ -2468,7 +2468,8 @@ function startEditor(){
   function scrOf(v){var w=root.clientWidth,h=root.clientHeight;tmpV.copy(v).project(C);return [(tmpV.x+1)/2*w,(1-tmpV.y)/2*h]}
   function setJoint(kind,nm,ax,val){var mn=mirOf(nm),a=(model[kind][nm]||[0,0,0]).slice(),b,d=val-a[ax];a[ax]=val;model[kind][nm]=a;                       // 부위 위치(off) · 각도(rot) 한 축을 정한 값으로. 반대쪽 짝은 거울처럼
     if(mirror&&mn!==nm){b=(model[kind][mn]||[0,0,0]).slice();b[ax]=+(b[ax]+((kind==="off"?ax===0:ax!==0)?-d:d)).toFixed(2);model[kind][mn]=b}}
-  function gizStart(ev,gh){var bf0=snapStr();
+  function gizStart(ev,gh){var bf0=snapStr(),sn0=sels[0].nm;
+    if(!joint&&model.sub[sn0]&&sels.every(function(q){return q.nm===sn0})&&(gh.kind==="rot"||(fine&&padMode!=="ext"))){sels=model.parts[sn0].map(function(v){return {nm:sn0,v:v}});joint=true;refreshSel();updateGizmo()}   // 조각의 일부만 골랐어도 조각 전체를 옮기고 돌린다
     if((gh.kind==="rot"||(fine&&padMode!=="ext"))&&!joint){if(!detachSel()){drag=null;return}joint=true;rebuild();updateGizmo()}   // 미세 이동이 켜져 있으면 화살표로 옮길 때도 조각으로 분리해 잘게 움직인다                                  // 블록 묶음을 돌리려면 먼저 조각으로 분리한다
     var o=GZ.position.clone(),a=new THREE.Vector3(gh.ax===0?1:0,gh.ax===1?1:0,gh.ax===2?1:0).applyQuaternion(GZ.quaternion),s0=scrOf(o),s1=scrOf(o.clone().addScaledVector(a,.4)),nm=sels[0].nm,q=sels[0];
     drag={mode:"giz",ax:gh.ax,kind:gh.kind,sx:ev.clientX,sy:ev.clientY,before:bf0,ul:undo.length,done:0,nm:nm,sv:[(s1[0]-s0[0])/.4,(s1[1]-s0[1])/.4],c:s0,a0:Math.atan2(ev.clientY-cv.getBoundingClientRect().top-s0[1],ev.clientX-cv.getBoundingClientRect().left-s0[0]),
