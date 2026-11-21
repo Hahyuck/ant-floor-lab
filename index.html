@@ -243,6 +243,13 @@
   .card .alt{margin-top:10px;background:transparent;border:0;color:var(--dim);font-size:13px;text-decoration:underline}
   #estatus{min-height:18px;font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
   #estatus.err{color:var(--red)}
+#bgmBox{display:inline-flex;align-items:center;gap:6px;padding:0 8px;cursor:default}
+#bgmBox button{all:unset;cursor:pointer;font-size:15px;line-height:1;padding:6px 2px;position:relative}
+#bgmBox.off #bBgm{opacity:.45;filter:grayscale(1)}
+#bgmBox.off #bgmV,#bgmBox.off #bBgmN{display:none}
+#bgmV{-webkit-appearance:none;appearance:none;width:66px;height:4px;border-radius:2px;background:linear-gradient(90deg,#f7c62b var(--v,45%),rgba(255,255,255,.22) var(--v,45%));outline:none;cursor:pointer;margin:0}
+#bgmV::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;border:0;box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+#bgmV::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:0}
 </style>
 </head>
 <body>
@@ -256,6 +263,7 @@
   <div id="thbar" role="group" aria-label="테마 고르기"></div>
   <div id="quick">
     <button class="pill ic tipb" id="bSound" data-tip="소리 켜기" aria-label="소리 켜기">🔇</button>
+    <div class="pill" id="bgmBox"><button class="tipb" id="bBgm" data-tip="배경 음악 켜기" aria-label="배경 음악 켜기">🎵</button><input type="range" id="bgmV" min="0" max="100" step="1" value="45" aria-label="배경 음악 볼륨"><button class="tipb" id="bBgmN" data-tip="다음 곡" aria-label="다음 곡">⏭</button></div>
     <button class="pill" id="bFocus">방송 집중</button>
     <button class="pill" id="bInv">상점·가방</button>
     <button class="pill" id="bMenu">⚙ 설정</button>
@@ -2252,7 +2260,24 @@ $("bInvite").onclick=function(){var l=inviteLink();$("link").value=l;
 $("bSound").onclick=function(){if(!ytFrame){toast("아직 방송이 없습니다");return}
   muted=!muted;if(muted)ytCmd("mute");else{ytCmd("unMute");ytCmd("setVolume",[100]);ytCmd("playVideo")}
   soundBtn(muted)};
-function soundBtn(m){var b=$("bSound"),t=m?"소리 켜기":"소리 끄기";b.textContent=m?"🔇":"🔊";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m)}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
+function soundBtn(m){var b=$("bSound"),t=m?"소리 켜기":"소리 끄기";b.textContent=m?"🔇":"🔊";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m);bgmVol()}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
+// 배경 음악(사운드트랙): 일곱 곡을 차례로 돌려 튼다. 방송 소리를 켜면 음악은 작게 깔린다. 테마를 바꿔 화면이 새로 열려도 듣던 곡을 이어서 튼다
+var BGM={L:[["opening","오프닝 · 슈카 기본 테마곡"],["ready-a","준비곡 A"],["ready-b","준비곡 B"],["theme-a","테마 A"],["theme-b","테마 B"],["theme-c","테마 C"],["theme-d","테마 D"]],i:0,t:0,on:true,a:null,v:45};
+try{BGM.on=localStorage.getItem("antbgm")!=="0";(function(){var v=localStorage.getItem("antbgmV");if(v!=null&&isFinite(+v))BGM.v=Math.max(0,Math.min(100,+v))})();(function(){var q=JSON.parse(sessionStorage.getItem("antbgmS")||"null");if(q&&q.i>=0&&q.i<BGM.L.length){BGM.i=q.i|0;BGM.t=+q.t||0}})()}catch(_){}
+function bgmVol(){if(BGM&&BGM.a)BGM.a.volume=BGM.v/100*((ytFrame&&!muted)?.25:1)}   // 방송 소리가 켜져 있으면 음악은 1/4 크기로
+function bgmBtn(){var b=$("bBgm"),t=BGM.on?"배경 음악 끄기 · ♪ "+BGM.L[BGM.i][1]:"배경 음악 켜기";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);$("bgmBox").classList.toggle("off",!BGM.on);$("bgmV").value=BGM.v;$("bgmV").style.setProperty("--v",BGM.v+"%")}
+function bgmPlay(){if(!BGM.on)return;var a=BGM.a,src="bgm/"+BGM.L[BGM.i][0]+".mp3",t,p;
+  if(!a){a=BGM.a=new Audio();a.preload="auto";a.onended=function(){bgmNext()}}
+  if(a.getAttribute("src")!==src){a.src=src;t=BGM.t;BGM.t=0;if(t)a.addEventListener("loadedmetadata",function(){try{a.currentTime=t}catch(_){}},{once:true})}
+  bgmVol();p=a.play();if(p&&p.catch)p.catch(function(){});bgmBtn()}                                       // 브라우저가 막으면 화면을 처음 누를 때 시작된다
+function bgmNext(){BGM.i=(BGM.i+1)%BGM.L.length;BGM.t=0;bgmPlay();if(BGM.on)toast("♪ "+BGM.L[BGM.i][1],2200)}
+$("bBgm").onclick=function(){this.blur();BGM.on=!BGM.on;try{localStorage.setItem("antbgm",BGM.on?"1":"0")}catch(_){}
+  if(BGM.on){bgmPlay();toast("♪ "+BGM.L[BGM.i][1],2200)}else{if(BGM.a)BGM.a.pause();bgmBtn();toast("배경 음악을 껐습니다",1800)}};
+$("bBgmN").onclick=function(){this.blur();bgmNext()};
+$("bgmV").oninput=function(){BGM.v=+this.value;this.style.setProperty("--v",BGM.v+"%");bgmVol();try{localStorage.setItem("antbgmV",BGM.v)}catch(_){}};$("bgmV").onchange=function(){this.blur()};
+["pointerdown","keydown"].forEach(function(ev){document.addEventListener(ev,function(e){if(BGM.on&&(!BGM.a||BGM.a.paused)&&!(e.target&&e.target.id==="bBgm"))bgmPlay()},true)});
+window.addEventListener("pagehide",function(){try{sessionStorage.setItem("antbgmS",JSON.stringify({i:BGM.i,t:BGM.a?BGM.a.currentTime:BGM.t}))}catch(_){}});
+bgmBtn();if(!/[?&]edit/.test(location.search))bgmPlay();
 var focusMode=false;
 $("bFocus").onclick=function(){focusMode=!focusMode;this.classList.toggle("on",focusMode);toast(focusMode?"방송 집중: 화면을 크게 잡고 객장 조명을 낮춥니다":"객장 시점으로 돌아왔습니다",2600)};
 $("rwGo").onclick=function(){var s=clean($("rwText").value,40);if(!s||!isHost)return;$("rwText").value="";raidWarn(s);castAll({t:"rw",s:s});closePops()};
@@ -2427,7 +2452,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211613";
+var BUILD="B11211747";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
