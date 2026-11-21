@@ -269,7 +269,7 @@
   <div id="banner"></div>
   <div id="raid" aria-live="assertive"></div>
   <div id="gfx"><button class="x" aria-label="닫기">✕</button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출, 안개, 조명 소품을 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
-  <div id="spp" class="ppx"><button class="x" aria-label="닫기">✕</button><h3>내 캐릭터 고르기</h3><div class="row" id="spIn"></div><p>고르면 다른 사람 화면에서도 그 동물로 보입니다. 테마 의상은 그대로 입습니다.</p><div class="row" style="grid-template-columns:1fr;margin-top:10px"><button class="btn" id="spCute">✨ 귀요미 개미 (내 화면에서만)</button></div></div>
+  <div id="spp" class="ppx"><button class="x" aria-label="닫기">✕</button><h3>내 캐릭터 고르기</h3><div class="row" id="spIn"></div><p>고르면 다른 사람 화면에서도 그 동물로 보입니다. 테마 의상은 그대로 입습니다.</p></div>
   <div id="svp" class="ppx"><button class="x" aria-label="닫기">✕</button><h3>서버 이동</h3><div class="row" id="svIn"></div><p>고른 채널로 바로 옮겨 갑니다. 정식 서비스에서는 입장 서버가 빈 채널을 안내합니다.</p></div>
   <div id="thp"><button class="x" aria-label="닫기">✕</button><h3>테마 바꾸기</h3><div class="row" id="thIn"></div><p>고르면 방 전체가 그 자리에서 함께 바뀝니다. 방송은 끊기지 않습니다.</p></div>
   <div id="exitp"><b>EXIT</b><span>바깥문을 지나 나갈까요?</span><div class="row"><button id="exGo">나가기</button><button id="exNo">머물기</button></div></div>
@@ -905,7 +905,7 @@ function placeScreen(){var cy=SCR.y0+SCR.h/2;scrPos[1]=cy;holeMesh.position.y=cy
 
 /* ───────────── 복셀 개미: 작은 복셀로 빚은 둥근 몸 ───────────── */
 var VS=.085, VMAX=3000, MAXA=132;
-var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
+var CUTE=false;   // 귀요미 개미는 앱에서 뺐다 (항상 꺼짐)
 var CM=null;                                     // 직접 편집한 개미 모델 (?edit 화면에서 저장). 부위 이름 → [x,y,z,색] 목록. 좌표는 복셀 칸 단위
 var CMO=null,CMR=null;                           // CMR: 부위별 각도 옮김값 (도)                                    // 부위별 붙는 위치 옮김값 (칸 단위)
 var CMS={};                                      // 캐릭터별 편집 모델: 0 개미("antmodel"), 1 인간형 개미("antmodel1"). 각각 {parts, off, rot}
@@ -1420,12 +1420,6 @@ function renderGfx(){
     if(GFX.dens===fi){b.style.borderColor="var(--amber)";b.style.boxShadow="0 0 0 2px var(--amber)";b.lastChild.style.color="var(--amber)"}
     b.onclick=function(){if(GFX.dens===fi)return;GFX.dens=fi;try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}buildWorld();renderGfx()};fb.appendChild(b)})(fi);
   fl.appendChild(fb);box.appendChild(fl);
-  var cl=mk("div",null,""),cb=mk("div",null,""),ci;cl.style.cssText="padding:8px 0 4px";cl.appendChild(mk("label",null,"귀요미 개미 밀도 · −2 굵게 ← 0 기본 → +2 곱게"));
-  cb.style.cssText="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px";
-  for(ci=0;ci<5;ci++)(function(ci){var b=mk("button","rst",ci===2?"0":(ci>2?"+":"−")+Math.abs(ci-2));b.style.margin="0";
-    if(GFX.cdens===ci){b.style.background="var(--amber)";b.style.color="#201600";b.style.borderColor="var(--amber)"}
-    b.onclick=function(){GFX.cdens=ci;try{localStorage.setItem("antgfx2",JSON.stringify(GFX))}catch(_){}if(!CUTE)setCute(true);else{setVS();remakeAnts()}renderGfx()};cb.appendChild(b)})(ci);
-  cl.appendChild(cb);box.appendChild(cl);
   var rs=mk("button","rst","기본값으로");rs.onclick=function(){var of=GFX.dens;for(var q in GFX_DEF)GFX[q]=GFX_DEF[q];try{localStorage.removeItem("antgfx2")}catch(_){}if(of!==GFX.dens)buildWorld();setVS();remakeAnts();applyGfx();renderGfx()};box.appendChild(rs);
 }
 function applyQuality(){
@@ -2207,11 +2201,10 @@ if(isTouch)touchOn();addEventListener("touchstart",touchOn,{once:true,passive:tr
 })();
 function paintCute(){$("bCute").textContent=CUTE?"개미: 귀요미":mySp?"캐릭터: "+SPN[mySp]:"개미: 기본";$("bCute").classList.toggle("on",CUTE||mySp>0)}
 function remakeAnts(){for(var k in ents)ents[k].parts=null;ants.dirty=true;pvEnt.parts=null;pvAnts.dirty=true}
-function setCute(on){CUTE=!!on;setVS();try{localStorage.setItem("antcute",CUTE?"1":"0")}catch(_){}remakeAnts();paintCute()}
+
 function paintSp(){var box=$("spIn");box.textContent="";SPOK.forEach(function(i){var nm=SPN[i],b=mk("button","btn"+(!CUTE&&mySp===i?" on":""),""),ic=mk("i",null,SPI[i]);b.appendChild(ic);b.appendChild(document.createTextNode(nm));
-    b.onclick=function(){if(CUTE)setCute(false);setSp(i);paintCute();paintSp();toast(SPI[i]+" "+nm+" 투자자로 바꿨습니다",2200)};box.appendChild(b)});
-  $("spCute").classList.toggle("on",CUTE)}
-$("spCute").onclick=function(){setCute(!CUTE);paintSp();toast(CUTE?"귀요미 개미로 바꿨습니다. 내 화면에서만 바뀝니다":"귀요미 개미를 껐습니다",2600)};
+    b.onclick=function(){setSp(i);paintCute();paintSp();toast(SPI[i]+" "+nm+" 투자자로 바꿨습니다",2200)};box.appendChild(b)});
+}
 $("bCute").onclick=function(){var on=!$("spp").classList.contains("show");closePops();if(on){paintSp();$("spp").classList.add("show")}};
 paintCute();
 // 서버 이동: 채널을 골라 그 자리에서 옮겨 간다 (이름은 그대로 들고 간다)
@@ -2219,7 +2212,7 @@ $("bSrv").onclick=function(){var on=!$("svp").classList.contains("show");closePo
   for(var i=1;i<=6;i++)(function(i){var cur=roomCode==="chan0"+i,b=mk("button","btn"+(cur?" on":""),"채널 "+i);
     b.onclick=function(){if(cur)return toast("지금 있는 채널입니다",1800);try{sessionStorage.setItem("antgo",myName||"")}catch(_){}location.hash="room-chan0"+i;location.reload()};box.appendChild(b)})(i);
   $("svp").classList.add("show")};
-$("bEdit").onclick=function(){window.open(location.pathname+"?edit","_blank")};
+$("bEdit").onclick=function(){window.open(location.pathname+"?edit"+(mySp?"="+mySp:""),"_blank")};   // 지금 고른 캐릭터의 저장본을 연다
 $("bTheme").onclick=function(){var on=!$("thp").classList.contains("show");closePops();if(on){paintThemes();$("thp").classList.add("show")}};
 $("bGfx").onclick=function(){var on=!$("gfx").classList.contains("show");closePops();if(on){renderGfx();$("gfx").classList.add("show")}};
 $("bQ").onclick=function(){quality=quality==="high"?"low":"high";try{localStorage.setItem("antq",quality)}catch(_){}applyQuality()};
@@ -2336,7 +2329,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211511";
+var BUILD="B11211513";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2351,7 +2344,7 @@ try{var agN=sessionStorage.getItem("antgo");if(agN){sessionStorage.removeItem("a
    모델 형식: {v:1, parts:{부위:[[x,y,z,색],...]}, xf:{부위:{p,r}}}  좌표는 부위 안에서의 복셀 칸 단위, 색은 "B"(몸 색) "D"(짙은 색) "S"(줄무늬) 또는 0xRRGGBB */
 var EDIT=/[?&]edit/.test(location.search);
 function startEditor(){
-  var edBoss=/[?&]edit=[bc]/i.test(location.search),edCute=/[?&]edit=q/i.test(location.search),edBV=1,edSp=edBoss?9:SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(edBoss?"antmodelC":edCute?"antmodelQ":edSp?"antmodel"+edSp:"antmodel"),edB=null,edD=null;   // edBoss: 슈카 새우 편집 (한 덩어리 "boss")
+  var edBoss=/[?&]edit=[bc]/i.test(location.search),edCute=false,edBV=1,edSp=edBoss?9:SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(edBoss?"antmodelC":edCute?"antmodelQ":edSp?"antmodel"+edSp:"antmodel"),edB=null,edD=null;   // edBoss: 슈카 새우 편집 (한 덩어리 "boss")
     // ?sb: 시험용 저장 칸 (실제 편집본을 건드리지 않고 기능을 시험할 때)             // 편집할 캐릭터: 0 개미, 1 인간형 개미 (저장도 따로)
   var PNAME={belly:"배",chest:edSp===3?"가슴":edSp?"몸통":"가슴",waist:"허리",pelvis:"골반",shinL:"정강이",shinR:"정강이",footL:"발",footR:"발",tail:"꼬리",boss:"새우",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
@@ -2679,7 +2672,7 @@ function startEditor(){
   function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
     panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));panel.appendChild(mk("h4",null,"모델 불러오기 · 지금 "+(edBoss?"슈카 새우":edCute?"귀요미 개미":SPN[edSp])));g=mk("div","g g3");
     SPOK.forEach(function(k){var has=false;try{has=!!localStorage.getItem(k?"antmodel"+k:"antmodel")}catch(_){}btn(g,SPI[k]+" "+SPN[k],k===edSp&&!edCute?"on":"",function(){if(k!==edSp||edCute)location.search=k?"?edit="+k:"?edit"},has?"편집본 있음":"처음 모양")});
-    (function(){var has=false;try{has=!!localStorage.getItem("antmodelQ")}catch(_){}btn(g,"🐜 귀요미 개미",edCute?"on":"",function(){if(!edCute)location.search="?edit=q"},has?"편집본 있음":"처음 모양")})();
+
     (function(){var has=false;try{has=!!localStorage.getItem("antmodelC")}catch(_){}btn(g,"🦐 슈카 새우",edBoss?"on":"",function(){if(!edBoss)location.search="?edit=c"},has?"편집본 있음":"표준 모양")})();panel.appendChild(g);
     panel.appendChild(mk("h4",null,"도구"));g=mk("div","g g3");tools.forEach(function(t){btn(g,t[1],tool===t[0]?"on":"",function(){setTool(t[0])})});btn(g,"대칭 "+(mirror?"켬":"끔"),mirror?"on":"",function(){mirror=!mirror;paint()});panel.appendChild(g);
     g=mk("div","g");g.style.marginTop="6px";btn(g,"되돌리기","",doUndo).disabled=!undo.length;btn(g,"다시 실행","",doRedo).disabled=!redo.length;panel.appendChild(g);
