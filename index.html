@@ -941,9 +941,9 @@ function buildVox(L){
     for(q=0;q<M.length;q++){cc=M[q][3];cc=cc==="B"?body:cc==="D"?dark:cc==="S"?[body[0]*.72,body[1]*.72,body[2]*.72]:lin(cc);
       put(o,M[q][0]*VS,M[q][1]*VS,M[q][2]*VS,cc,y1>y0?.86+.18*(M[q][1]-y0)/(y1-y0):1)}}
   // 초타원체를 복셀화해서 겉면만 남긴다. paint(mi,j,k,front,i)가 색을 정하고, null이면 그 칸을 비운다.
-  function blob(o,cx,cy,cz,rx,ry,rz,pw,paint,zc){
+  function blob(o,cx,cy,cz,rx,ry,rz,pw,paint,zc,zb){                                          // zc · zb: 앞 · 뒤로 튀어나오는 층을 잘라 평평하게
     var nx=Math.ceil(rx/VS),ny=Math.ceil(ry/VS),nz=Math.ceil(rz/VS),i,j,k;
-    function ins(i,j,k){return (zc==null||(k+.5)*VS<=zc)&&Math.pow(Math.abs((i+.5)*VS/rx),pw)+Math.pow(Math.abs((j+.5)*VS/ry),pw)+Math.pow(Math.abs((k+.5)*VS/rz),pw)<=1}
+    function ins(i,j,k){return (zc==null||(k+.5)*VS<=zc)&&(zb==null||(k+.5)*VS>=-zb)&&Math.pow(Math.abs((i+.5)*VS/rx),pw)+Math.pow(Math.abs((j+.5)*VS/ry),pw)+Math.pow(Math.abs((k+.5)*VS/rz),pw)<=1}
     for(i=-nx;i<nx;i++)for(j=-ny;j<ny;j++)for(k=-nz;k<nz;k++){
       if(!ins(i,j,k))continue;
       if(ins(i+1,j,k)&&ins(i-1,j,k)&&ins(i,j+1,k)&&ins(i,j-1,k)&&ins(i,j,k+1)&&ins(i,j,k-1))continue;
@@ -958,7 +958,7 @@ function buildVox(L){
     TO=part([0,.92,0]);blob(TO,0,0,0,.28,.27,.18,4,function(mi,j,k,front){                       // 점퍼: 앞은 흰 셔츠, 깃과 밑단에 흰 줄, 가슴에 주머니 줄
       if(j<=-3)return CRM;if(front&&mi===0)return CRM;if(front&&mi===1&&j>=2)return (j&1)?CRM:NAVY;if(front&&mi===2&&(j===-1||j===0)&&!(j===0&&mi===2&&false))return j===-1?CRM:NAVY;
       if(j>=3)return (mi&1)?CRM:NAVY;return (k<0&&mi>=2)?NAV2:NAVY});
-    cube(TO,0,-.27-VS*2,0,5,2,3,KH);                                                            // 바지 윗단
+    cube(TO,0,-.27-VS*2.4,0,6,3,4,KH);                                                            // 바지 윗단
     for(sx=-1;sx<=1;sx+=2){
       lgp=part([sx*.13,.6,0],null,sx<0?1:2);for(rw=0;rw<5;rw++)cube(lgp,0,-(rw+1)*VS,0,2,1,2,rw===4?KH2:KH);cube(lgp,0,-5*VS,0,3,1,3,KH2);                         // 바지 다리와 접어 올린 단
       cube(lgp,0,-7*VS,VS*.5,3,1,4,SHO2);cube(lgp,0,-6*VS,VS*.5,3,1,4,SHO);cube(lgp,0,-6*VS+VS*.02,VS*1.6,1,1,1,CRM);                                              // 운동화: 밑창은 한 톤 어둡게
@@ -966,7 +966,7 @@ function buildVox(L){
       cube(amp,0,-7*VS,0,2,2,2,OR);cube(amp,0,-6.5*VS,VS*.7,1,1,1,OR);                                                                                             // 주황 손
       anp=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3);anp.h=1;rw=L.ant;seg(anp,[0,0,0],[sx*.08,.42*rw,-.06],ANB);seg(anp,[sx*.08,.42*rw,-.06],[sx*.15,.5*rw,.24],ANB);put(anp,sx*.15,.5*rw-VS*.7,.24+VS,ANB);put(anp,sx*.15,.5*rw-VS*.7,.24,ANB)}   // 더듬이: 개미와 같은 모양
     var HH=part([0,HY,.02],null,4);HH.h=1;blob(HH,0,0,0,.44,hry,.39,2.6,function(mi,j,k,front){
-      if(front){if(mi>=1&&mi<=3&&(j===0||j===1))return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-2)return MOUTH;if(mi===0&&j===-3)return RED}return OR},.39*.8);   // 앞으로 튀어나오는 층을 잘라 얼굴을 평평하게
+      if(front){if(mi>=1&&mi<=3&&(j===0||j===1))return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-2)return MOUTH;if(mi===0&&j===-3)return RED}return OR},.39*.8,.39*.8);   // 앞으로 튀어나오는 층을 잘라 얼굴을 평평하게
     blob(HH,0,hry-.03,0,.22,.07,.2,2,function(){return OR});
     if(L.acc==="crown"){var cr2=NV(.2),ck2;for(i=-cr2;i<cr2;i++)for(ck2=-cr2;ck2<cr2;ck2++){if(i>-cr2&&i<cr2-1&&ck2>-cr2&&ck2<cr2-1)continue;put(HH,(i+.5)*VS,hry+.06,(ck2+.5)*VS,V_GOLD);if((i+ck2)&1)put(HH,(i+.5)*VS,hry+.06+VS,(ck2+.5)*VS,V_GOLD)}}
     return fin()}
@@ -2264,7 +2264,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211214";
+var BUILD="B11211215";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
