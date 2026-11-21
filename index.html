@@ -285,7 +285,9 @@ body.compact #toast{top:64px}
 body.touch #joy{left:0;bottom:66px;width:46vw;height:36dvh;border-radius:0;background:transparent;border:0}
 body.touch #knob{display:none}
 body.touch #btns{right:12px;bottom:68px;width:auto;height:auto;display:flex;gap:10px}
-body.touch #btns button{position:static;width:56px;height:56px}
+body.touch #btns button{position:relative;left:auto;top:auto;right:auto;bottom:auto;width:56px;height:56px}
+body.touch #btns #pA{font-size:16px!important;white-space:nowrap}
+#btns button[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;right:-3px;bottom:-3px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:rgba(10,12,17,.92);border:1px solid var(--line);color:var(--amber);font-size:11px;font-weight:700;line-height:16px;text-align:center;pointer-events:none}
 body.touch #log{bottom:136px}
 #chatOpen,#chatpop{display:none}
 body.touch #chatOpen{display:block;position:absolute;left:14px;right:14px;bottom:12px;height:44px;box-sizing:border-box;text-align:left;color:var(--dim);font-size:14px;z-index:5;cursor:pointer}
@@ -1812,7 +1814,7 @@ function renderHot(){
   var now=performance.now(),i,k,it,cool,h=$("hot").children,p;
   for(i=0;i<3;i++){k=bind[i];it=k&&ITEMS[k];cool=k&&(cdUntil[k]||0)>now;
     h[i].querySelector(".ic").textContent=it?it.i:"";h[i].querySelector(".ct").textContent=it?inv[k]:"";h[i].classList.toggle("cool",!!cool);h[i].title=it?it.n+" — "+it.d:"비어 있음";
-    p=$(SLOT_PAD[i]);p.textContent=it?it.i:"·";p.classList.toggle("cool",!!cool)}
+    p=$(SLOT_PAD[i]);p.textContent=it?it.i:"·";p.setAttribute("data-n",it?Math.min(99,inv[k]|0):"");p.classList.toggle("cool",!!cool)}   // 버튼 귀퉁이에 가진 개수 (최대 두 자리)
 }
 function mk(tag,cls,txt){var d=document.createElement(tag);if(cls)d.className=cls;if(txt!=null)d.textContent=txt;return d}
 function renderInv(){
@@ -2525,7 +2527,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211853";
+var BUILD="B11211854";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
