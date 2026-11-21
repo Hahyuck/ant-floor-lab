@@ -909,7 +909,7 @@ var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
 var CM=null;                                     // 직접 편집한 개미 모델 (?edit 화면에서 저장). 부위 이름 → [x,y,z,색] 목록. 좌표는 복셀 칸 단위
 var CMO=null,CMR=null;                           // CMR: 부위별 각도 옮김값 (도)                                    // 부위별 붙는 위치 옮김값 (칸 단위)
 var CMS={};                                      // 캐릭터별 편집 모델: 0 개미("antmodel"), 1 인간형 개미("antmodel1"). 각각 {parts, off, rot}
-function loadCM(){CMS={};try{if(localStorage.getItem("antmodelOn")==="1")[0,1].forEach(function(k){var t=localStorage.getItem(k?"antmodel1":"antmodel"),j=t?JSON.parse(t):null;if(j&&j.parts&&j.v===2)CMS[k]=j})}catch(_){CMS={}}}loadCM();   // v 2: 리디자인한 몸에 맞춘 편집본만 쓴다 (예전 개미 모양의 편집본은 건너뛴다)
+function loadCM(){CMS={};try{if(localStorage.getItem("antmodelOn")==="1")[0,1,2,3,4,5,6,7].forEach(function(k){var t=localStorage.getItem(k?"antmodel"+k:"antmodel"),j=t?JSON.parse(t):null;if(j&&j.parts&&j.v===2)CMS[k]=j})}catch(_){CMS={}}}loadCM();   // v 2: 리디자인한 몸에 맞춘 편집본만 쓴다 (예전 개미 모양의 편집본은 건너뛴다)
 var CS=.85;   // 귀요미 개미 전체 배율: 머리가 커진 만큼 줄여서 기본 개미와 키를 맞춘다
 var CVS=[.08,.068,.056,.047,.04];                              // 귀요미 개미 밀도 −2 ~ +2 (복셀 한 칸의 크기)
 function setVS(){VS=CUTE?CVS[(GFX&&GFX.cdens!=null)?GFX.cdens:2]:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
@@ -925,17 +925,17 @@ function buildVox(L){
   var parts=[],r=rng((L.phase*1e6)|0),body=lin(L.color),dark=CUTE?[body[0]*.62,body[1]*.62,body[2]*.62]:[body[0]*.3,body[1]*.3,body[2]*.3],h=L.head*(CUTE?1.6:1),b=L.belly*(CUTE?.86:1),HY=CUTE?.92+.32*L.head*1.6:1.33,sx,i;
   // 동물 투자자: 개미와 같은 뼈대(배·가슴·머리·네 다리·두 팔)에 색과 귀·주둥이·꼬리만 바꿔 입힌다. 1 고양이 2 곰 3 고릴라 4 앵무새 5 펭귄 6 토끼 7 레서판다
   var SP=CUTE?0:(L.sp|0),A=SP>0,PAL=A?SPAL[SP]:null,TB,LEGL,lite,hcol,legc,pink=[.96,.58,.66],YEL=lin(0xf2c230);
-  if(A){var kv=.93+r()*.12,bb0=lin(PAL.b);body=[bb0[0]*kv,bb0[1]*kv,bb0[2]*kv];lite=lin(PAL.l);dark=lin(PAL.d);hcol=PAL.h?lin(PAL.h):body;legc=PAL.g?lin(PAL.g):body;TB=SPB[SP];LEGL=1.1-2*TB[1];h=L.head*TB[4];HY=1.04+.32*h*.74}
+  if(A){var kv=L.raw?1:.93+r()*.12,bb0=lin(PAL.b);body=[bb0[0]*kv,bb0[1]*kv,bb0[2]*kv];lite=lin(PAL.l);dark=lin(PAL.d);hcol=PAL.h?lin(PAL.h):body;legc=PAL.g?lin(PAL.g):body;TB=SPB[SP];LEGL=1.1-2*TB[1];h=L.head*TB[4];HY=1.04+.32*h*.74}
   var NA=!A&&!CUTE,MOUTH=lin(0x8a1a12);                                                        // NA: 리디자인한 기본 개미 (큰 둥근 머리, 가는 가슴, 공 같은 배, 무릎 있는 긴 다리)
   if(NA){dark=[body[0]*.3,body[1]*.27,body[2]*.5];HY=1.37-VS}                                    // 팔다리 · 더듬이는 몸 색을 눌러 만든 갈색
   function seg(o,a,b2,c,th){var n2=Math.max(1,Math.ceil(Math.hypot(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2])/(VS*.85))),t,x,y,z;      // 두 점을 잇는 복셀 줄 (th 2: 두 줄 굵기)
     for(t=0;t<=n2;t++){x=a[0]+(b2[0]-a[0])*t/n2;y=a[1]+(b2[1]-a[1])*t/n2;z=a[2]+(b2[2]-a[2])*t/n2;put(o,x,y,z,c);if(th===2){put(o,x,y,z-VS,c);put(o,x+VS,y,z,c);put(o,x+VS,y,z-VS,c)}}}
-  function fin(){var tot=0,q;for(q=0;q<parts.length;q++){parts[q].v=new Float32Array(parts[q].v);parts[q].c=new Float32Array(parts[q].c);tot+=parts[q].v.length/3}parts.n=tot;parts.hb=[0,HY-hry,.06];return parts}
+  function fin(){var tot=0,q;for(q=0;q<parts.length;q++){parts[q].v=new Float32Array(parts[q].v);parts[q].c=new Float32Array(parts[q].c);tot+=parts[q].v.length/3}parts.n=tot;parts.hb=[0,HY-hry,.06];parts.bc=body;parts.dc=dark;return parts}
   function cube(o,x,y,z,nx,ny,nz,c){for(var a=0;a<nx;a++)for(var b2=0;b2<ny;b2++)for(var c2=0;c2<nz;c2++)put(o,x+(a-(nx-1)/2)*VS,y+b2*VS,z+(c2-(nz-1)/2)*VS,c)}
   function part(p,rot,a){var o={p:p,r:rot||[0,0,0],a:a||0,v:[],c:[]};parts.push(o);return o}
   function put(o,x,y,z,c,k){k=L.raw?1:(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}   // L.raw: 편집 화면용. 음영 없이 원래 색 그대로
   // 부위에 이름을 붙이고, 편집한 모델이 있으면 그 부위의 복셀을 통째로 바꾼다. 색 B·D·S 는 개미마다 다른 몸 색·짙은 색·줄무늬 색
-  function cust(o,nm){o.nm=nm;var CC=!CUTE&&!L.raw&&SP<2&&CMS[SP],M=CC&&CC.parts[nm],OF=CC&&CC.off&&CC.off[nm],RT=CC&&CC.rot&&CC.rot[nm],q,cc,y0=1e9,y1=-1e9;
+  function cust(o,nm){o.nm=nm;var CC=!CUTE&&!L.raw&&CMS[SP],M=CC&&CC.parts[nm],OF=CC&&CC.off&&CC.off[nm],RT=CC&&CC.rot&&CC.rot[nm],q,cc,y0=1e9,y1=-1e9;
     if(OF)o.p=[o.p[0]+OF[0]*VS,o.p[1]+OF[1]*VS,o.p[2]+OF[2]*VS];
     if(RT)o.r=[o.r[0]+RT[0]*.017453,o.r[1]+RT[1]*.017453,o.r[2]+RT[2]*.017453];if(!M)return;o.v.length=0;o.c.length=0;
     for(q=0;q<M.length;q++){y0=Math.min(y0,M[q][1]);y1=Math.max(y1,M[q][1])}
@@ -975,7 +975,7 @@ function buildVox(L){
     cube(BEL,0,-VS,.31*b+.02,2,2,3,body);cust(BEL,"belly")}                                                                                          // 가슴과 잇는 자루
   else if(!A){var BEL=part([0,.38,-.34]);blob(BEL,0,0,0,.31*b,.27*b,.38*b,2.3,function(mi,j,k){return ((k+40)%3===0)?[body[0]*.72,body[1]*.72,body[2]*.72]:body});cust(BEL,"belly")}
   // 가슴: 넥타이
-  if(A)blob(part([0,1.06-TB[1],-.02]),0,0,0,TB[0],TB[1],TB[2],2.4,function(mi,j,k,front){                     // 동물: 두 발로 선 통통한 몸통. 배는 밝고 등에는 무늬
+  if(A){var TOA=part([0,1.06-TB[1],-.02]);blob(TOA,0,0,0,TB[0],TB[1],TB[2],2.4,function(mi,j,k,front){                     // 동물: 두 발로 선 통통한 몸통. 배는 밝고 등에는 무늬
     if(L.acc==="tie"&&front&&mi===0&&j>=0)return V_RED;
     if(SP===1)return front&&mi<=1&&j<=1?lite:(!front&&k<0&&(j+40)%3===0?dark:body);
     if(SP===2)return front&&mi<=1&&j<=0&&j>=-3?lite:body;
@@ -983,7 +983,7 @@ function buildVox(L){
     if(SP===4)return front&&mi<=2?YEL:body;
     if(SP===5)return front&&mi<=2&&j<3?lite:body;
     if(SP===7)return j<-1||(front&&mi<=1)?dark:body;
-    return body});
+    return body});cust(TOA,"chest")}
   else if(NA){var CHE=part([0,.82-VS,-.02]);blob(CHE,0,0,0,.185,.3,.165,4,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=0&&j<=2)?V_RED:body});cust(CHE,"chest")}   // 가슴: 곧게 선 가는 기둥
   else{var CHE=part([0,.80,-.04]);blob(CHE,0,0,0,.22,.23,.2,2.3,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=-NV(.2)&&j<=1)?V_RED:body});cust(CHE,"chest")}
   // 머리: 얼굴을 겉면에 그린다
@@ -1017,7 +1017,7 @@ function buildVox(L){
     return A?hcol:body;
   },CUTE?.32*h*.78:null);
   if(NA)blob(H,0,hry-.03,0,.2*h,.07,.2*h,2,function(){return body});                                 // 정수리 한 단
-  cust(H,"head");
+  if(!A)cust(H,"head");
   if(A){var Zf=.32*h,tp=hry,ear;                                                              // 귀·주둥이·부리
     var snout=function(mi,j,k,fr){return fr&&mi===0&&j>=0?V_BLACK:lite};
     if(SP===2)blob(H,0,-.15,Zf-.03,.15,.11,.1,2,snout);
@@ -1032,6 +1032,7 @@ function buildVox(L){
       else if(SP===3)cube(H,sx*(.35*h+.02),-.04,0,1,2,1,lite);
       else if(SP===6){ear=part([sx*.14,HY+tp-.06,0],[0,0,-sx*.12],3);ear.h=1;cube(ear,0,0,0,2,6,1,body);for(i=1;i<5;i++)put(ear,0,i*VS,VS*.6,pink)}
       else if(SP===7){cube(H,sx*.25,tp-VS*.5,0,3,2,1,lite);cube(H,sx*.25,tp+VS*1.5,0,1,1,1,lite);put(H,sx*.25,tp-VS*.5,VS*.6,dark)}}}                                                                    // 귀요미: 코처럼 튀어나오는 앞쪽 층을 잘라 얼굴을 평평하게
+  if(A)cust(H,"head");                                                                     // 동물은 귀 · 주둥이까지 붙인 뒤에 머리로 묶는다
   var top=hry;
   if(L.acc==="hat"||L.acc==="helmet"){var hc=L.acc==="hat"?V_HAT:V_HELM;
     blob(H,0,top-.14,0,.35*h+.09,.26,.32*h+.09,2.4,function(mi,j){return j>=0?hc:null});
@@ -1048,7 +1049,7 @@ function buildVox(L){
       for(aa=0;aa<2;aa++)put(lg,(aa-.5)*VS,-(nl-.5)*VS,1.5*VS,PAL.p?lin(PAL.p):lc);                                                                            // 발끝
       for(i=0;i<na;i++)for(aa=0;aa<aw;aa++)for(bb=0;bb<ad;bb++)put(am,aa*sx*VS,-(i+.5)*VS,(bb-(ad-1)/2)*VS,i>=na-(SP===4?2:1)?tipc:body);                           // 팔 · 날개 · 지느러미
       if(SP===3)cube(am,sx*VS*.5,-(na+1)*VS,0,3,2,3,dark);
-      continue}
+      var sdA=sx<0?"L":"R";cust(lg,"leg"+sdA);cust(am,"arm"+sdA);continue}
     if(NA){var lgN=part([sx*.14,.58-VS,.04],null,sx<0?1:2),amN=part([sx*.17,.98-VS,.1],null,sx<0?2:1),mdN=part([sx*.14,.6-VS,-.3],null,sx<0?2:1),anN=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3),al=L.ant,sdN=sx<0?"L":"R";anN.h=1;
       seg(lgN,[0,0,0],[sx*.2,-.14,.06],dark);seg(lgN,[sx*.2,-.14,.06],[sx*.3,-.54+VS,.08],dark);put(lgN,sx*.3,-.54+VS,.08+VS,dark);put(lgN,sx*.3,-.54+VS,.08+VS*2,dark);              // 앞다리: 무릎에서 꺾여 내려오고 발끝이 앞으로
       seg(mdN,[0,0,0],[sx*.22,-.1,-.1],dark);seg(mdN,[sx*.22,-.1,-.1],[sx*.34,-.56+VS,-.16],dark);put(mdN,sx*.34,-.56+VS,-.16+VS,dark);                                              // 뒷다리
@@ -1071,7 +1072,7 @@ function buildVox(L){
     else if(SP===4){T=part([0,LEGL+.12,-TB[2]+.02],[-.6,0,0],3);for(i=0;i<6;i++)cube(T,0,0,-i*VS,3,1,1,i>=4?dark:hcol)}
     else if(SP===5){T=part([0,LEGL+.08,-TB[2]-.02]);cube(T,0,0,0,2,1,2,body)}
     else if(SP===6){T=part([0,LEGL+.12,-TB[2]-.06]);blob(T,0,0,0,.13,.13,.13,2,function(){return V_WHITE})}
-    else if(SP===7){T=part([0,LEGL+.1,-TB[2]+.08],[.5,0,0],3);blob(T,0,0,-.32,.17,.17,.34,2.2,function(mi,j,k){return ((k+40)%4<2)?body:dark})}}
+    else if(SP===7){T=part([0,LEGL+.1,-TB[2]+.08],[.5,0,0],3);blob(T,0,0,-.32,.17,.17,.34,2.2,function(mi,j,k){return ((k+40)%4<2)?body:dark})}if(T)cust(T,"tail")}
   /* 테마별 의상
      노멀 · 강변: 그냥 일개미 (원래 소품만)   주식시장: 허리까지 오는 정장에 넥타이나 리본
      클럽: 나비넥타이 · 스카프 · 머리띠 · 꽃 머리띠   게임: 진영과 직업 복장 */
@@ -2265,7 +2266,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211218";
+var BUILD="B11211221";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2280,17 +2281,17 @@ try{var agN=sessionStorage.getItem("antgo");if(agN){sessionStorage.removeItem("a
    모델 형식: {v:1, parts:{부위:[[x,y,z,색],...]}, xf:{부위:{p,r}}}  좌표는 부위 안에서의 복셀 칸 단위, 색은 "B"(몸 색) "D"(짙은 색) "S"(줄무늬) 또는 0xRRGGBB */
 var EDIT=/[?&]edit/.test(location.search);
 function startEditor(){
-  var edSp=/[?&]edit=1/.test(location.search)?1:0,KEY=edSp?"antmodel1":"antmodel";             // 편집할 캐릭터: 0 개미, 1 인간형 개미 (저장도 따로)
-  var PNAME={belly:"배",chest:edSp?"몸통":"가슴",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
+  var edSp=SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=edSp?"antmodel"+edSp:"antmodel",edB=null,edD=null;             // 편집할 캐릭터: 0 개미, 1 인간형 개미 (저장도 따로)
+  var PNAME={belly:"배",chest:edSp?"몸통":"가슴",tail:"꼬리",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
       BODYS=["#f5821f","#b5532a","#2a2320","#d9362f","#6b4a32"],bodyHex=BODYS[0],model,tool="move",padMode="move",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
       sels=[],whole=false,multi=false,joint=false,anim=0,pv=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
   try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
   function base(){var L=lookOf("기본개미"),P,b,m={v:2,parts:{},xf:{}},i,k,q,c,arr;L.color="#f5821f";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=edSp;L.raw=true;
     var near=function(a,t){return Math.abs(a[0]-t[0])+Math.abs(a[1]-t[1])+Math.abs(a[2]-t[2])<.004};
-    P=buildVox(L);b=lin(L.color);
+    P=buildVox(L);b=P.bc;edB=P.bc;edD=P.dc;
     for(i=0;i<P.length;i++){q=P[i];if(!q.nm)continue;arr=[];for(k=0;k<q.v.length/3;k++){c=[q.c[k*3],q.c[k*3+1],q.c[k*3+2]];
-        arr.push([+(q.v[k*3]/VS).toFixed(2),+(q.v[k*3+1]/VS).toFixed(2),+(q.v[k*3+2]/VS).toFixed(2),near(c,b)?"B":near(c,[b[0]*.3,b[1]*.27,b[2]*.5])?"D":near(c,[b[0]*.72,b[1]*.72,b[2]*.72])?"S":new THREE.Color().setRGB(c[0],c[1],c[2]).getHex()])}
+        arr.push([+(q.v[k*3]/VS).toFixed(2),+(q.v[k*3+1]/VS).toFixed(2),+(q.v[k*3+2]/VS).toFixed(2),near(c,b)?"B":near(c,P.dc)?"D":near(c,[b[0]*.72,b[1]*.72,b[2]*.72])?"S":new THREE.Color().setRGB(c[0],c[1],c[2]).getHex()])}
       m.parts[q.nm]=arr;m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]],a:q.a||0}}
     return m}
   var BASE0=base();
@@ -2324,7 +2325,7 @@ function startEditor(){
   GH.count=0;SM.count=0;GH.frustumCulled=SM.frustumCulled=false;GH.renderOrder=2;SM.renderOrder=1;hov.matrixAutoUpdate=false;hov.visible=false;S.add(GH);S.add(SM);S.add(hov);
   function boxAt(nm,pos,sc){var m=byNm[nm];if(!m)return null;return tmpM.copy(m.matrixWorld).multiply(tmpS.makeTranslation(pos[0]*VS,pos[1]*VS,pos[2]*VS)).multiply(tmpS.makeScale(VS*sc,VS*sc,VS*sc))}
   function setBoxes(IM,list,sc){var n=0,i,cap=IM.instanceMatrix.count;for(i=0;i<list.length&&n<cap;i++)if(boxAt(list[i].nm,list[i].pos,sc))IM.setMatrixAt(n++,tmpM);IM.count=n;IM.instanceMatrix.needsUpdate=true}
-  function colOf(c){if(c==="B"||c==="D"||c==="S"){var b=lin(bodyHex),k=c==="B"?1:.72;return c==="D"?[b[0]*.3,b[1]*.27,b[2]*.5]:[b[0]*k,b[1]*k,b[2]*k]}return lin(c)}
+  function colOf(c){if(c==="B"||c==="D"||c==="S"){var b=edSp?edB:lin(bodyHex),k=c==="B"?1:.72;return c==="D"?(edSp?edD:[b[0]*.3,b[1]*.27,b[2]*.5]):[b[0]*k,b[1]*k,b[2]*k]}return lin(c)}   // 개미는 미리 볼 몸 색을 따르고, 다른 캐릭터는 제 몸 색
   function cssOf(c){var q=colOf(c);return "#"+new THREE.Color().setRGB(q[0],q[1],q[2]).getHexString()}
   function refreshSel(){setBoxes(SM,sels.map(function(q){return {nm:q.nm,pos:q.v}}),1.16)}
   function rebuild(){var nm,M,m,i,mt=new THREE.Matrix4(),col,tot=0,sc=VS*1.02,c,ck;
@@ -2532,8 +2533,8 @@ function startEditor(){
   function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function btn(par,label,cls,fn,sub){var b=mk("button",cls||"",label);if(sub)b.appendChild(mk("small",null,sub));b.onclick=fn;par.appendChild(b);return b}
   function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
-    panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));g=mk("div","g");g.style.marginTop="8px";
-    btn(g,"개미",edSp?"":"on",function(){if(edSp)location.search="?edit"});btn(g,"인간형 개미",edSp?"on":"",function(){if(!edSp)location.search="?edit=1"});panel.appendChild(g);
+    panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));panel.appendChild(mk("h4",null,"모델 불러오기 · 지금 "+SPN[edSp]));g=mk("div","g g3");
+    SPOK.forEach(function(k){var has=false;try{has=!!localStorage.getItem(k?"antmodel"+k:"antmodel")}catch(_){}btn(g,SPI[k]+" "+SPN[k],k===edSp?"on":"",function(){if(k!==edSp)location.search=k?"?edit="+k:"?edit"},has?"편집본 있음":"처음 모양")});panel.appendChild(g);
     panel.appendChild(mk("h4",null,"도구"));g=mk("div","g g3");tools.forEach(function(t){btn(g,t[1],tool===t[0]?"on":"",function(){setTool(t[0])})});btn(g,"대칭 "+(mirror?"켬":"끔"),mirror?"on":"",function(){mirror=!mirror;paint()});panel.appendChild(g);
     g=mk("div","g");g.style.marginTop="6px";btn(g,"되돌리기","",doUndo).disabled=!undo.length;btn(g,"다시 실행","",doRedo).disabled=!redo.length;panel.appendChild(g);
     if(tool==="move"){panel.appendChild(mk("h4",null,"선택 방식 · 지금 "+(joint?PNAME[sels[0].nm]+" 부위":sels.length+"개")));g=mk("div","g");
