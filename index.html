@@ -268,6 +268,16 @@ body.compact #topright #bgmBox{display:flex;align-items:center;gap:10px;padding:
 body.compact #topright #bgmBox .tipb::after{content:none}
 body.compact #topright #bgmBox #bgmV{flex:1;width:auto}
 body.compact #topright #bgmBox button{font-size:17px;padding:6px 2px}
+/* 휴대폰 · 좁은 화면: 방 이름은 짧게, 메뉴 버튼은 같은 줄 오른쪽에 */
+#topleft .tpre{font-style:normal}
+body.compact #topleft .tpre{display:none}
+body.compact #topleft{max-width:calc(100vw - 124px);white-space:nowrap;gap:8px}
+body.compact #topleft>*{flex:none}
+body.compact #topleft #count{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+body.compact #quick{top:14px}
+body.compact #quick #bMenu{padding:11.5px 14px;font-size:14px}
+body.compact #topright{top:62px}
+body.compact #toast{top:64px}
 </style>
 </head>
 <body>
@@ -2454,7 +2464,8 @@ if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status
     $("go").textContent="채널 "+i+" 입장";$("alt").style.display="";$("alt").textContent="채널 말고 새 방 만들기";status("채널 "+i+" · 정식 서비스에서는 빈 채널로 자동 배정됩니다")};
   box.appendChild(b)})(i)})();
 function themeUI(){
-  document.title=TNAME[THEME];document.querySelector(".card h1").textContent=TNAME[THEME];$("topleft").firstElementChild.textContent=TNAME[THEME];
+  document.title=TNAME[THEME];document.querySelector(".card h1").textContent=TNAME[THEME];(function(){var el=$("topleft").firstElementChild,nm=TNAME[THEME],pre="슈카친구들 ";el.textContent="";if(nm.indexOf(pre)===0){el.appendChild(mk("i","tpre",pre));nm=nm.slice(pre.length)}el.appendChild(document.createTextNode(nm))})();   // 좁은 화면에서는 앞의 "슈카친구들"을 감춰 짧게 쓴다
+  
   document.querySelector(".card .sub").textContent=RAID?"이름을 넣으면 그 이름의 개미와 직업이 정해집니다":"이름을 넣으면 그 이름의 개미가 만들어집니다";
   $("entry").style.background=FLOOR?"":"linear-gradient(rgba(8,9,13,.5),rgba(8,9,13,.8)),url(art/keyart-"+THEME+".jpg?2) center/cover no-repeat";
 }
@@ -2487,7 +2498,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211824";
+var BUILD="B11211840";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
