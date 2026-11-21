@@ -907,8 +907,8 @@ function placeScreen(){var cy=SCR.y0+SCR.h/2;scrPos[1]=cy;holeMesh.position.y=cy
 var VS=.085, VMAX=3000, MAXA=132;
 var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
 var CM=null;                                     // 직접 편집한 개미 모델 (?edit 화면에서 저장). 부위 이름 → [x,y,z,색] 목록. 좌표는 복셀 칸 단위
-var CMO=null;                                    // 부위별 붙는 위치 옮김값 (칸 단위)
-function loadCM(){CM=null;CMO=null;try{if(localStorage.getItem("antmodelOn")==="1"){var cj=JSON.parse(localStorage.getItem("antmodel"));CM=cj.parts;CMO=cj.off||null}}catch(_){CM=null;CMO=null}}loadCM();
+var CMO=null,CMR=null;                           // CMR: 부위별 각도 옮김값 (도)                                    // 부위별 붙는 위치 옮김값 (칸 단위)
+function loadCM(){CM=null;CMO=null;CMR=null;try{if(localStorage.getItem("antmodelOn")==="1"){var cj=JSON.parse(localStorage.getItem("antmodel"));CM=cj.parts;CMO=cj.off||null;CMR=cj.rot||null}}catch(_){CM=null;CMO=null;CMR=null}}loadCM();
 var CS=.85;   // 귀요미 개미 전체 배율: 머리가 커진 만큼 줄여서 기본 개미와 키를 맞춘다
 var CVS=[.08,.068,.056,.047,.04];                              // 귀요미 개미 밀도 −2 ~ +2 (복셀 한 칸의 크기)
 function setVS(){VS=CUTE?CVS[(GFX&&GFX.cdens!=null)?GFX.cdens:2]:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
@@ -930,7 +930,8 @@ function buildVox(L){
   function put(o,x,y,z,c,k){k=L.raw?1:(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}   // L.raw: 편집 화면용. 음영 없이 원래 색 그대로
   // 부위에 이름을 붙이고, 편집한 모델이 있으면 그 부위의 복셀을 통째로 바꾼다. 색 B·D·S 는 개미마다 다른 몸 색·짙은 색·줄무늬 색
   function cust(o,nm){o.nm=nm;var M=CM&&!A&&!CUTE&&!L.raw&&CM[nm],OF=CMO&&!A&&!CUTE&&!L.raw&&CMO[nm],q,cc,y0=1e9,y1=-1e9;
-    if(OF)o.p=[o.p[0]+OF[0]*VS,o.p[1]+OF[1]*VS,o.p[2]+OF[2]*VS];if(!M)return;o.v.length=0;o.c.length=0;
+    if(OF)o.p=[o.p[0]+OF[0]*VS,o.p[1]+OF[1]*VS,o.p[2]+OF[2]*VS];
+    var RT=CMR&&!A&&!CUTE&&!L.raw&&CMR[nm];if(RT)o.r=[o.r[0]+RT[0]*.017453,o.r[1]+RT[1]*.017453,o.r[2]+RT[2]*.017453];if(!M)return;o.v.length=0;o.c.length=0;
     for(q=0;q<M.length;q++){y0=Math.min(y0,M[q][1]);y1=Math.max(y1,M[q][1])}
     for(q=0;q<M.length;q++){cc=M[q][3];cc=cc==="B"?body:cc==="D"?dark:cc==="S"?[body[0]*.72,body[1]*.72,body[2]*.72]:lin(cc);
       put(o,M[q][0]*VS,M[q][1]*VS,M[q][2]*VS,cc,y1>y0?.86+.18*(M[q][1]-y0)/(y1-y0):1)}}
@@ -2227,7 +2228,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211057";
+var BUILD="B11211103";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2245,19 +2246,19 @@ function startEditor(){
   var PNAME={belly:"배",chest:"가슴",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
       BODYS=["#b5532a","#2a2320","#d9362f","#e8a13a","#6b4a32"],bodyHex=BODYS[0],model,tool="add",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
-      sels=[],whole=false,multi=false,joint=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
+      sels=[],whole=false,multi=false,joint=false,anim=0,pv=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
   try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
   function base(){var L=lookOf("기본개미"),P,b,m={v:1,parts:{},xf:{}},i,k,q,c,arr;L.color="#b5532a";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=0;L.raw=true;
     var near=function(a,t){return Math.abs(a[0]-t[0])+Math.abs(a[1]-t[1])+Math.abs(a[2]-t[2])<.004},cm=CM;CM=null;
     P=buildVox(L);CM=cm;b=lin(L.color);
     for(i=0;i<P.length;i++){q=P[i];if(!q.nm)continue;arr=[];for(k=0;k<q.v.length/3;k++){c=[q.c[k*3],q.c[k*3+1],q.c[k*3+2]];
         arr.push([+(q.v[k*3]/VS).toFixed(2),+(q.v[k*3+1]/VS).toFixed(2),+(q.v[k*3+2]/VS).toFixed(2),near(c,b)?"B":near(c,[b[0]*.3,b[1]*.3,b[2]*.3])?"D":near(c,[b[0]*.72,b[1]*.72,b[2]*.72])?"S":new THREE.Color().setRGB(c[0],c[1],c[2]).getHex()])}
-      m.parts[q.nm]=arr;m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]]}}
+      m.parts[q.nm]=arr;m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]],a:q.a||0}}
     return m}
   var BASE0=base();
   try{var sv=JSON.parse(localStorage.getItem("antmodel"));if(sv&&sv.parts&&sv.parts.head){model=sv;model.xf=BASE0.xf}}catch(_){}
   if(!model)model=JSON.parse(JSON.stringify(BASE0));
-  if(!model.off)model.off={};                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
+  if(!model.off)model.off={};if(!model.rot)model.rot={};                                       // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
   // ── 화면
   var st=document.createElement("style");st.textContent=
@@ -2278,7 +2279,7 @@ function startEditor(){
   var R=new THREE.WebGLRenderer({canvas:cv,antialias:true}),S=new THREE.Scene(),C=new THREE.PerspectiveCamera(32,1,.05,60),G=new THREE.Group(),ray=new THREE.Raycaster(),
       cam2={yaw:.7,pitch:.28,dist:4.6},T=new THREE.Vector3(0,.78,-.12),tmpM=new THREE.Matrix4(),tmpS=new THREE.Matrix4(),tmpV=new THREE.Vector3();
   S.background=new THREE.Color(0x1a2233);S.add(new THREE.HemisphereLight(0xdfe8ff,0x4a4038,1.25));var dl=new THREE.DirectionalLight(0xfff1d8,2.2);dl.position.set(2.5,5,3.5);S.add(dl);S.add(G);
-  S.add(new THREE.GridHelper(4,Math.round(4/VS/4),0x41506e,0x2b354b));
+  var grid=new THREE.GridHelper(4,Math.round(4/VS/4),0x41506e,0x2b354b);S.add(grid);
   // 미리보기: 커서 아래에서 어떤 블록이 생기고 · 지워지고 · 칠해질지 반투명 블록으로 보여 준다. 집은 블록은 하늘색으로 덮는다
   var GH=new THREE.InstancedMesh(boxGeo,new THREE.MeshBasicMaterial({transparent:true,opacity:.62,depthWrite:false}),200),SM=new THREE.InstancedMesh(boxGeo,new THREE.MeshBasicMaterial({color:0x5fe0ff,transparent:true,opacity:.42,depthWrite:false}),800),
       hov=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0xffffff}));
@@ -2291,17 +2292,17 @@ function startEditor(){
   function rebuild(){var nm,M,m,i,mt=new THREE.Matrix4(),col,tot=0,sc=VS*1.02,c,ck;
     meshes.forEach(function(x){G.remove(x);x.dispose()});meshes=[];byNm={};
     for(nm in model.parts){M=model.parts[nm];tot+=M.length;if(!M.length)continue;m=new THREE.InstancedMesh(boxGeo,antMat,M.length);col=new Float32Array(M.length*3);
-      for(i=0;i<M.length;i++){mt.makeScale(sc,sc,sc).setPosition(M[i][0]*VS,M[i][1]*VS,M[i][2]*VS);m.setMatrixAt(i,mt);c=colOf(M[i][3]);ck=((Math.floor(M[i][0])+Math.floor(M[i][1])+Math.floor(M[i][2]))&1)?.86:1;col[i*3]=c[0]*ck;col[i*3+1]=c[1]*ck;col[i*3+2]=c[2]*ck}   // 블록 경계가 보이게 한 칸 걸러 살짝 어둡게
-      m.instanceColor=new THREE.InstancedBufferAttribute(col,3);var of=model.off[nm]||[0,0,0],xp=model.xf[nm].p;m.position.set(xp[0]+of[0]*VS,xp[1]+of[1]*VS,xp[2]+of[2]*VS);m.rotation.set(model.xf[nm].r[0],model.xf[nm].r[1],model.xf[nm].r[2]);m.userData.nm=nm;m.frustumCulled=false;G.add(m);meshes.push(m);byNm[nm]=m}
+      for(i=0;i<M.length;i++){mt.makeScale(sc,sc,sc).setPosition(M[i][0]*VS,M[i][1]*VS,M[i][2]*VS);m.setMatrixAt(i,mt);c=colOf(M[i][3]);ck=pv?.9+((i*7919)%13)/100:((Math.floor(M[i][0])+Math.floor(M[i][1])+Math.floor(M[i][2]))&1)?.86:1;col[i*3]=c[0]*ck;col[i*3+1]=c[1]*ck;col[i*3+2]=c[2]*ck}   // 블록 경계가 보이게 한 칸 걸러 살짝 어둡게
+      m.instanceColor=new THREE.InstancedBufferAttribute(col,3);var of=model.off[nm]||[0,0,0],xp=model.xf[nm].p;m.position.set(xp[0]+of[0]*VS,xp[1]+of[1]*VS,xp[2]+of[2]*VS);var rt=model.rot[nm]||[0,0,0],xr=model.xf[nm].r;m.userData.r=[xr[0]+rt[0]*.017453,xr[1]+rt[1]*.017453,xr[2]+rt[2]*.017453];m.userData.a=model.xf[nm].a;m.rotation.set(m.userData.r[0],m.userData.r[1],m.userData.r[2]);m.userData.nm=nm;m.frustumCulled=false;G.add(m);meshes.push(m);byNm[nm]=m}
     G.updateMatrixWorld(true);refreshSel();info.textContent="블록 "+tot.toLocaleString("ko-KR")+"개 · "+(on?"게임에 적용 중":"게임에는 아직 적용 안 함");
-    try{localStorage.setItem("antmodel",JSON.stringify({v:1,parts:model.parts,off:model.off}))}catch(_){}}
+    try{localStorage.setItem("antmodel",JSON.stringify({v:1,parts:model.parts,off:model.off,rot:model.rot}))}catch(_){}}
 
   // ── 모델 다루기
   function find(M,x,y,z){for(var i=0;i<M.length;i++)if(Math.abs(M[i][0]-x)<.02&&Math.abs(M[i][1]-y)<.02&&Math.abs(M[i][2]-z)<.02)return i;return -1}
   function mirOf(nm){var e=nm.slice(-1);return e==="L"?nm.slice(0,-1)+"R":e==="R"?nm.slice(0,-1)+"L":nm}
   function mt(nm,pos){var o=[{nm:nm,pos:pos}],mn=mirOf(nm);if(mirror&&(mn!==nm||Math.abs(pos[0])>.02))o.push({nm:mn,pos:[-pos[0],pos[1],pos[2]]});return o}   // 대칭까지 포함한 대상 칸
-  function snapStr(){return JSON.stringify({p:model.parts,o:model.off})}
-  function restore(t){var j=JSON.parse(t);model.parts=j.p;model.off=j.o||{}}
+  function snapStr(){return JSON.stringify({p:model.parts,o:model.off,r:model.rot})}
+  function restore(t){var j=JSON.parse(t);model.parts=j.p;model.off=j.o||{};model.rot=j.r||{}}
   function commit(before){if(before===snapStr())return false;undo.push(before);if(undo.length>80)undo.shift();redo.length=0;return true}   // 실제로 바뀐 때만 되돌리기 단계로 남긴다
   function doUndo(){if(!undo.length)return flash("되돌릴 단계가 없습니다");redo.push(snapStr());restore(undo.pop());sels=[];lineA=null;rebuild();paint()}
   function doRedo(){if(!redo.length)return flash("다시 실행할 단계가 없습니다");undo.push(snapStr());restore(redo.pop());sels=[];lineA=null;rebuild();paint()}
@@ -2327,6 +2328,8 @@ function startEditor(){
     L.forEach(function(e){var M=model.parts[e.nm],i=find(M,e.v[0]+e.sg*dx,e.v[1]+dy,e.v[2]+dz);if(i>=0&&!L.some(function(q){return q.v===M[i]}))bad=true});
     if(bad)return flash("다른 블록에 막혀서 그쪽으로는 못 갑니다");
     L.forEach(function(e){e.v[0]=+(e.v[0]+e.sg*dx).toFixed(2);e.v[1]=+(e.v[1]+dy).toFixed(2);e.v[2]=+(e.v[2]+dz).toFixed(2)});commit(before);rebuild();paint()}
+  function turn(ax,sg){if(!sels.length)return flash("먼저 돌릴 부위를 누르세요");var nm=sels[0].nm,mn=mirOf(nm),before=snapStr(),a=(model.rot[nm]||[0,0,0]).slice(),b;   // 부위 각도를 5도씩. 반대쪽 짝은 거울처럼 돈다
+    a[ax]+=sg*5;model.rot[nm]=a;if(mirror&&mn!==nm){b=(model.rot[mn]||[0,0,0]).slice();b[ax]+=(ax===0?1:-1)*sg*5;model.rot[mn]=b}commit(before);rebuild();paint()}
   function placeSel(h){var q=sels[0],before=snapStr(),A0=model.parts[q.nm],B0=model.parts[h.nm],mn0=mirOf(q.nm),mn1=mirOf(h.nm),mA=model.parts[mn0],mB=model.parts[mn1],mv=null,j,ox=q.v[0];   // 집은 블록 하나를 누른 면 옆으로
     if(find(B0,h.add[0],h.add[1],h.add[2])>=0)return flash("그 자리에는 이미 블록이 있습니다");if(A0!==B0&&A0.length<2)return flash("부위의 마지막 블록은 옮길 수 없습니다");
     if(mirror&&(mn0!==q.nm||Math.abs(ox)>.02)){j=find(mA,-ox,q.v[1],q.v[2]);if(j>=0&&mA[j]!==q.v)mv=mA[j]}
@@ -2409,20 +2412,28 @@ function startEditor(){
   var tools=[["add","쌓기","1"],["del","지우기","2"],["paint","칠하기","3"],["pick","색 뽑기","4"],["move","옮기기","5"],["line","잇기","6"]];
   function armBtn(b,key,label,fn){if(arm===key){b.textContent="한 번 더 누르면 실행";b.className="warn"}else b.textContent=label;
     b.onclick=function(){clearTimeout(armT);if(arm===key){arm=null;fn()}else{arm=key;armT=setTimeout(function(){arm=null;paint()},3500)}paint()}}
-  function resetAll(){model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};undo=[];redo=[];sels=[];lineA=null;tool="add";cur="B";mirror=true;whole=false;multi=false;joint=false;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6;
+  function resetAll(){model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};undo=[];redo=[];sels=[];lineA=null;tool="add";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6;
     try{localStorage.removeItem("antmodel");localStorage.setItem("antmodelOn","0")}catch(_){}rebuild();try{localStorage.removeItem("antmodel")}catch(_){}paint();flash("처음 상태로 모두 되돌렸습니다")}
   function paint(){panel.textContent="";var g,b,h,sc=panel.scrollTop;
     panel.appendChild(mk("h2",null,"개미 모델 편집"));panel.appendChild(mk("p",null,"블록 위에서 누르면 도구가 동작하고, 빈 곳이나 오른쪽 버튼으로 끌면 돌려 봅니다. 휠로 확대합니다. 오른쪽 버튼으로 블록을 누르면 언제나 지웁니다."));
     panel.appendChild(mk("h4",null,"도구"));g=mk("div","g");tools.forEach(function(t){b=mk("button",tool===t[0]?"on":"",t[1]);b.appendChild(mk("small",null,"단축키 "+t[2]));b.onclick=function(){setTool(t[0])};g.appendChild(b)});panel.appendChild(g);
     g=mk("div","g g3");g.style.marginTop="6px";b=mk("button",mirror?"on":"","대칭 "+(mirror?"켬":"끔"));b.onclick=function(){mirror=!mirror;paint()};g.appendChild(b);
     b=mk("button",null,"되돌리기");b.disabled=!undo.length;b.onclick=doUndo;g.appendChild(b);b=mk("button",null,"다시 실행");b.disabled=!redo.length;b.onclick=doRedo;g.appendChild(b);panel.appendChild(g);
+    panel.appendChild(mk("h4",null,"미리보기 · 저장"));g=mk("div","g g3");
+    b=mk("button",anim===1?"on":"","걷기");b.onclick=function(){anim=anim===1?0:1;paint()};g.appendChild(b);b=mk("button",anim===2?"on":"","서 있기");b.onclick=function(){anim=anim===2?0:2;paint()};g.appendChild(b);
+    b=mk("button",pv?"on":"","게임 모습");b.onclick=function(){pv=!pv;grid.visible=!pv;rebuild();paint()};g.appendChild(b);panel.appendChild(g);
+    g=mk("div","g");g.style.marginTop="6px";b=mk("button",null,"저장");b.onclick=function(){rebuild();flash("저장했습니다"+(on?" · 게임에 적용 중":" · 게임에는 아직 적용 안 함"))};g.appendChild(b);
+    b=mk("button",on?"on":"",on?"게임 적용 중":"저장하고 게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}rebuild();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};g.appendChild(b);panel.appendChild(g);
+    panel.appendChild(mk("p",null,"\"걷기\"와 \"서 있기\"는 게임과 같은 움직임을 이 화면에서 보여 줍니다. \"게임 모습\"은 격자와 칸 표시를 끄고 게임에서처럼 보여 줍니다. 보면서 계속 고칠 수 있습니다."));
     if(tool==="move"){panel.appendChild(mk("h4",null,"옮기기 · 집은 블록 "+sels.length+"개"));
       g=mk("div","g");b=mk("button",multi?"on":"","여러 개 집기 "+(multi?"켬":"끔"));b.onclick=function(){multi=!multi;if(multi){whole=false;joint=false}paint()};g.appendChild(b);
       b=mk("button",whole?"on":"","부위 통째로 "+(whole?"켬":"끔"));b.onclick=function(){whole=!whole;if(whole){multi=false;joint=false}paint()};g.appendChild(b);panel.appendChild(g);
-      g=mk("div","g");g.style.cssText="grid-template-columns:1fr;margin-top:6px";b=mk("button",joint?"on":"","부위 붙는 위치 옮기기 "+(joint?"켬":"끔"));b.appendChild(mk("small",null,"블록 모양은 그대로, 몸에 붙는 자리만 반 칸씩"));
+      g=mk("div","g");g.style.cssText="grid-template-columns:1fr;margin-top:6px";b=mk("button",joint?"on":"","부위 위치·각도 조절 "+(joint?"켬":"끔"));b.appendChild(mk("small",null,"블록 모양은 그대로, 붙는 자리는 반 칸씩 · 각도는 5도씩"));
       b.onclick=function(){joint=!joint;if(joint){multi=false;whole=false}sels=[];refreshSel();paint()};g.appendChild(b);panel.appendChild(g);
       if(joint&&sels.length){var jo=model.off[sels[0].nm]||[0,0,0],fm=function(v){return (v>0?"+":"")+v};panel.appendChild(mk("p",null,PNAME[sels[0].nm]+" 붙는 위치: 좌우 "+fm(jo[0])+" · 위아래 "+fm(jo[1])+" · 앞뒤 "+fm(jo[2])+" (칸)"));
-        g=mk("div","g");g.style.cssText="grid-template-columns:1fr;margin-top:6px";b=mk("button",null,"이 부위 위치 원래대로");b.onclick=function(){var bf=snapStr(),nm=sels[0].nm,mn=mirOf(nm);delete model.off[nm];if(mirror&&mn!==nm)delete model.off[mn];commit(bf);rebuild();paint()};g.appendChild(b);panel.appendChild(g)}
+        var jr=model.rot[sels[0].nm]||[0,0,0];panel.appendChild(mk("p",null,PNAME[sels[0].nm]+" 각도: 숙임 "+fm(jr[0])+"° · 돌림 "+fm(jr[1])+"° · 기울임 "+fm(jr[2])+"°"));
+        g=mk("div","g");g.style.marginTop="6px";[["앞으로 숙이기",0,1],["뒤로 젖히기",0,-1],["왼쪽으로 돌리기",1,1],["오른쪽으로 돌리기",1,-1],["왼쪽으로 기울이기",2,1],["오른쪽으로 기울이기",2,-1]].forEach(function(t){b=mk("button",null,t[0]);b.onclick=function(){turn(t[1],t[2])};g.appendChild(b)});panel.appendChild(g);
+        g=mk("div","g");g.style.cssText="grid-template-columns:1fr;margin-top:6px";b=mk("button",null,"이 부위 위치·각도 원래대로");b.onclick=function(){var bf=snapStr(),nm=sels[0].nm,mn=mirOf(nm);delete model.off[nm];delete model.rot[nm];if(mirror&&mn!==nm){delete model.off[mn];delete model.rot[mn]}commit(bf);rebuild();paint()};g.appendChild(b);panel.appendChild(g)}
       g=mk("div","g g3");g.style.marginTop="6px";[["왼쪽",-1,0,0],["위",0,1,0],["오른쪽",1,0,0],["앞",0,0,1],["아래",0,-1,0],["뒤",0,0,-1]].forEach(function(t){b=mk("button",null,t[0]);b.disabled=!sels.length;b.onclick=function(){nudge(t[1],t[2],t[3])};g.appendChild(b)});panel.appendChild(g);
       g=mk("div","g");g.style.marginTop="6px";b=mk("button",null,"집은 블록 지우기");b.disabled=!sels.length;b.onclick=delSel;g.appendChild(b);b=mk("button",null,"집기 해제");b.disabled=!sels.length;b.onclick=function(){sels=[];refreshSel();paint()};g.appendChild(b);panel.appendChild(g);
       panel.appendChild(mk("p",null,"하나를 집으면 내려놓을 면을 눌러 옮길 수 있습니다. \"여러 개 집기\"를 켜면 누르거나 끌어서 묶음으로 집고(Shift+누르기도 같음), 방향 버튼·방향키로 한 칸씩 밉니다. 앞뒤는 PageUp·PageDown 입니다. \"부위 붙는 위치 옮기기\"는 팔·다리·머리가 몸에 붙는 자리를 옮기며, 게임에서 걷기와 팔 흔들기는 옮긴 자리에서 그대로 움직입니다."))}
@@ -2434,10 +2445,10 @@ function startEditor(){
     panel.appendChild(mk("h4",null,"게임에 쓰기"));g=mk("div","g");
     b=mk("button",on?"on":"",on?"적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}rebuild();paint()};g.appendChild(b);
     b=mk("button",null,"게임 열기");b.onclick=function(){window.open(location.pathname,"_blank")};g.appendChild(b);
-    b=mk("button",null,"파일로 내보내기");b.onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:1,parts:model.parts,off:model.off})],{type:"application/json"}));a.download="ant-model.json";a.click()};g.appendChild(b);
-    b=mk("button",null,"파일 불러오기");b.onclick=function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;model.parts=j.parts;model.off=j.off||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()};g.appendChild(b);panel.appendChild(g);
+    b=mk("button",null,"파일로 내보내기");b.onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:1,parts:model.parts,off:model.off,rot:model.rot})],{type:"application/json"}));a.download="ant-model.json";a.click()};g.appendChild(b);
+    b=mk("button",null,"파일 불러오기");b.onclick=function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()};g.appendChild(b);panel.appendChild(g);
     panel.appendChild(mk("h4",null,"처음으로"));g=mk("div","g");
-    b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
+    b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
     b=mk("button");armBtn(b,"all","완전 초기화",resetAll);g.appendChild(b);
     b=mk("button",null,"보기 초기화");b.onclick=function(){cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6};g.appendChild(b);panel.appendChild(g);
     panel.appendChild(mk("p",null,"\"모양만 처음으로\"는 블록만 처음 개미로 돌리고 되돌리기로 취소할 수 있습니다. \"완전 초기화\"는 저장된 편집 내용, 되돌리기 기록, 게임 적용, 도구와 보기까지 모두 처음으로 돌립니다."));
@@ -2446,10 +2457,13 @@ function startEditor(){
   function size(){var w=root.clientWidth,h=root.clientHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()}
   addEventListener("resize",size);size();rebuild();paint();
   (function loop(){requestAnimationFrame(loop);var cp=Math.cos(cam2.pitch);C.position.set(T.x+Math.sin(cam2.yaw)*cp*cam2.dist,T.y+Math.sin(cam2.pitch)*cam2.dist,T.z+Math.cos(cam2.yaw)*cp*cam2.dist);C.lookAt(T);
+    var tm=performance.now()/1000,wk=anim===1?Math.sin(tm*11):0,i,m,u;G.position.y=anim===1?Math.abs(Math.sin(tm*11))*.07:anim===2?Math.sin(tm*2)*.012:0;
+    for(i=0;i<meshes.length;i++){m=meshes[i];u=m.userData;m.rotation.set(u.r[0]+(u.a===1?wk*.75:u.a===2?-wk*.75:0),u.r[1]+(anim&&u.a===4?Math.sin(tm*.8)*.22:0),u.r[2]+(anim&&u.a===3?Math.sin(tm*3)*.07:0))}
+    if(anim){G.updateMatrixWorld(true);refreshSel()}
     if(flashT&&performance.now()>flashT){flashT=0;idle()}R.render(S,C)})();
   window.__ed={model:function(){return model},sels:function(){return sels},undoN:function(){return [undo.length,redo.length]},nudge:nudge,delSel:delSel,doUndo:doUndo,doRedo:doRedo,resetAll:resetAll,linePts:linePts,
     click:function(h,ev){clickTool(h,ev)},stroke:function(h,t){var bf=snapStr();strokeId++;if(applyTool(h,t)){commit(bf);rebuild();paint()}},preview:preview,ghosts:function(){return GH.count},hint:function(){return hint.textContent},
-    set:function(k,v){if(k==="tool")return setTool(v);if(k==="cur")cur=v;if(k==="mirror")mirror=v;if(k==="whole")whole=v;if(k==="multi")multi=v;if(k==="joint")joint=v;paint()},cam:cam2};
+    set:function(k,v){if(k==="tool")return setTool(v);if(k==="cur")cur=v;if(k==="mirror")mirror=v;if(k==="whole")whole=v;if(k==="multi")multi=v;if(k==="joint")joint=v;if(k==="anim")anim=v;if(k==="pv"){pv=v;grid.visible=!v;rebuild()}paint()},turn:turn,meshes:function(){return meshes},cam:cam2};
 }
 
 if(EDIT)startEditor();else requestAnimationFrame(frame);
