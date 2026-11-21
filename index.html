@@ -529,10 +529,30 @@ var WB={ix:[{n:"개미종합",s:"아시아",v:2684.3,b:2684.3,h:[]},{n:"야수10
 (function(){var r=rng(77),i,v;WB.ix.forEach(function(q){v=q.b;for(i=0;i<60;i++){v*=1+(r()-.5)*.004;q.h.push(v)}q.v=v})})();
 function wbClock(tz){var d=new Date(),p={},o;try{new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(d).forEach(function(q){p[q.type]=q.value})}catch(_){return {t:"--:--:--",open:false}}
   o=(+p.hour%24)*60+(+p.minute);return {t:(p.hour==="24"?"00":p.hour)+":"+p.minute+":"+p.second,open:p.weekday!=="Sat"&&p.weekday!=="Sun"&&(tz==="Asia/Seoul"?o>=540&&o<930:o>=570&&o<960)}}   // 장 시간: 서울 09:00~15:30, 뉴욕 09:30~16:00 (평일)
+// 강변의 작은 전광판 두 개: 하나는 두 도시의 시각과 지수 그래프, 하나는 다른 지수 그래프와 많이 움직인 종목
+var rv=[0,1].map(function(){var c=document.createElement("canvas");c.width=512;c.height=288;var t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return {cv:c,tex:t}});
+function drawIdx(g,q,X,Y,W,H){var up=q.v>=q.b,c=up?"#ff4b4b":"#4a8dff",lo=Math.min.apply(null,q.h.concat([q.b])),hi=Math.max.apply(null,q.h.concat([q.b])),n=q.h.length,k,gx=X+4,gy=Y+34,gw=W-8,gh=H-40,py;
+  if(hi-lo<1e-6)hi=lo+1;py=function(v){return gy+gh-(v-lo)/(hi-lo)*gh};g.textBaseline="middle";
+  g.textAlign="left";g.fillStyle="#e6ebf3";g.font="800 20px "+FONT;g.fillText(q.n,X+4,Y+15);g.fillStyle="#8a93a3";g.font="700 14px "+FONT;g.fillText(q.s,X+10+g.measureText(q.n).width*1.45,Y+16);
+  g.textAlign="right";g.fillStyle=c;g.font="800 19px "+FONT;g.fillText(q.v.toLocaleString("ko-KR",{maximumFractionDigits:0})+" "+(up?"▲":"▼")+Math.abs((q.v/q.b-1)*100).toFixed(2)+"%",X+W-4,Y+15);
+  g.strokeStyle="rgba(127,216,255,.16)";g.lineWidth=1;for(k=0;k<=3;k++){g.beginPath();g.moveTo(gx,gy+gh*k/3);g.lineTo(gx+gw,gy+gh*k/3);g.stroke()}for(k=0;k<=6;k++){g.beginPath();g.moveTo(gx+gw*k/6,gy);g.lineTo(gx+gw*k/6,gy+gh);g.stroke()}
+  g.setLineDash([5,5]);g.strokeStyle="rgba(255,255,255,.45)";g.beginPath();g.moveTo(gx,py(q.b));g.lineTo(gx+gw,py(q.b));g.stroke();g.setLineDash([]);
+  g.beginPath();for(k=0;k<n;k++)g[k?"lineTo":"moveTo"](gx+gw*k/(n-1),py(q.h[k]));g.strokeStyle=c;g.lineWidth=3;g.stroke();
+  g.lineTo(gx+gw,gy+gh);g.lineTo(gx,gy+gh);g.closePath();g.globalAlpha=.18;g.fillStyle=c;g.fill();g.globalAlpha=1;g.beginPath();g.arc(gx+gw,py(q.v),5,0,6.3);g.fillStyle=c;g.fill()}
+function drawRiv(){var g=rv[0].cv.getContext("2d"),i,o,y,up;
+  g.fillStyle="#04060a";g.fillRect(0,0,512,288);g.textBaseline="middle";                                                    // 첫째: 아시아(서울) · 북미(뉴욕) 시각과 장 상태, 아래에 개미종합 그래프
+  [["아시아 · 서울","Asia/Seoul"],["북미 · 뉴욕","America/New_York"]].forEach(function(z,zi){var t=wbClock(z[1]),X=12+zi*250;
+    g.textAlign="left";g.font="700 17px "+FONT;g.fillStyle="#9fb0c8";g.fillText(z[0],X,20);g.textAlign="right";g.fillStyle=t.open?"#5fe08a":"#8a93a3";g.fillText(t.open?"● 장중":"○ 장 마감",X+236,20);
+    g.textAlign="left";g.font="800 38px "+FONT;g.fillStyle="#f2f5fa";g.fillText(t.t,X,58)});
+  g.fillStyle="#f7c62b";g.fillRect(10,84,492,2);drawIdx(g,WB.ix[0],10,94,492,188);rv[0].tex.needsUpdate=true;
+  g=rv[1].cv.getContext("2d");g.fillStyle="#04060a";g.fillRect(0,0,512,288);drawIdx(g,WB.ix[1],10,10,492,150);          // 둘째: 야수100 그래프, 아래에 가장 많이 움직인 종목 넷
+  g.fillStyle="#f7c62b";g.fillRect(10,168,492,2);o=NAMES.map(function(_,k){return k}).sort(function(a,b){return Math.abs(bd.c[b])-Math.abs(bd.c[a])}).slice(0,4);g.textBaseline="middle";
+  for(i=0;i<4;i++){y=188+i*26;up=bd.c[o[i]]>=0;g.textAlign="left";g.fillStyle="#e6ebf3";g.font="700 20px "+FONT;g.fillText(NAMES[o[i]],14,y);
+    g.fillStyle=up?"#ff4b4b":"#4a8dff";g.textAlign="right";g.fillText(bd.p[o[i]].toLocaleString("ko-KR"),366,y);g.fillText((up?"▲ ":"▼ ")+Math.abs(bd.c[o[i]]).toFixed(2)+"%",498,y)}
+  rv[1].tex.needsUpdate=true}
 function drawWide(){
   if(!wb.asked){wb.asked=true;wb.img.src="art/board/stock-board-wide.png"}
   var g=wb.cv.getContext("2d"),i,y,up,x0=690,w=668,RED="#ff4b4b",BLU="#4a8dff",AMB="#f7c62b",k,lo,hi,c,n,hw=(w-36)/2;
-  WB.ix.forEach(function(q){q.v*=1+(Math.random()-.5)*.0036;q.h.push(q.v);if(q.h.length>60)q.h.shift()});
   g.fillStyle="#04060a";g.fillRect(0,0,2048,640);if(wb.ok)g.drawImage(wb.img,0,0,2048,640);                        // 양옆: 생성한 그림 (지수 · 봉 차트 · 업종 지도 · 호가 · 계기)
   g.fillStyle="#04060a";g.fillRect(x0,6,w,628);g.strokeStyle="rgba(127,216,255,.55)";g.lineWidth=2;g.strokeRect(x0+1,7,w-2,626);g.textBaseline="middle";
   // 가운데 맨 위: 아시아(서울) · 북미(뉴욕) 시각과 장 상태
@@ -569,7 +589,9 @@ function drawBoard(time){
     g.textAlign="left";g.fillStyle="#dfe5ee";g.fillText(NAMES[i],14,y);
     g.fillStyle=up?"#ff4b4b":"#4a8dff";g.textAlign="right";g.fillText(bd.p[i].toLocaleString("ko-KR"),366,y);
     g.fillText((up?"▲ ":"▼ ")+Math.abs(bd.c[i]).toFixed(2)+"%",500,y)}
-  bdTex.needsUpdate=true;if(STOCK)drawWide();
+  bdTex.needsUpdate=true;
+  WB.ix.forEach(function(q){q.v*=1+(Math.random()-.5)*.0036;q.h.push(q.v);if(q.h.length>60)q.h.shift()});
+  if(STOCK)drawWide();if(RIVER)drawRiv();
 }
 var ck={cv:document.createElement("canvas"),s:""};ck.cv.width=256;ck.cv.height=96;
 var ckTex=new THREE.CanvasTexture(ck.cv);ckTex.colorSpace=THREE.SRGBColorSpace;
@@ -793,7 +815,7 @@ function buildProps(){
     for(q=0;q<3;q++){z=3+q*5.5;B(RW-10.2,.55,z,.9,.16,3.2,0x796857);B(RW-10.2,.28,z,.2,.4,2.8,0x514b44);B(RW-10.6,1,z,.14,.7,3.2,0x796857)}                      // 강을 보는 벤치
     B(RW-12,1,RD-2.2,4.4,2,1.6,0x526360);B(RW-12.8,2.25,RD-2.2,.9,.5,.9,0x373f40);B(RW-11.4,2.25,RD-2.2,.9,.5,.9,0x373f40);B(RW-12.1,2.15,RD-1.5,1.4,.3,.5,0xa69a82);   // 라면 매점
     for(z=-5*ROOM_KZ;z<=5*ROOM_KZ+.01;z+=10*ROOM_KZ){B(-(RW-.6),5.2,z,.3,5.3,8.8,DARK);B(-(RW-.6),1.3,z-3.4,.3,2.6,.4,0x2a2e33);B(-(RW-.6),1.3,z+3.4,.3,2.6,.4,0x2a2e33);
-      glowPlane(8,4.5,bdTex,1.2,-(RW-.77),5.2,z,Math.PI/2)}                                                                                                   // 야외 시세판
+      glowPlane(8,4.5,rv[z>0?1:0].tex,1.2,-(RW-.77),5.2,z,Math.PI/2)}                                                                                                   // 야외 시세판
     // 한강 수온계: 난간 옆에 서 있고, 다가가면 오늘 수온을 알려 준다. 수온은 시세판의 평균 등락을 따라간다
     B(RW-1.6,.3,4,1.6,.6,1.6,0x4a4f55);B(RW-1.6,3.3,4,.9,5.4,.5,0xf1ede0);B(RW-1.6,.95,4,1.2,1,.7,0xf1ede0);for(q=0;q<6;q++)B(RW-1.98,1.9+q*.7,4.27,.14,.05,.02,0x4a4f55);
     (function(){var col=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0xff5a4a,fog:false})),bulb=new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:0xff5a4a,fog:false})),
@@ -2391,7 +2413,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211545";
+var BUILD="B11211553";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
