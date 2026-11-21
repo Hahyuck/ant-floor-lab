@@ -63,6 +63,18 @@
   .x{position:absolute;right:10px;top:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.12);font-size:15px}
   /* 상단: 자주 쓰는 버튼 셋 + 메뉴. 나머지는 메뉴를 눌러야 묶음별로 펼쳐진다 */
   #quick{position:absolute;right:14px;top:14px;display:flex;gap:8px;z-index:6}
+  /* 테마 고르기: 위 가운데에 아이콘만 두고, 마우스를 올리면 이름이 뜬다 */
+  #thbar{position:absolute;left:50%;top:12px;transform:translateX(-50%);display:flex;gap:6px;z-index:6;padding:5px;border-radius:999px;background:var(--panel);border:1px solid var(--line);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #thbar button{position:relative;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.07);font-size:18px;line-height:1;padding:0;cursor:pointer;transition:background .15s ease,transform .15s ease}
+  #thbar button:hover{background:rgba(255,255,255,.18)}
+  #thbar button:active{transform:scale(.94)}
+  #thbar button.on{background:var(--amber)}
+  #thbar button.lock{opacity:.55}
+  #thbar button:hover::after,#thbar button:focus-visible::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;
+    background:var(--panel);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:10px;pointer-events:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  @media (max-width:1180px){#thbar{top:62px}}
+  @media (max-width:560px){#thbar{top:106px}}
   #bMenu{font-weight:700}
   body #topright{display:none;position:absolute;right:14px;left:auto;top:62px;width:300px;max-width:calc(100vw - 28px);grid-template-columns:1fr 1fr;gap:6px;z-index:6;
     background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -225,6 +237,7 @@
   <div id="fade"></div>
 
   <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small></div>
+  <div id="thbar" role="group" aria-label="테마 고르기"></div>
   <div id="quick">
     <button class="pill" id="bSound">소리 켜기</button>
     <button class="pill" id="bFocus">방송 집중</button>
@@ -234,7 +247,6 @@
   <div id="topright">
     <div class="mh">꾸미기</div>
     <button class="pill" id="bCute">개미: 기본</button>
-    <button class="pill" id="bTheme">테마</button>
     <button class="pill" id="bEdit">개미 모델 편집</button>
     <div class="mh">방</div>
     <button class="pill" id="bInvite">초대 링크 복사</button>
@@ -271,7 +283,7 @@
   <div id="gfx"><button class="x" aria-label="닫기">✕</button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출, 안개, 조명 소품을 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
   <div id="spp" class="ppx"><button class="x" aria-label="닫기">✕</button><h3>내 캐릭터 고르기</h3><div class="row" id="spIn"></div><p>고르면 다른 사람 화면에서도 그 동물로 보입니다. 테마 의상은 그대로 입습니다.</p></div>
   <div id="svp" class="ppx"><button class="x" aria-label="닫기">✕</button><h3>서버 이동</h3><div class="row" id="svIn"></div><p>고른 채널로 바로 옮겨 갑니다. 정식 서비스에서는 입장 서버가 빈 채널을 안내합니다.</p></div>
-  <div id="thp"><button class="x" aria-label="닫기">✕</button><h3>테마 바꾸기</h3><div class="row" id="thIn"></div><p>고르면 방 전체가 그 자리에서 함께 바뀝니다. 방송은 끊기지 않습니다.</p></div>
+
   <div id="exitp"><b>EXIT</b><span>바깥문을 지나 나갈까요?</span><div class="row"><button id="exGo">나가기</button><button id="exNo">머물기</button></div></div>
   <div id="vote"><div class="q"><span id="voteQ"></span><small id="voteT"></small></div><div class="bar"><i id="voteBar"></i></div><div class="row"><button id="vA">🐂 황소</button><button id="vB">곰 🐻</button></div></div>
   <div id="pad">
@@ -1552,7 +1564,7 @@ function tkText(){return TNAME[THEME]+"   ·   새우 공대장과 시황 방송
 function applyTheme(v){
   if(TLIST.indexOf(v)<0||v===THEME)return;
   var doit=function(){
-    setFlags(v);buildWorld();TK_DEF=tkText();tkUntil=0;drawTicker(TK_DEF);
+    setFlags(v);buildWorld();paintThemes();TK_DEF=tkText();tkUntil=0;drawTicker(TK_DEF);
     var k,e,p;for(k in ents){e=ents[k];e.look=lookFor(e);e.parts=null;e.out=null;
       if(!YARD){e.yard=false;if(e.z>RD-.8||(e.sz!=null&&e.sz>RD-.8)){p=pickSpot();e.x=e.tx=e.sx=p[0];e.z=e.tz=e.sz=p[1];e.buf=null;if(e.ai){e.ai.gx=p[0];e.ai.gz=p[1]}}}     // 마당에 있던 개미는 안으로
       else if(isHost&&e.bot&&(+e.id.slice(1))%7===3){e.yard=true;p=yardSpot();e.x=e.tx=e.sx=p[0];e.z=e.tz=e.sz=p[1];e.buf=null;if(e.ai){e.ai.gx=p[0];e.ai.gz=p[1];e.ai.wait=1}}}
@@ -2254,7 +2266,7 @@ $("bSrv").onclick=function(){var on=!$("svp").classList.contains("show");closePo
     b.onclick=function(){if(cur)return toast("지금 있는 채널입니다",1800);try{sessionStorage.setItem("antgo",myName||"")}catch(_){}location.hash="room-chan0"+i;location.reload()};box.appendChild(b)})(i);
   $("svp").classList.add("show")};
 $("bEdit").onclick=function(){window.open(location.pathname+"?edit"+(mySp?"="+mySp:""),"_blank")};   // 지금 고른 캐릭터의 저장본을 연다
-$("bTheme").onclick=function(){var on=!$("thp").classList.contains("show");closePops();if(on){paintThemes();$("thp").classList.add("show")}};
+
 $("bGfx").onclick=function(){var on=!$("gfx").classList.contains("show");closePops();if(on){renderGfx();$("gfx").classList.add("show")}};
 $("bQ").onclick=function(){quality=quality==="high"?"low":"high";try{localStorage.setItem("antq",quality)}catch(_){}applyQuality()};
 $("bots").oninput=function(){$("botsN").textContent=this.value;setBots(+this.value)};
@@ -2323,7 +2335,7 @@ function goFull(on){var el=document.documentElement;try{
 function fullCh(){$("bFull").textContent=isFull()?"전체화면 끄기":"전체화면";setTimeout(resize,60)}
 document.addEventListener("fullscreenchange",fullCh);document.addEventListener("webkitfullscreenchange",fullCh);
 $("bFull").onclick=function(){if(!goFull(!isFull()))toast("이 브라우저는 전체화면을 지원하지 않습니다. 크롬이나 삼성 인터넷에서 열어 주세요",5000)};
-function closePops(){$("pop").classList.remove("show");$("inv").classList.remove("show");$("gfx").classList.remove("show");$("thp").classList.remove("show");$("spp").classList.remove("show");$("svp").classList.remove("show")}
+function closePops(){$("pop").classList.remove("show");$("inv").classList.remove("show");$("gfx").classList.remove("show");$("spp").classList.remove("show");$("svp").classList.remove("show")}
 function setCompact(){document.body.classList.toggle("compact",isTouch||innerWidth<=760)}
 setCompact();addEventListener("resize",setCompact);
 $("bMenu").onclick=function(){document.body.classList.toggle("menu");closePops()};
@@ -2361,16 +2373,17 @@ var invited=!!joinCode;
     ch.onclick=function(){sugar+=500;save();draw()};sg.appendChild(ch)};
   sg.style.cssText="font-size:12px;color:var(--dim);margin-top:8px";box.parentNode.insertBefore(sg,box.nextSibling);draw();
   if(!ownsTheme(THEME))status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다. 위에서 구입하거나 노멀을 골라 주세요",true)})();
-function paintThemes(){                                                              // 방 안 테마 버튼: 보유하지 않은 테마는 자물쇠
-  var box=$("thIn");box.textContent="";TLIST.forEach(function(id){var b=mk("button","btn alt2",(ownsTheme(id)?"":"🔒 ")+TSHORT[id]);if(id===THEME){b.style.background="var(--amber)";b.style.color="#201600"}
-    b.style.padding="9px 4px";b.onclick=function(){setTheme(id)};box.appendChild(b)})}
+var TICON={normal:"🏠",stock:"📈",raid:"⚔️",river:"🌊"};
+function paintThemes(){                                                              // 위 가운데 테마 아이콘: 지금 테마는 노랗게, 보유하지 않은 테마는 흐리게 (이름과 가격은 마우스를 올리면 뜬다)
+  var box=$("thbar");box.textContent="";TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",(id===THEME?"on":"")+(has?"":" lock"),TICON[id]||"•"),tip=TSHORT[id]+" 테마"+(id===THEME?" · 지금":has?"":" · 🔒 🍬"+TPRICE[id].toLocaleString("ko-KR"));
+    b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();setTheme(id)};box.appendChild(b)})}
 paintThemes();
 // 테마를 바꾸며 넘어온 경우: 같은 이름으로 같은 방에 자동으로 다시 들어간다
 (function(){var a=null;try{a=JSON.parse(sessionStorage.getItem("antauto")||"null");sessionStorage.removeItem("antauto")}catch(_){}
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211535";
+var BUILD="B11211538";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
