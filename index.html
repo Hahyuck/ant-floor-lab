@@ -2228,7 +2228,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211137";
+var BUILD="B11211150";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2479,6 +2479,19 @@ function startEditor(){
     "#edr button.dir{border-color:#5fe0ff;color:#bff3ff}#edr button i{display:block;font-style:normal;font-size:17px;line-height:1}"+
     "#edp .more{width:100%;margin-top:12px}#edp .nf{display:block;font-size:10px;color:#9aa3b2}#edp .nf input{display:block;width:100%;box-sizing:border-box;margin-top:2px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#eef1f6;padding:7px 6px;font:inherit}";
   document.head.appendChild(st2);
+  var bar=mk("div"),lastSave="",st3=document.createElement("style");bar.id="eds";root.appendChild(bar);
+  st3.textContent="#eds{position:absolute;right:14px;top:12px;display:flex;gap:8px;align-items:center;background:rgba(14,17,24,.88);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 10px}"+
+    "#eds button{padding:9px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#eef1f6;font:inherit;font-weight:700;cursor:pointer}#eds button.pri{background:#ffc23d;border-color:#ffc23d;color:#201600}"+
+    "#eds button.on{border-color:#ffc23d;color:#ffc23d}#eds span{color:#9aa3b2;font-size:12px;white-space:nowrap}#edp .slot{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-top:6px}#edp .slot span{font-size:12px;color:#c9d0dc}"+
+    "@media (max-width:700px){#eds span{display:none}#edh{top:66px}}";
+  document.head.appendChild(st3);
+  function nowStr(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+  function saveNow(){rebuild();lastSave=nowStr();paintBar();flash("지금 상태를 저장했습니다"+(on?" · 게임에 적용 중":" · 게임에는 아직 적용 안 함"))}
+  function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
+    b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
+  function slotGet(i){try{return JSON.parse(localStorage.getItem("antmodel_s"+i))}catch(_){return null}}
+  function slotSave(i){try{localStorage.setItem("antmodel_s"+i,JSON.stringify({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}),parts:model.parts,off:model.off,rot:model.rot}))}catch(_){}paint();flash("저장본 "+i+"에 지금 상태를 담았습니다")}
+  function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function btn(par,label,cls,fn,sub){var b=mk("button",cls||"",label);if(sub)b.appendChild(mk("small",null,sub));b.onclick=fn;par.appendChild(b);return b}
   function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
     panel.appendChild(mk("h2",null,"개미 모델 편집"));
@@ -2495,10 +2508,10 @@ function startEditor(){
     panel.appendChild(mk("h4",null,"색"));g=mk("div","sw role");[["B","몸 색"],["D","짙은 색"],["S","줄무늬"]].forEach(function(t){b=mk("button",cur===t[0]?"on":"",t[1]);b.style.background=cssOf(t[0]);b.onclick=function(){cur=t[0];pickCol()};g.appendChild(b)});panel.appendChild(g);
     g=mk("div","sw");g.style.marginTop="6px";PAL.forEach(function(c){b=mk("button",cur===c?"on":"","");b.style.background=cssOf(c);b.onclick=function(){cur=c;pickCol()};g.appendChild(b)});panel.appendChild(g);
     h=document.createElement("input");h.type="color";h.value=typeof cur==="number"?"#"+("00000"+cur.toString(16)).slice(-6):"#ffffff";h.oninput=function(){cur=parseInt(h.value.slice(1),16)};h.onchange=function(){pickCol()};panel.appendChild(h);
-    panel.appendChild(mk("h4",null,"보기 · 저장"));g=mk("div","g g3");
+    panel.appendChild(mk("h4",null,"미리보기"));g=mk("div","g g3");
     btn(g,"걷기",anim===1?"on":"",function(){anim=anim===1?0:1;paint()});btn(g,"서 있기",anim===2?"on":"",function(){anim=anim===2?0:2;paint()});btn(g,"게임 모습",pv?"on":"",function(){pv=!pv;grid.visible=!pv;rebuild();paint()});panel.appendChild(g);
-    g=mk("div","g");g.style.marginTop="6px";btn(g,"저장","",function(){rebuild();flash("저장했습니다"+(on?" · 게임에 적용 중":" · 게임에는 아직 적용 안 함"))});
-    btn(g,on?"게임 적용 중":"게임에 적용",on?"on":"",function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}rebuild();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")});panel.appendChild(g);
+    panel.appendChild(mk("h4",null,"저장본 · 지금 상태를 따로 담아 두기"));[1,2,3].forEach(function(i){var j=slotGet(i),r=mk("div","slot");r.appendChild(mk("span",null,"저장본 "+i+(j&&j.t?" · "+j.t:" · 비어 있음")));
+      btn(r,"담기","",function(){slotSave(i)});btn(r,"불러오기","",function(){slotLoad(i)}).disabled=!j;panel.appendChild(r)});
     btn(panel,more?"더보기 접기 ▴":"더보기 ▾ (파일 · 초기화 · 몸 색)","more",function(){more=!more;paint()});
     if(more){panel.appendChild(mk("h4",null,"미리 볼 몸 색"));g=mk("div","sw");BODYS.forEach(function(c){b=mk("button",bodyHex===c?"on":"","");b.style.background=c;b.onclick=function(){bodyHex=c;rebuild();paint()};g.appendChild(b)});panel.appendChild(g);
       panel.appendChild(mk("h4",null,"파일 · 게임"));g=mk("div","g");
@@ -2509,7 +2522,7 @@ function startEditor(){
       b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
       b=mk("button");armBtn(b,"all","완전 초기화",resetAll);g.appendChild(b);panel.appendChild(g);
       panel.appendChild(mk("p",null,"편집 내용은 이 브라우저에 자동 저장됩니다. \"완전 초기화\"는 저장 내용 · 되돌리기 기록 · 게임 적용까지 모두 처음으로 돌립니다. 단축키: 1~5 도구, 방향키 이동, Shift+방향키 확장, Delete 삭제, J 잇기, Ctrl+Z 되돌리기."))}
-    panel.scrollTop=sc;paintRing();idle()}
+    panel.scrollTop=sc;paintBar();paintRing();idle()}
 
   // ── 고리 메뉴: 선택한 블록 둘레에 뜨는 버튼. 이동 · 확장을 고르면 실제로 움직일 방향 쪽에 방향 버튼이 놓인다
   var DIRS=[["왼쪽",-1,0,0],["오른쪽",1,0,0],["위",0,1,0],["아래",0,-1,0],["앞",0,0,1],["뒤",0,0,-1]];
