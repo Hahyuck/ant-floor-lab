@@ -2343,7 +2343,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211428";
+var BUILD="B11211431";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2367,7 +2367,7 @@ function startEditor(){
   try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
   if(edBoss&&BVER!==edBV){BVER=edBV;bossGen()}                                                        // 편집할 새우 버전의 처음 모양을 준비한다 (게임 설정은 바꾸지 않는다)
   function base(){if(edBoss){edB=lin(0xf0826a);edD=lin(0xb9432f);
-      var bm={v:2,parts:{boss:[]},xf:{boss:{p:[0,0,0],r:[0,0,0],a:0}},sub:{}},gi,gn,ga2,cc2,MIRB={bAntL:"bAntR",bAntR:"bAntL",bTailL:"bTailR",bTailR:"bTailL"};
+      var bm={v:2,parts:{boss:[]},xf:{boss:{p:[0,0,0],r:[0,0,0],a:0}},sub:{}},gi,gn,ga2,cc2,MIRB={bAntL:"bAntR",bAntR:"bAntL"};
       for(gi=0;gi<BOSSV.length;gi++){gn=BOSSG[gi]||"boss";(bm.parts[gn]=bm.parts[gn]||[]).push(BOSSV[gi].slice())}                    // 부위 이름별로 나눠 담는다
       for(gn in bm.parts){if(gn==="boss")continue;ga2=bm.parts[gn];cc2=[0,0,0];ga2.forEach(function(v){cc2[0]+=v[0];cc2[1]+=v[1];cc2[2]+=v[2]});
         bm.sub[gn]={par:"boss",c:[Math.round(cc2[0]/ga2.length*2)/2,Math.round(cc2[1]/ga2.length*2)/2,Math.round(cc2[2]/ga2.length*2)/2],mir:MIRB[gn]||null}}   // 회전 중심은 조각 한가운데
@@ -2394,7 +2394,8 @@ function startEditor(){
       V.forEach(function(v){var gn=G[v[0]+","+v[1]+","+v[2]];if(!gn||gn===old||!BASE0.sub[gn]||gn.slice(0,4)!==old.slice(0,4)||(model.parts[gn]&&!made[gn])){keep.push(v);return}
         if(!made[gn]){made[gn]=1;model.parts[gn]=[];model.sub[gn]={par:"boss",c:(turned?su.c:BASE0.sub[gn].c).slice(),mir:BASE0.sub[gn].mir};if(of)model.off[gn]=of.slice();if(rt)model.rot[gn]=rt.slice()}
         model.parts[gn].push(v)});
-      if(keep.length)model.parts[old]=keep;else{delete model.parts[old];delete model.sub[old];delete model.off[old];delete model.rot[old]}})})();                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
+      if(keep.length)model.parts[old]=keep;else{delete model.parts[old];delete model.sub[old];delete model.off[old];delete model.rot[old]}});
+    ["bTailL","bTailR"].forEach(function(k){if(model.sub[k])model.sub[k].mir=null})})();   // 꼬리 부채는 좌우를 따로 움직인다 (대칭으로 함께 움직이지 않는다)                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
                                          // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
   // ── 화면
