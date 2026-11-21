@@ -308,6 +308,23 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
 #chatpop .hd #chatX{margin-left:auto}
 #chatpop .hd #bSrv{display:block;height:32px;border-radius:999px;border:0;background:rgba(255,255,255,.1);color:var(--text);padding:0 13px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
 #svp{z-index:10}
+/* 선 아이콘 */
+.ic2{width:1.2em;height:1.2em;vertical-align:-.22em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ic2+span{margin-left:7px}
+#thbar button{color:var(--text)}
+#thbar button .ic2{width:20px;height:20px;vertical-align:middle}
+#topleft #bFull{color:var(--text)}
+#bgmBox button,#chatbar button,.x,#chatX,#reroll{color:var(--text)}
+.x,#chatX{display:inline-flex;align-items:center;justify-content:center}
+body.compact #topright .ic2+span{margin-left:9px}
+body.compact #topright #bgmBox.off #bBgm{opacity:.75;display:flex;align-items:center}
+body.compact #topright #bgmBox.off #bBgm::after{content:attr(data-tip);position:static;transform:none;background:none;border:0;padding:0 0 0 9px;font-size:14px;font-weight:400;color:var(--text);white-space:nowrap;-webkit-backdrop-filter:none;backdrop-filter:none}
+/* 휴대폰 아래 줄: 왼쪽에 짧은 대화 바, 오른쪽 끝에 아이템 버튼 셋. 점프 버튼은 없다 (오른쪽 절반을 톡 치면 점프) */
+body.touch #pA{display:none}
+body.touch #btns{right:12px;bottom:10px;gap:8px}
+body.touch #btns button{width:48px;height:48px;font-size:21px!important}
+body.touch #chatOpen{right:184px}
+body.touch #log{bottom:72px}
 </style>
 </head>
 <body>
@@ -317,28 +334,28 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
   <canvas id="lb"></canvas>
   <div id="fade"></div>
 
-  <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small><button id="bFull" class="tipb" data-tip="전체화면" aria-label="전체화면">🖥️</button></div>
+  <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small><button id="bFull" class="tipb" data-tip="전체화면" aria-label="전체화면" data-ic="full"></button></div>
   <div id="thbar" role="group" aria-label="테마 고르기"></div>
   <div id="quick">
-    <button class="pill ic tipb" id="bSound" data-tip="영상 소리 켜기" aria-label="영상 소리 켜기">🔇</button>
-    <div class="pill" id="bgmBox"><button class="tipb" id="bBgm" data-tip="배경 음악 켜기" aria-label="배경 음악 켜기">🎵</button><input type="range" id="bgmV" min="0" max="100" step="1" value="45" aria-label="배경 음악 볼륨"><button class="tipb" id="bBgmN" data-tip="다음 곡" aria-label="다음 곡">⏭️</button></div>
-    <button class="pill" id="bFocus">📺 방송 집중</button>
-    <button class="pill" id="bInv">🛍️ 상점·가방</button>
-    <button class="pill" id="bMenu">⚙️ 설정</button>
+    <button class="pill ic tipb" id="bSound" data-tip="영상 소리 켜기" aria-label="영상 소리 켜기" data-ic="mute"></button>
+    <div class="pill" id="bgmBox"><button class="tipb" id="bBgm" data-tip="배경 음악 켜기" aria-label="배경 음악 켜기" data-ic="music"></button><input type="range" id="bgmV" min="0" max="100" step="1" value="45" aria-label="배경 음악 볼륨"><button class="tipb" id="bBgmN" data-tip="다음 곡" aria-label="다음 곡" data-ic="next"></button></div>
+    <button class="pill" id="bFocus" data-ic="tv">방송 집중</button>
+    <button class="pill" id="bInv" data-ic="bag">상점·가방</button>
+    <button class="pill" id="bMenu" data-ic="gear">설정</button>
   </div>
   <div id="topright">
     <div class="mh" id="mhQ">소리 · 화면</div>
     <div class="mh">방</div>
-    <button class="pill" id="bInvite">🔗 초대 링크 복사</button>
-    <button class="pill" id="bSet">🛠️ 방 설정</button>
-    <button class="pill" id="bChat">💬 채팅</button>
+    <button class="pill" id="bInvite" data-ic="link">초대 링크 복사</button>
+    <button class="pill" id="bSet" data-ic="gear">방 설정</button>
+    <button class="pill" id="bChat" data-ic="chat">채팅</button>
     <div class="mh">설정</div>
-    <button class="pill" id="bQ">🎨 그래픽 설정</button>
-    <button class="pill" id="bGfx">🎛️ 그래픽 옵션 설정</button>
-    <button class="pill" id="bEdit">✏️ 개미 모델 편집</button>
+    <button class="pill" id="bQ" data-ic="screen">그래픽 설정</button>
+    <button class="pill" id="bGfx" data-ic="sliders">그래픽 옵션 설정</button>
+    <button class="pill" id="bEdit" data-ic="pencil">개미 모델 편집</button>
     <div class="mh" id="verTxt" style="text-align:right;opacity:.7;font-weight:500"></div>
   </div>
-  <div id="pop"><button class="x" aria-label="닫기">✖️</button>
+  <div id="pop"><button class="x" aria-label="닫기" data-ic="close"></button>
     <h3>방 설정</h3>
     <div id="hostOnly">
       <div class="raidbox"><b>공대장 명령</b>
@@ -358,9 +375,9 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
   <div id="toast" class="pill"></div>
   <div id="banner"></div>
   <div id="raid" aria-live="assertive"></div>
-  <div id="gfx"><button class="x" aria-label="닫기">✖️</button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출, 안개, 조명 소품을 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
-  <div id="spp" class="ppx"><button class="x" aria-label="닫기">✖️</button><h3>내 캐릭터 고르기</h3><div class="row" id="spIn"></div><p>고르면 다른 사람 화면에서도 그 동물로 보입니다. 테마 의상은 그대로 입습니다.</p></div>
-  <div id="svp" class="ppx"><button class="x" aria-label="닫기">✖️</button><h3>서버 이동</h3><div class="row" id="svIn"></div><p>고른 채널로 바로 옮겨 갑니다. 정식 서비스에서는 입장 서버가 빈 채널을 안내합니다.</p></div>
+  <div id="gfx"><button class="x" aria-label="닫기" data-ic="close"></button><h3>그래픽 강도 조절 <small style="color:var(--amber)">테스트용</small></h3><div id="gfxList"></div><p>0은 끔, 1은 기본, 2는 두 배입니다. 노출, 안개, 조명 소품을 뺀 나머지는 "그래픽: 고급"에서만 보입니다. 값은 이 브라우저에만 저장되고 다른 사람에게는 영향이 없습니다.</p></div>
+  <div id="spp" class="ppx"><button class="x" aria-label="닫기" data-ic="close"></button><h3>내 캐릭터 고르기</h3><div class="row" id="spIn"></div><p>고르면 다른 사람 화면에서도 그 동물로 보입니다. 테마 의상은 그대로 입습니다.</p></div>
+  <div id="svp" class="ppx"><button class="x" aria-label="닫기" data-ic="close"></button><h3>서버 이동</h3><div class="row" id="svIn"></div><p>고른 채널로 바로 옮겨 갑니다. 정식 서비스에서는 입장 서버가 빈 채널을 안내합니다.</p></div>
 
   <div id="exitp"><b>EXIT</b><span>바깥문을 지나 나갈까요?</span><div class="row"><button id="exGo">나가기</button><button id="exNo">머물기</button></div></div>
   <div id="vote"><div class="q"><span id="voteQ"></span><small id="voteT"></small></div><div class="bar"><i id="voteBar"></i></div><div class="row"><button id="vA">🐂 황소</button><button id="vB">곰 🐻</button></div></div>
@@ -370,13 +387,13 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
   </div>
   <div id="log" aria-live="polite"></div>
   <div id="hot"><button><i class="ic"></i><span class="ky">1</span><span class="ct"></span></button><button><i class="ic"></i><span class="ky">2</span><span class="ct"></span></button><button><i class="ic"></i><span class="ky">3</span><span class="ct"></span></button></div>
-  <div id="inv"><button class="x" aria-label="닫기">✖️</button><h3>상점·가방</h3><div id="invList"></div><p>숫자 버튼을 누르면 그 단축 버튼에 배정됩니다. PC는 1 · 2 · 3 키, 모바일은 오른쪽 패드의 세 버튼입니다. 설탕과 충전은 시연용이며 실제 결제는 일어나지 않습니다.</p></div>
-  <button type="button" id="chatOpen" class="pill">💬 한마디 남기기</button>
-  <div id="chatpop" role="dialog" aria-label="대화"><div class="hd"><b>대화</b><button type="button" id="chatX" aria-label="닫기">✖️</button></div><div id="chatSlot"></div></div>
+  <div id="inv"><button class="x" aria-label="닫기" data-ic="close"></button><h3>상점·가방</h3><div id="invList"></div><p>숫자 버튼을 누르면 그 단축 버튼에 배정됩니다. PC는 1 · 2 · 3 키, 모바일은 오른쪽 패드의 세 버튼입니다. 설탕과 충전은 시연용이며 실제 결제는 일어나지 않습니다.</p></div>
+  <button type="button" id="chatOpen" class="pill" data-ic="chat">한마디 남기기</button>
+  <div id="chatpop" role="dialog" aria-label="대화"><div class="hd"><b>대화</b><button type="button" id="chatX" aria-label="닫기" data-ic="close"></button></div><div id="chatSlot"></div></div>
   <form id="chatbar" class="pill" autocomplete="off">
-    <button type="button" id="bSrv">🔀 서버 이동</button>
+    <button type="button" id="bSrv" data-ic="shuffle">서버 이동</button>
     <input id="chat" maxlength="60" placeholder="한마디 남기기">
-    <button type="submit" aria-label="보내기">📨</button>
+    <button type="submit" aria-label="보내기" data-ic="send"></button>
   </form>
 </div>
 
@@ -384,7 +401,7 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
   <div class="card">
     <h1>슈카친구들 객장</h1>
     <div class="sub">이름을 넣으면 그 이름의 개미가 만들어집니다</div>
-    <div id="pvwrap"><canvas id="pv" width="440" height="440"></canvas><button type="button" id="reroll" title="다른 개미로 바꾸기" aria-label="다른 개미로 바꾸기">🎲</button></div>
+    <div id="pvwrap"><canvas id="pv" width="440" height="440"></canvas><button type="button" id="reroll" title="다른 개미로 바꾸기" aria-label="다른 개미로 바꾸기" data-ic="dice"></button></div>
     <div id="pvtitle"></div>
     <input id="name" maxlength="12" placeholder="이름 입력" autocomplete="off">
     <div id="ths"></div>
@@ -1590,7 +1607,7 @@ function renderGfx(){
 function applyQuality(){
   var hi=quality==="high";
   sun.shadow.mapSize.set(hi?2048:1024,hi?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}
-  $("bQ").textContent=hi?"🎨 그래픽 설정 · 고급":"🎨 그래픽 설정 · 가벼움";resize();
+  setIc($("bQ"),"screen",hi?"그래픽 설정 · 고급":"그래픽 설정 · 가벼움");resize();
 }
 function resize(){
   var W=innerWidth,H=innerHeight,hi=quality==="high",d=Math.min(devicePixelRatio||1,hi?2:1.25,Math.sqrt((hi?4.2e6:2e6)/(W*H)));
@@ -1825,6 +1842,36 @@ function renderHot(){
     h[i].querySelector(".ic").textContent=it?it.i:"";h[i].querySelector(".ct").textContent=it?inv[k]:"";h[i].classList.toggle("cool",!!cool);h[i].title=it?it.n+" — "+it.d:"비어 있음";
     p=$(SLOT_PAD[i]);p.textContent=it?it.i:"·";p.setAttribute("data-n",it?Math.min(99,inv[k]|0):"");p.setAttribute("data-over",it&&inv[k]>99?"1":"");p.classList.toggle("cool",!!cool)}   // 버튼 귀퉁이에 가진 개수 (최대 두 자리)
 }
+function IC(n){var P={
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  chart:'<path d="M3 3v18h18"/><path d="M7 15l4-5 4 3 5-7"/>',
+  swords:'<path d="M4 4l11 11M20 4L9 15"/><path d="M4 4v3M4 4h3M20 4v3M20 4h-3"/><path d="M6 14l4 4M18 14l-4 4M5 20l3-3M19 20l-3-3"/>',
+  wave:'<path d="M2 8c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1"/><path d="M2 14c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1"/><path d="M2 20c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1"/>',
+  ant:'<circle cx="12" cy="6.5" r="2.5"/><ellipse cx="12" cy="12" rx="1.8" ry="2"/><ellipse cx="12" cy="18" rx="2.8" ry="3.4"/><path d="M10.5 4.5L8 2M13.5 4.5L16 2M10.2 11.5L5 9.5M13.8 11.5l5.2-2M10.2 12.8L5 15M13.8 12.8L19 15M9.6 16.5L5.5 20.5M14.4 16.5l4.1 4"/>',
+  person:'<circle cx="12" cy="5.5" r="3"/><path d="M6 21v-6a6 6 0 0112 0v6"/><path d="M10 9.5l2 3 2-3M12 12.5V16"/>',
+  bear:'<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="13" r="8"/><path d="M9.5 11.5v.6M14.5 11.5v.6M12 14.2v1"/><path d="M10.3 16.3c1.1 1 2.3 1 3.4 0"/>',
+  vol:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/>',
+  mute:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/>',
+  music:'<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  next:'<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>',
+  tv:'<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 22h8M9 3l3 4 3-4"/>',
+  bag:'<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
+  link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  crown:'<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  screen:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  pencil:'<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
+  shuffle:'<path d="M3 6h4l10 12h4M3 18h4l3-3.5M14 9.5L17 6h4"/><path d="M18 3l3 3-3 3M18 15l3 3-3 3"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/>',
+  full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  send:'<path d="M3 11l18-8-7 18-3-7z"/>',
+  dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M15 9h.01M12 12h.01M9 15h.01M15 15h.01"/>'};
+  return '<svg class="ic2" viewBox="0 0 24 24" aria-hidden="true">'+(P[n]||"")+'</svg>'}
+function setIc(el,n,t){el.innerHTML=IC(n)+(t?"<span>"+t+"</span>":"")}                       // 아이콘 + 글자 (글자는 코드에 적힌 고정 문구만 넣는다)
+[].forEach.call(document.querySelectorAll("[data-ic]"),function(el){setIc(el,el.getAttribute("data-ic"),el.textContent.trim())});
 function mk(tag,cls,txt){var d=document.createElement(tag);if(cls)d.className=cls;if(txt!=null)d.textContent=txt;return d}
 function renderInv(){
   var box=$("invList"),k,i;box.textContent="";
@@ -2300,7 +2347,8 @@ addEventListener("blur",function(){keys={}});
     if(!drag&&Math.hypot(dx,dy)>6)drag=true;
     if(drag){cam.yaw-=dx*.005;cam.pitch=clamp(cam.pitch+dy*.004,.02,1.25);down={x:ev.clientX,y:ev.clientY}}});
   cv.addEventListener("pointerup",function(ev){
-    if(down&&!drag&&me){_ndc.set(ev.clientX/innerWidth*2-1,-(ev.clientY/innerHeight)*2+1);_ray.setFromCamera(_ndc,camera);
+    if(down&&!drag&&me&&isTouch&&ev.clientX>innerWidth*.5)doJump();   // 휴대폰: 오른쪽 절반을 톡 치면 점프
+    else if(down&&!drag&&me){_ndc.set(ev.clientX/innerWidth*2-1,-(ev.clientY/innerHeight)*2+1);_ray.setFromCamera(_ndc,camera);
       if(_ray.ray.intersectPlane(_floor,_hit)&&Math.abs(_hit.x)<RW+3&&_hit.z>-RD-3&&_hit.z<ZMAXY+4){moveTarget=[clamp(_hit.x,XL(),XH()),clamp(_hit.z,ZMIN,ZMAXY)];lastInput=performance.now();if(me.ai)me.ai.wait=0}}
     down=null});
   cv.addEventListener("pointercancel",function(){down=null});
@@ -2324,7 +2372,7 @@ $("bInvite").onclick=function(){var l=inviteLink();$("link").value=l;
 $("bSound").onclick=function(){if(!ytFrame){toast("아직 방송이 없습니다");return}
   muted=!muted;if(muted)ytCmd("mute");else{ytCmd("unMute");ytCmd("setVolume",[100]);ytCmd("playVideo")}
   soundBtn(muted)};
-function soundBtn(m){var b=$("bSound"),t=m?"영상 소리 켜기":"영상 소리 끄기";b.textContent=m?"🔇":"🔊";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m);bgmSync()}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
+function soundBtn(m){var b=$("bSound"),t=m?"영상 소리 켜기":"영상 소리 끄기";b.innerHTML=IC(m?"mute":"vol");b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m);bgmSync()}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
 // 배경 음악(사운드트랙): 일곱 곡을 차례로 돌려 튼다. 방송 소리를 켜면 음악은 작게 깔린다. 테마를 바꿔 화면이 새로 열려도 듣던 곡을 이어서 튼다
 var BGM={L:[["opening","오프닝 · 슈카 기본 테마곡"],["ready-a","준비곡 A"],["ready-b","준비곡 B"],["theme-a","테마 A"],["theme-b","테마 B"],["theme-c","테마 C"],["theme-d","테마 D"]],i:0,t:0,on:true,a:null,v:45};
 try{BGM.on=localStorage.getItem("antbgm")!=="0";(function(){var v=localStorage.getItem("antbgmV");if(v!=null&&isFinite(+v))BGM.v=Math.max(0,Math.min(100,+v))})();(function(){var q=JSON.parse(sessionStorage.getItem("antbgmS")||"null");if(q&&q.i>=0&&q.i<BGM.L.length){BGM.i=q.i|0;BGM.t=+q.t||0}})()}catch(_){}
@@ -2417,7 +2465,7 @@ function status(s,err){var el=$("estatus");el.textContent=s;el.classList.toggle(
 function fail(s){status(s,true);$("go").disabled=false;$("alt").style.display="";$("alt").textContent="새 방 만들기"}
 function enterRoom(){
   inRoom=true;$("entry").classList.add("hide");applyQuality();
-  $("hostOnly").style.display=isHost?"":"none";$("bSet").textContent=isHost?"👑 공대장 메뉴":"🛠️ 방 설정";
+  $("hostOnly").style.display=isHost?"":"none";setIc($("bSet"),isHost?"crown":"gear",isHost?"공대장 메뉴":"방 설정");
   if(isHost||/[?&](bc|dev)(=|&|$)/.test(location.search)){$("bSet").classList.add("lead");$("quick").insertBefore($("bSet"),$("bMenu"));layoutMenu()}   // 공대장(과 개발자 모드)에게는 메뉴 안에 숨기지 않고 위쪽에 따로 보인다
   save();
   bossEnt.say="어서 오세요, 공대원 여러분";bossEnt.sayT=performance.now()+5000;bossShow(5500);
@@ -2481,9 +2529,9 @@ function setCompact(){document.body.classList.toggle("compact",isTouch||innerWid
 // 휴대폰 · 좁은 화면: 위쪽 버튼(테마 · 캐릭터 · 소리 · 음악 · 방송 집중 · 상점 · 공대장 메뉴)을 모두 오른쪽 위 메뉴 하나에 넣어 한 줄씩 늘어놓는다. 넓은 화면에서는 제자리로 돌려놓는다
 function layoutMenu(){var c=document.body.classList.contains("compact"),tr=$("topright"),q=$("quick"),m=$("bMenu"),th=$("thbar"),an,ids=["bSound","bgmBox","bFocus","bInv"];
   if(c){if(th.parentNode!==tr)tr.insertBefore(th,tr.firstChild);an=$("mhQ").nextSibling;ids.forEach(function(id){if($(id).parentNode!==tr)tr.insertBefore($(id),an)});
-    if($("bSet").classList.contains("lead")){if(tr.firstChild!==$("bSet"))tr.insertBefore($("bSet"),tr.firstChild)}else if($("bSet").parentNode!==tr)tr.insertBefore($("bSet"),$("bChat"));m.textContent="📋 메뉴"}   // 공대장 메뉴는 목록 맨 위
+    if($("bSet").classList.contains("lead")){if(tr.firstChild!==$("bSet"))tr.insertBefore($("bSet"),tr.firstChild)}else if($("bSet").parentNode!==tr)tr.insertBefore($("bSet"),$("bChat"));setIc(m,"menu","메뉴")}   // 공대장 메뉴는 목록 맨 위
   else{if(th.parentNode===tr)q.parentNode.insertBefore(th,q);ids.forEach(function(id){if($(id).parentNode!==q)q.insertBefore($(id),m)});
-    if($("bSet").classList.contains("lead")&&$("bSet").parentNode!==q)q.insertBefore($("bSet"),m);m.textContent="⚙️ 설정"}}
+    if($("bSet").classList.contains("lead")&&$("bSet").parentNode!==q)q.insertBefore($("bSet"),m);setIc(m,"gear","설정")}}
 setCompact();addEventListener("resize",setCompact);
 $("bMenu").onclick=function(){document.body.classList.toggle("menu");closePops()};
 $("topright").addEventListener("click",function(ev){if(ev.target.closest("button"))document.body.classList.remove("menu")});
@@ -2526,19 +2574,19 @@ var invited=!!joinCode;
   sg.style.cssText="font-size:12px;color:var(--dim);margin-top:8px";box.parentNode.insertBefore(sg,box.nextSibling);draw();
   if(!ownsTheme(THEME))status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다. 위에서 구입하거나 노멀을 골라 주세요",true)})();
 function paintThemes(){                                                              // 위 가운데 아이콘 줄: 테마 넷 | 내 캐릭터 셋. 지금 고른 것은 노랗게, 이름은 마우스를 올리면 뜬다
-  var TICON={normal:"🏠",stock:"📈",raid:"⚔️",river:"🌊"},top0=$("thbar"),box;if(!top0)return;top0.textContent="";top0.appendChild(mk("div","mh","테마"));box=mk("div","grp","");top0.appendChild(box);
-  TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",(id===THEME?"on":"")+(has?"":" lock"),TICON[id]||"•"),tip=TSHORT[id]+" 테마"+(id===THEME?" · 지금":has?"":" · 🔒 🍬"+TPRICE[id].toLocaleString("ko-KR"));
-    b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();setTheme(id)};box.appendChild(b)});
+  var TICON={normal:"home",stock:"chart",raid:"swords",river:"wave"},SPIC=["ant","person","bear"],top0=$("thbar"),box;if(!top0)return;top0.textContent="";top0.appendChild(mk("div","mh","테마"));box=mk("div","grp","");top0.appendChild(box);
+  TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",(id===THEME?"on":"")+(has?"":" lock"),""),tip=TSHORT[id]+" 테마"+(id===THEME?" · 지금":has?"":" · 🔒 🍬"+TPRICE[id].toLocaleString("ko-KR"));
+    b.innerHTML=IC(TICON[id]);b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();setTheme(id)};box.appendChild(b)});
   top0.appendChild(mk("div","mh","내 캐릭터"));box=mk("div","grp","");top0.appendChild(box);
-  SPOK.forEach(function(i){var b=mk("button",mySp===i?"on":"",SPI[i]),tip="내 캐릭터: "+SPN[i]+(mySp===i?" · 지금":"");
-    b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();if(mySp===i)return;setSp(i);paintThemes();toast(SPI[i]+" "+SPN[i]+" 투자자로 바꿨습니다",2200)};box.appendChild(b)})}
+  SPOK.forEach(function(i){var b=mk("button",mySp===i?"on":"",""),tip="내 캐릭터: "+SPN[i]+(mySp===i?" · 지금":"");
+    b.innerHTML=IC(SPIC[i]||"ant");b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();if(mySp===i)return;setSp(i);paintThemes();toast(SPI[i]+" "+SPN[i]+" 투자자로 바꿨습니다",2200)};box.appendChild(b)})}
 paintThemes();
 // 테마를 바꾸며 넘어온 경우: 같은 이름으로 같은 방에 자동으로 다시 들어간다
 (function(){var a=null;try{a=JSON.parse(sessionStorage.getItem("antauto")||"null");sessionStorage.removeItem("antauto")}catch(_){}
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211907";
+var BUILD="B11211915";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2864,7 +2912,7 @@ function startEditor(){
   function saveNow(){rebuild();histPush("저장");var made=bakPush();lastSave=nowStr();paint();flash("저장되었습니다 · "+(made?"백업을 만들었습니다 (백업 "+bakGet().length+"개)":"바뀐 것이 없어 기존 백업 그대로입니다")+(on?" · 게임에 적용 중":""))}
   function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,(lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장")+" · 백업 "+bakGet().length+"개"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
     b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem(ONKEY,on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b);
-    b=mk("button","","🚪 나가기");b.title="편집을 마치고 게임으로 돌아갑니다 (고친 내용은 이미 저장돼 있습니다)";b.onclick=function(){rebuild();try{if(window.opener&&!window.opener.closed){window.close()}}catch(_){}setTimeout(function(){location.href=location.pathname},180)};bar.appendChild(b)}   // 게임에서 새 창으로 열었으면 창을 닫고, 아니면 게임 화면으로 간다
+    b=mk("button","","나가기");b.title="편집을 마치고 게임으로 돌아갑니다 (고친 내용은 이미 저장돼 있습니다)";b.onclick=function(){rebuild();try{if(window.opener&&!window.opener.closed){window.close()}}catch(_){}setTimeout(function(){location.href=location.pathname},180)};bar.appendChild(b)}   // 게임에서 새 창으로 열었으면 창을 닫고, 아니면 게임 화면으로 간다
   function bakGet(){try{return JSON.parse(localStorage.getItem(KEY+"_bak"))||[]}catch(_){return []}}
   function bakPush(){var h=bakGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}),n=0,q;for(q in model.parts)n+=model.parts[q].length;
     if(h.length&&h[0].d===d)return false;                                                                                       // 바뀐 것이 없으면 같은 백업을 또 만들지 않는다
