@@ -347,12 +347,12 @@ var TYPES=[
   {k:"서학개미",w:15,c:["#5b4636","#4a3b33","#6a5142"],acc:["glasses"],s:[.92,1.1]},
   {k:"왕개미",w:5,c:["#3a3f4a","#2f333d","#4a3f52"],acc:["crown"],s:[1.28,1.42]}
 ];
-var SPN=["개미","고양이","곰","고릴라","앵무새","펭귄","토끼","레서판다"],SPI=["🐜","🐱","🐻","🦍","🦜","🐧","🐰","🐾"];   // 고를 수 있는 투자자 동물
-var SPOK=[0,2,3,5];                                                                                 // 지금 쓰는 동물: 개미 · 곰 · 고릴라 · 펭귄 (나머지 모델은 꺼 둔다)
+var SPN=["개미","인간형 개미","곰","고릴라","앵무새","펭귄","토끼","레서판다"],SPI=["🐜","🧥","🐻","🦍","🦜","🐧","🐰","🐾"];   // 고를 수 있는 투자자 동물
+var SPOK=[0,1,2,3,5];                                                                                 // 지금 쓰는 동물: 개미 · 곰 · 고릴라 · 펭귄 (나머지 모델은 꺼 둔다)
 function okSp(v){v=(v|0)&7;return SPOK.indexOf(v)<0?0:v}
 var mySp=0;try{mySp=okSp(+localStorage.getItem("antsp")||0)}catch(_){}
 function botSp(name){return 0}                                                                       // 봇은 모두 개미. 동물은 각자 자기 캐릭터만 골라 바꾼다                        // 봇은 열에 넷이 동물
-function lookFor(e){var L=lookOf(e.name);L.sp=e.sp|0;if(L.sp)L.title=L.title.replace(L.type,SPN[L.sp]);return L}   // 이름으로 정한 모습에 고른 동물을 입힌다
+function lookFor(e){var L=lookOf(e.name);L.sp=e.sp|0;if(L.sp>1)L.title=L.title.replace(L.type,SPN[L.sp]);return L}   // 이름으로 정한 모습에 고른 동물을 입힌다
 function lookOf(name){
   var r=rng(hashStr("ant:"+name)), tot=0,i,t;
   for(i=0;i<TYPES.length;i++)tot+=TYPES[i].w;
@@ -925,6 +925,11 @@ function buildVox(L){
   // 동물 투자자: 개미와 같은 뼈대(배·가슴·머리·네 다리·두 팔)에 색과 귀·주둥이·꼬리만 바꿔 입힌다. 1 고양이 2 곰 3 고릴라 4 앵무새 5 펭귄 6 토끼 7 레서판다
   var SP=CUTE?0:(L.sp|0),A=SP>0,PAL=A?SPAL[SP]:null,TB,LEGL,lite,hcol,legc,pink=[.96,.58,.66],YEL=lin(0xf2c230);
   if(A){var kv=.93+r()*.12,bb0=lin(PAL.b);body=[bb0[0]*kv,bb0[1]*kv,bb0[2]*kv];lite=lin(PAL.l);dark=lin(PAL.d);hcol=PAL.h?lin(PAL.h):body;legc=PAL.g?lin(PAL.g):body;TB=SPB[SP];LEGL=1.1-2*TB[1];h=L.head*TB[4];HY=1.04+.32*h*.74}
+  var NA=!A&&!CUTE,MOUTH=lin(0x8a1a12);                                                        // NA: 리디자인한 기본 개미 (큰 둥근 머리, 가는 가슴, 공 같은 배, 무릎 있는 긴 다리)
+  if(NA){dark=[body[0]*.3,body[1]*.27,body[2]*.5];HY=1.37}                                    // 팔다리 · 더듬이는 몸 색을 눌러 만든 갈색
+  function seg(o,a,b2,c,th){var n2=Math.max(1,Math.ceil(Math.hypot(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2])/(VS*.85))),t,x,y,z;      // 두 점을 잇는 복셀 줄 (th 2: 두 줄 굵기)
+    for(t=0;t<=n2;t++){x=a[0]+(b2[0]-a[0])*t/n2;y=a[1]+(b2[1]-a[1])*t/n2;z=a[2]+(b2[2]-a[2])*t/n2;put(o,x,y,z,c);if(th===2){put(o,x,y,z-VS,c);put(o,x+VS,y,z,c);put(o,x+VS,y,z-VS,c)}}}
+  function fin(){var tot=0,q;for(q=0;q<parts.length;q++){parts[q].v=new Float32Array(parts[q].v);parts[q].c=new Float32Array(parts[q].c);tot+=parts[q].v.length/3}parts.n=tot;parts.hb=[0,HY-hry,.06];return parts}
   function cube(o,x,y,z,nx,ny,nz,c){for(var a=0;a<nx;a++)for(var b2=0;b2<ny;b2++)for(var c2=0;c2<nz;c2++)put(o,x+(a-(nx-1)/2)*VS,y+b2*VS,z+(c2-(nz-1)/2)*VS,c)}
   function part(p,rot,a){var o={p:p,r:rot||[0,0,0],a:a||0,v:[],c:[]};parts.push(o);return o}
   function put(o,x,y,z,c,k){k=L.raw?1:(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}   // L.raw: 편집 화면용. 음영 없이 원래 색 그대로
@@ -947,7 +952,27 @@ function buildVox(L){
     }
   }
   // 배: 줄무늬
-  if(!A){var BEL=part([0,.38,-.34]);blob(BEL,0,0,0,.31*b,.27*b,.38*b,2.3,function(mi,j,k){return ((k+40)%3===0)?[body[0]*.72,body[1]*.72,body[2]*.72]:body});cust(BEL,"belly")}
+  if(SP===1){                                                                               // 인간형 개미: 큰 주황 머리, 남색 점퍼, 베이지 바지, 크림색 운동화 (의상이 몸에 포함돼 있어 테마 의상은 입히지 않는다)
+    var OR=lin(0xf5821f),ORD=lin(0xdc4f1c),NAVY=lin(0x2b3145),NAV2=lin(0x222839),CRM=lin(0xf3ead9),KH=lin(0xdcbb8c),KH2=lin(0xc7a273),SHO=lin(0xf1e6d2),SHO2=lin(0xddd0b8),RED=lin(0xd9362f),TO,lgp,amp,anp,rw;
+    body=OR;HY=1.5;h=1;hry=.36;
+    TO=part([0,.92,0]);blob(TO,0,0,0,.28,.27,.18,4,function(mi,j,k,front){                       // 점퍼: 앞은 흰 셔츠, 깃과 밑단에 흰 줄, 가슴에 주머니 줄
+      if(j<=-3)return CRM;if(front&&mi===0)return CRM;if(front&&mi===1&&j>=2)return (j&1)?CRM:NAVY;if(front&&mi===2&&(j===-1||j===0)&&!(j===0&&mi===2&&false))return j===-1?CRM:NAVY;
+      if(j>=3)return (mi&1)?CRM:NAVY;return (k<0&&mi>=2)?NAV2:NAVY});
+    cube(TO,0,-.27-VS*2,0,5,2,3,KH);                                                            // 바지 윗단
+    for(sx=-1;sx<=1;sx+=2){
+      lgp=part([sx*.13,.6,0],null,sx<0?1:2);for(rw=0;rw<5;rw++)cube(lgp,0,-(rw+1)*VS,0,2,1,2,rw===4?KH2:KH);cube(lgp,0,-5*VS,0,3,1,3,KH2);                         // 바지 다리와 접어 올린 단
+      cube(lgp,0,-7*VS,VS*.5,3,1,4,SHO2);cube(lgp,0,-6*VS,VS*.5,3,1,4,SHO);cube(lgp,0,-6*VS+VS*.02,VS*1.6,1,1,1,CRM);                                              // 운동화: 밑창은 한 톤 어둡게
+      amp=part([sx*.34,1.1,0],[0,0,sx*.3],sx<0?2:1);for(rw=0;rw<4;rw++)cube(amp,0,-(rw+1)*VS,0,2,1,2,NAVY);cube(amp,0,-5*VS,0,2,1,2,CRM);cube(amp,0,-4*VS+VS*.01,0,2,1,2,NAVY);
+      cube(amp,0,-7*VS,0,2,2,2,OR);cube(amp,0,-6.5*VS,VS*.7,1,1,1,OR);                                                                                             // 주황 손
+      anp=part([sx*.17,HY+hry-.05,0],[0,0,-sx*.14],3);anp.h=1;seg(anp,[0,0,0],[sx*.07,.3,0],ORD,2);seg(anp,[sx*.07,.3,0],[sx*.2,.37,.16],ORD,2);cube(anp,sx*.22,.3,.24,2,2,2,ORD)}   // 끝이 앞으로 꺾인 더듬이
+    var HH=part([0,HY,.02],null,4);HH.h=1;blob(HH,0,0,0,.44,hry,.39,2.6,function(mi,j,k,front){
+      if(front){if(mi>=1&&mi<=3&&(j===0||j===1))return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-2)return MOUTH;if(mi===0&&j===-3)return RED}return OR});
+    blob(HH,0,hry-.03,0,.22,.07,.2,2,function(){return OR});
+    if(L.acc==="crown"){var cr2=NV(.2),ck2;for(i=-cr2;i<cr2;i++)for(ck2=-cr2;ck2<cr2;ck2++){if(i>-cr2&&i<cr2-1&&ck2>-cr2&&ck2<cr2-1)continue;put(HH,(i+.5)*VS,hry+.06,(ck2+.5)*VS,V_GOLD);if((i+ck2)&1)put(HH,(i+.5)*VS,hry+.06+VS,(ck2+.5)*VS,V_GOLD)}}
+    return fin()}
+  if(NA){var BEL=part([0,.62,-.58]);blob(BEL,0,0,0,.27*b,.24*b,.29*b,2.4,function(){return body});blob(BEL,0,.21*b,0,.16*b,.07,.17*b,2,function(){return body});   // 배: 뒤에 달린 둥근 공, 위에 한 단
+    cube(BEL,0,-VS,.31*b+.02,2,2,3,body);cust(BEL,"belly")}                                                                                          // 가슴과 잇는 자루
+  else if(!A){var BEL=part([0,.38,-.34]);blob(BEL,0,0,0,.31*b,.27*b,.38*b,2.3,function(mi,j,k){return ((k+40)%3===0)?[body[0]*.72,body[1]*.72,body[2]*.72]:body});cust(BEL,"belly")}
   // 가슴: 넥타이
   if(A)blob(part([0,1.06-TB[1],-.02]),0,0,0,TB[0],TB[1],TB[2],2.4,function(mi,j,k,front){                     // 동물: 두 발로 선 통통한 몸통. 배는 밝고 등에는 무늬
     if(L.acc==="tie"&&front&&mi===0&&j>=0)return V_RED;
@@ -958,10 +983,11 @@ function buildVox(L){
     if(SP===5)return front&&mi<=2&&j<3?lite:body;
     if(SP===7)return j<-1||(front&&mi<=1)?dark:body;
     return body});
+  else if(NA){var CHE=part([0,.82,-.02]);blob(CHE,0,0,0,.185,.3,.165,4,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=0&&j<=2)?V_RED:body});cust(CHE,"chest")}   // 가슴: 곧게 선 가는 기둥
   else{var CHE=part([0,.80,-.04]);blob(CHE,0,0,0,.22,.23,.2,2.3,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=-NV(.2)&&j<=1)?V_RED:body});cust(CHE,"chest")}
   // 머리: 얼굴을 겉면에 그린다
-  var H=part([0,HY,.06],null,4),big=L.eye>1.02,hry=.32*h,ny=Math.ceil(hry/VS);H.h=1;
-  blob(H,0,0,0,.35*h,hry,.32*h,CUTE?2.1:3.2,function(mi,j,k,front){
+  var H=part([0,HY,.06],null,4),big=L.eye>1.02,hry=(NA?.31:.32)*h,ny=Math.ceil(hry/VS);H.h=1;
+  blob(H,0,0,0,(NA?.37:.35)*h,hry,(NA?.34:.32)*h,CUTE?2.1:NA?2.5:3.2,function(mi,j,k,front){
     if(L.acc==="band"&&j===ny-2)return V_RED;
     if(front&&CUTE){                                                                          // 귀요미 얼굴: 머리 표면에 바로 칠한다 (튀어나오는 층 없이). 점 눈, 작은 입, 분홍 볼
       var fx=(mi+.5)*VS,fy=(j+.5)*VS,gd=Math.max(Math.abs(fx-.2),Math.abs(fy-.03));
@@ -970,6 +996,9 @@ function buildVox(L){
       if(fx<.058&&fy>-.17&&fy<-.11)return [body[0]*.3,body[1]*.25,body[2]*.25];               // 입: 짧은 선
       if(fx>.23&&fx<.36&&fy>-.2&&fy<-.085)return [1,.52,.5];                                  // 볼
       return body}
+    if(front&&NA){                                                                            // 리디자인 얼굴: 흰자 옆에 안쪽으로 몰린 검은 눈동자, 작은 붉은 입
+      if(L.acc==="glasses"&&mi<=4&&j>=-2&&j<=2&&(mi===4||j===2||j===-2))return V_BLACK;
+      if(mi>=1&&mi<=3&&j>=-1&&j<=1)return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-3)return MOUTH;return body}
     if(front){
       var eyeTop=big?1:0;
       if((mi===1||mi===2)&&j>=-1&&j<=eyeTop)return (mi===1&&j<=0)?V_BLACK:V_WHITE;
@@ -986,6 +1015,7 @@ function buildVox(L){
     }
     return A?hcol:body;
   },CUTE?.32*h*.78:null);
+  if(NA)blob(H,0,hry-.03,0,.2*h,.07,.2*h,2,function(){return body});                                 // 정수리 한 단
   cust(H,"head");
   if(A){var Zf=.32*h,tp=hry,ear;                                                              // 귀·주둥이·부리
     var snout=function(mi,j,k,fr){return fr&&mi===0&&j>=0?V_BLACK:lite};
@@ -1018,6 +1048,12 @@ function buildVox(L){
       for(i=0;i<na;i++)for(aa=0;aa<aw;aa++)for(bb=0;bb<ad;bb++)put(am,aa*sx*VS,-(i+.5)*VS,(bb-(ad-1)/2)*VS,i>=na-(SP===4?2:1)?tipc:body);                           // 팔 · 날개 · 지느러미
       if(SP===3)cube(am,sx*VS*.5,-(na+1)*VS,0,3,2,3,dark);
       continue}
+    if(NA){var lgN=part([sx*.14,.58,.04],null,sx<0?1:2),amN=part([sx*.17,.98,.1],null,sx<0?2:1),mdN=part([sx*.14,.6,-.3],null,sx<0?2:1),anN=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3),al=L.ant,sdN=sx<0?"L":"R";anN.h=1;
+      seg(lgN,[0,0,0],[sx*.2,-.14,.06],dark);seg(lgN,[sx*.2,-.14,.06],[sx*.3,-.54,.08],dark);put(lgN,sx*.3,-.54,.08+VS,dark);put(lgN,sx*.3,-.54,.08+VS*2,dark);              // 앞다리: 무릎에서 꺾여 내려오고 발끝이 앞으로
+      seg(mdN,[0,0,0],[sx*.22,-.1,-.1],dark);seg(mdN,[sx*.22,-.1,-.1],[sx*.34,-.56,-.16],dark);put(mdN,sx*.34,-.56,-.16+VS,dark);                                              // 뒷다리
+      seg(amN,[0,0,0],[sx*.16,-.12,.1],dark);seg(amN,[sx*.16,-.12,.1],[sx*.2,.06,.2],dark);put(amN,sx*.2-sx*VS,.06,.2+VS*.6,dark);                                             // 팔: 팔꿈치에서 꺾여 들어 올린 손
+      seg(anN,[0,0,0],[sx*.08,.42*al,-.06],dark);seg(anN,[sx*.08,.42*al,-.06],[sx*.15,.5*al,.24],dark);put(anN,sx*.15,.5*al-VS*.7,.24+VS,dark);put(anN,sx*.15,.5*al-VS*.7,.24,dark);                                // 더듬이: 길게 올라가 앞으로 꺾인다
+      cust(lgN,"leg"+sdN);cust(amN,"arm"+sdN);cust(mdN,"mid"+sdN);cust(anN,"ant"+sdN);continue}
     var leg=part([sx*.15,.58,-.04],null,sx<0?1:2);for(i=0;i<NV(.56);i++)put(leg,0,-(i+.5)*VS,0,dark);put(leg,0,-(NV(.56)-.5)*VS,VS,dark);
     var arm=part([sx*.27,.93,0],[0,0,sx*.32],sx<0?2:1);for(i=0;i<NV(.42);i++)put(arm,0,-(i+.5)*VS,0,dark);
     var mid=part([sx*.33,.58,-.27],[0,0,sx*.1],sx<0?2:1);for(i=0;i<NV(.56);i++)put(mid,0,-(i+.5)*VS,0,dark);put(mid,0,-(NV(.56)-.5)*VS,VS,dark);   // 뒷다리: 앞다리와 엇박으로 걷는다
@@ -1075,8 +1111,7 @@ function buildVox(L){
       for(a2=-1;a2<=1;a2++)for(b2=20;b2<23;b2++)for(q=-1;q<=1;q++)if(Math.abs(a2)+Math.abs(b2-21)+Math.abs(q)<=1)put(it,a2*VS,(b2+.5)*VS,q*VS,[1.7,.5,2.2])}      // 지팡이
     else for(sx=-1;sx<=1;sx+=2){it=part([sx*.44,.6,.2]);put(it,0,0,0,lin(0x5a3d22));for(q=1;q<5;q++)put(it,0,0,q*VS,STEEL)}                                       // 단검
   }
-  var tot=0;for(i=0;i<parts.length;i++){parts[i].v=new Float32Array(parts[i].v);parts[i].c=new Float32Array(parts[i].c);tot+=parts[i].v.length/3}
-  parts.n=tot;parts.hb=[0,HY-hry,.06];return parts;
+  return fin();
 }
 function AntMesh(max){
   this.cap=max*VMAX;this.mesh=new THREE.InstancedMesh(boxGeo,antMat,this.cap);this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -1344,8 +1379,9 @@ pvScene.add(pvAnts.mesh,new THREE.HemisphereLight(0xbfd0ff,0x3a2f28,1.3));
 var pvEnt={x:0,z:0,r:0,moving:false,look:lookOf(""),parts:null},pvName="";
 function setPreview(name){pvName=name;pvEnt.look=lookFor({name:name,sp:mySp});pvEnt.parts=null;pvAnts.dirty=true}
 function drawPreview(t){
-  if(ZOO){var zi;if(!zooL){zooL=[];for(zi=0;zi<8;zi++){zooL.push({x:(zi%4-1.5)*1.55,y:zi<4?1.85:0,z:0,r:0,moving:false,look:lookFor({name:"동물"+zi,sp:zi}),parts:null});zooL[zi].look.acc="none";zooL[zi].look.scale=1}}
-    for(zi=0;zi<8;zi++){zooL[zi].r=Math.sin(t*.7)*1.1;zooL[zi].moving=Math.sin(t*.45)>.6}pvCam.position.set(0,2.6,13.5);pvCam.lookAt(0,1.75,0);pvAnts.update(zooL,t);pvR.render(pvScene,pvCam);return}
+  if(ZOO){var zi;if(!zooL){zooL=[];for(zi=0;zi<8;zi++){zooL.push({x:(zi%4-1.5)*1.55,y:zi<4?1.85:0,z:0,r:0,moving:false,look:lookFor({name:"동물"+zi,sp:zi}),parts:null});zooL[zi].look.acc="none";zooL[zi].look.scale=1;if(!zi)zooL[zi].look.color="#f5821f"}}
+    var z2=/[?&]zoo=2/.test(location.search);for(zi=0;zi<8;zi++){zooL[zi].r=Math.sin(t*.7)*1.5;zooL[zi].moving=Math.sin(t*.45)>.6;if(z2){zooL[zi].x=zi<2?(zi?1.05:-1.05):99;zooL[zi].y=0}}if(z2){pvCam.position.set(0,1.5,6.6);pvCam.lookAt(0,1.05,0)}else{pvCam.position.set(0,2.6,13.5);pvCam.lookAt(0,1.75,0)}   // ?zoo=2: 개미와 인간형 개미만 크게
+    pvAnts.update(zooL,t);pvR.render(pvScene,pvCam);return}
   var s=pvEnt.look.scale;pvCam.position.set(0,1.7*s,4.5*s);pvCam.lookAt(0,1.16*s,0);
   pvEnt.r=Math.sin(t*.9)*.9;pvEnt.moving=Math.sin(t*.45)>.6;pvAnts.update([pvEnt],t);pvR.render(pvScene,pvCam);
 }
@@ -2228,7 +2264,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211150";
+var BUILD="B11211210";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2245,14 +2281,14 @@ var EDIT=/[?&]edit/.test(location.search);
 function startEditor(){
   var PNAME={belly:"배",chest:"가슴",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
-      BODYS=["#b5532a","#2a2320","#d9362f","#e8a13a","#6b4a32"],bodyHex=BODYS[0],model,tool="move",padMode="move",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
+      BODYS=["#f5821f","#b5532a","#2a2320","#d9362f","#6b4a32"],bodyHex=BODYS[0],model,tool="move",padMode="move",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
       sels=[],whole=false,multi=false,joint=false,anim=0,pv=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
   try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
-  function base(){var L=lookOf("기본개미"),P,b,m={v:1,parts:{},xf:{}},i,k,q,c,arr;L.color="#b5532a";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=0;L.raw=true;
+  function base(){var L=lookOf("기본개미"),P,b,m={v:1,parts:{},xf:{}},i,k,q,c,arr;L.color="#f5821f";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=0;L.raw=true;
     var near=function(a,t){return Math.abs(a[0]-t[0])+Math.abs(a[1]-t[1])+Math.abs(a[2]-t[2])<.004},cm=CM;CM=null;
     P=buildVox(L);CM=cm;b=lin(L.color);
     for(i=0;i<P.length;i++){q=P[i];if(!q.nm)continue;arr=[];for(k=0;k<q.v.length/3;k++){c=[q.c[k*3],q.c[k*3+1],q.c[k*3+2]];
-        arr.push([+(q.v[k*3]/VS).toFixed(2),+(q.v[k*3+1]/VS).toFixed(2),+(q.v[k*3+2]/VS).toFixed(2),near(c,b)?"B":near(c,[b[0]*.3,b[1]*.3,b[2]*.3])?"D":near(c,[b[0]*.72,b[1]*.72,b[2]*.72])?"S":new THREE.Color().setRGB(c[0],c[1],c[2]).getHex()])}
+        arr.push([+(q.v[k*3]/VS).toFixed(2),+(q.v[k*3+1]/VS).toFixed(2),+(q.v[k*3+2]/VS).toFixed(2),near(c,b)?"B":near(c,[b[0]*.3,b[1]*.27,b[2]*.5])?"D":near(c,[b[0]*.72,b[1]*.72,b[2]*.72])?"S":new THREE.Color().setRGB(c[0],c[1],c[2]).getHex()])}
       m.parts[q.nm]=arr;m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]],a:q.a||0}}
     return m}
   var BASE0=base();
@@ -2286,7 +2322,7 @@ function startEditor(){
   GH.count=0;SM.count=0;GH.frustumCulled=SM.frustumCulled=false;GH.renderOrder=2;SM.renderOrder=1;hov.matrixAutoUpdate=false;hov.visible=false;S.add(GH);S.add(SM);S.add(hov);
   function boxAt(nm,pos,sc){var m=byNm[nm];if(!m)return null;return tmpM.copy(m.matrixWorld).multiply(tmpS.makeTranslation(pos[0]*VS,pos[1]*VS,pos[2]*VS)).multiply(tmpS.makeScale(VS*sc,VS*sc,VS*sc))}
   function setBoxes(IM,list,sc){var n=0,i,cap=IM.instanceMatrix.count;for(i=0;i<list.length&&n<cap;i++)if(boxAt(list[i].nm,list[i].pos,sc))IM.setMatrixAt(n++,tmpM);IM.count=n;IM.instanceMatrix.needsUpdate=true}
-  function colOf(c){if(c==="B"||c==="D"||c==="S"){var b=lin(bodyHex),k=c==="B"?1:c==="D"?.3:.72;return [b[0]*k,b[1]*k,b[2]*k]}return lin(c)}
+  function colOf(c){if(c==="B"||c==="D"||c==="S"){var b=lin(bodyHex),k=c==="B"?1:.72;return c==="D"?[b[0]*.3,b[1]*.27,b[2]*.5]:[b[0]*k,b[1]*k,b[2]*k]}return lin(c)}
   function cssOf(c){var q=colOf(c);return "#"+new THREE.Color().setRGB(q[0],q[1],q[2]).getHexString()}
   function refreshSel(){setBoxes(SM,sels.map(function(q){return {nm:q.nm,pos:q.v}}),1.16)}
   function rebuild(){var nm,M,m,i,mt=new THREE.Matrix4(),col,tot=0,sc=VS*1.02,c,ck;
