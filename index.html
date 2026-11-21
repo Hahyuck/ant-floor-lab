@@ -373,7 +373,7 @@ var SIDE=(RW+10.4)/2, SIDE_W=RW-10.4;                    // 스크린 옆 벽면
 var SCR={w:19.2,h:10.8,y0:2.6};       // 뒷벽(z=-RD) 스크린
 var SCREEN_C={x:0,z:-RD};
 var YD=24, ZMAXY=RD-.8;function setDims(){RH=RAID?19:15.5;SCR.y0=RAID?5.2:2.6;ZMAXY=YARD?RD+YD-1.2:RIVER?RD-2.3:RD-.8}setDims();
-function XL(){return RIVER?-RW+2.3:-(RW-2.8)}function XH(){return RIVER?RW-9.5:RW-2.8}   // 걸어갈 수 있는 좌우 끝. 강변은 보도블럭 안쪽 잔디밭까지만     // 앞마당 깊이, 걸어갈 수 있는 가장 먼 z
+function XL(){return RIVER?-RW+2.3:-(RW-2.8)}function XH(){return RIVER?RW-5.7:RW-2.8}   // 걸어갈 수 있는 좌우 끝. 강변은 강 쪽 보행로(보도블록)까지, 붉은 자전거 도로 앞에서 멈춘다     // 앞마당 깊이, 걸어갈 수 있는 가장 먼 z
 var ZMIN=-RD+3.6;                      // 무대 앞까지만 걸어갈 수 있음
 var FONT=getComputedStyle(document.documentElement).getPropertyValue("--font");
 
@@ -2370,7 +2370,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211532";
+var BUILD="B11211535";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
