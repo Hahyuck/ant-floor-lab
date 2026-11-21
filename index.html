@@ -2412,8 +2412,8 @@ $("name").addEventListener("input",function(){var n=clean(this.value,12);$("go")
   setPreview(n);$("pvtitle").textContent=n?pvEnt.look.title:""});
 $("name").addEventListener("keydown",function(ev){if(ev.key==="Enter"&&!$("go").disabled)$("go").click()});
 $("go").onclick=function(){var n=clean($("name").value,12);if(!n)return;if(!invited&&!ownsTheme(THEME))return status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다",true);this.disabled=true;if(isTouch)goFull(true);if(joinCode)connect(n,joinCode);else startHost(n).catch(function(){fail("방을 만들지 못했습니다. 다시 시도해 주세요.")})};
-$("alt").onclick=function(){joinCode="";[].forEach.call($("chs").children,function(x){x.classList.remove("on")});this.style.display="none";$("go").textContent="방 만들기";$("go").disabled=!clean($("name").value,12);status("")};
-if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status("초대받은 방: "+joinCode)}else $("go").textContent="방 만들기";
+$("alt").onclick=function(){joinCode="";[].forEach.call($("chs").children,function(x){x.classList.remove("on")});this.style.display="none";$("go").textContent="입장하기";$("go").disabled=!clean($("name").value,12);status("")};
+if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status("초대받은 방: "+joinCode)}else $("go").textContent="입장하기";
 // 채널: 고정된 방 코드 6개. 정식 서비스에서는 입장 서버가 빈 채널로 자동 배정한다
 (function(){var box=$("chs");for(var i=1;i<=6;i++)(function(i){var b=mk("button",null,"채널 "+i);
   b.onclick=function(){joinCode="chan0"+i;[].forEach.call(box.children,function(x){x.classList.toggle("on",x===b)});
@@ -2428,6 +2428,7 @@ themeUI();
 // 테마 선택: 보유한 테마만 골라서 방을 열 수 있다. 초대 링크로 온 손님은 방장의 테마를 그대로 쓴다
 var invited=!!joinCode;
 (function(){var box=$("ths"),sg=mk("div",null,"");if(invited){box.style.display="none";return}
+  if(1){box.style.display="none";if(!ownsTheme(THEME))applyTheme("normal");return}   // 이번 버전: 오프닝에서는 테마를 고르지 않는다 (채널만 고른다). 테마는 들어간 뒤 위쪽 아이콘으로 바꾼다
   var go2=function(id){applyTheme(id);status("");draw()};
   var draw=function(){box.textContent="";TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",id===THEME?"on":"",(has?"":"🔒 ")+TSHORT[id]),armed=false;
       b.onclick=function(){if(!ownsTheme(id)){var pr="🍬"+TPRICE[id].toLocaleString("ko-KR"),hv=" (보유 🍬"+sugar.toLocaleString("ko-KR")+")";
@@ -2452,7 +2453,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211749";
+var BUILD="B11211751";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
