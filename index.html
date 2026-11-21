@@ -300,6 +300,14 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
 #chatpop #log{position:static;flex:1;width:auto;max-height:none;overflow-y:auto;justify-content:flex-start;pointer-events:auto;-webkit-mask-image:none;mask-image:none;background:rgba(255,255,255,.04);border:0;border-radius:12px;padding:8px;-webkit-backdrop-filter:none;backdrop-filter:none}
 #chatpop #log .ln{background:transparent;font-size:14.5px;text-shadow:none;flex:none}
 #chatpop #chatbar{display:flex;position:static;transform:none;width:auto;left:auto;top:auto;bottom:auto;flex:none}
+/* 대화창: 봇 잡담은 대화창 안에서만 보인다 · 서버 이동은 제목 옆 */
+#log .ln.bot{display:none}
+#chatpop #log .ln.bot,body.chatting #log .ln.bot{display:block;color:#dfe4ec;font-size:14.5px;background:transparent}
+#chatpop #log .ln b,body.chatting #log .ln b{filter:brightness(1.45) saturate(1.1);text-shadow:0 0 1px rgba(255,255,255,.25)}   /* 어두운 개미 색 이름도 읽히게 */
+#chatpop .hd{justify-content:flex-start;gap:10px}
+#chatpop .hd #chatX{margin-left:auto}
+#chatpop .hd #bSrv{display:block;height:32px;border-radius:999px;border:0;background:rgba(255,255,255,.1);color:var(--text);padding:0 13px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
+#svp{z-index:10}
 </style>
 </head>
 <body>
@@ -328,6 +336,7 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
     <button class="pill" id="bQ">🎨 그래픽 설정</button>
     <button class="pill" id="bGfx">🎛️ 그래픽 옵션 설정</button>
     <button class="pill" id="bEdit">✏️ 개미 모델 편집</button>
+    <div class="mh" id="verTxt" style="text-align:right;opacity:.7;font-weight:500"></div>
   </div>
   <div id="pop"><button class="x" aria-label="닫기">✖️</button>
     <h3>방 설정</h3>
@@ -1804,9 +1813,8 @@ function useSlot(i){
   L.addEventListener("mousedown",function(ev){ev.preventDefault()})})();                              // 기록을 눌러도 대화창의 입력이 끊기지 않게
 function logAdd(el){var L=$("log");L.appendChild(el);while(L.children.length>40)L.removeChild(L.firstChild);L.scrollTop=L.scrollHeight}
 function logChat(e,s){
-  if(e.bot)return;                                   // 봇 잡담은 말풍선으로만, 로그에는 사람 대화만
   var d=document.createElement("div"),b=document.createElement("b");d.className="ln"+(e.bot?" bot":"")+(e===me?" me":"")+(e.bigT>performance.now()?" big big"+e.bigL:"");
-  b.textContent=e.name;b.style.color=e.bot?"":e.look.color;d.appendChild(b);d.appendChild(document.createTextNode(" "+s));logAdd(d)}
+  b.textContent=e.name;b.style.color=e.look.color;d.appendChild(b);d.appendChild(document.createTextNode(" "+s));logAdd(d)}
 function logSys(s){var d=document.createElement("div");d.className="ln sys";d.textContent=s;logAdd(d)}
 
 /* ───────────── 가방 · 단축 버튼 ───────────── */
@@ -2376,13 +2384,13 @@ if(isTouch)touchOn();addEventListener("touchstart",touchOn,{once:true,passive:tr
   // 휴대폰 대화창: 아래의 대화 바(또는 메뉴의 채팅)를 누르면 화면 가운데에 팝업으로 뜬다. 대화 기록과 입력 칸을 팝업 안으로 옮겼다가 닫으면 제자리로 돌려놓는다
   var chatHome=$("log").nextSibling,barHome=$("chatbar").nextSibling,stage0=$("log").parentNode;
   function chatPop(on){document.body.classList.toggle("chat",on);document.body.classList.remove("menu");
-    if(on){$("chatSlot").appendChild($("log"));$("chatpop").appendChild($("chatbar"));$("log").scrollTop=$("log").scrollHeight;$("chat").focus()}
-    else{$("chat").blur();document.body.classList.remove("chatting");stage0.insertBefore($("log"),chatHome);stage0.insertBefore($("chatbar"),barHome)}}
+    if(on){$("chatSlot").appendChild($("log"));$("chatpop").appendChild($("chatbar"));$("chatX").parentNode.insertBefore($("bSrv"),$("chatX"));$("log").scrollTop=$("log").scrollHeight;$("chat").focus()}
+    else{$("chat").blur();document.body.classList.remove("chatting");stage0.insertBefore($("log"),chatHome);stage0.insertBefore($("chatbar"),barHome);$("chatbar").insertBefore($("bSrv"),$("chat"))}}
   $("bChat").onclick=function(){chatPop(!document.body.classList.contains("chat"))};$("chatOpen").onclick=function(){chatPop(true)};$("chatX").onclick=function(){chatPop(false)};
   $("bInv").onclick=function(){renderInv();$("inv").classList.toggle("show");$("pop").classList.remove("show")};
   [].forEach.call($("hot").children,function(el,i){el.onclick=function(){useSlot(i)}});
   renderHot();setInterval(renderHot,250);
-  logSys("이동 WASD · 점프 스페이스 · 아이템 1 2 3 · 채팅 Enter");
+  if(!isTouch)logSys("이동 WASD · 점프 스페이스 · 아이템 1 2 3 · 채팅 Enter");
 })();
 function paintCute(){paintThemes()}
 function remakeAnts(){for(var k in ents)ents[k].parts=null;ants.dirty=true;pvEnt.parts=null;pvAnts.dirty=true}
@@ -2530,13 +2538,13 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211902";
+var BUILD="B11211907";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
   else if(!checkBuild.told){checkBuild.told=1;toast("새 버전이 올라왔습니다. 새로고침하면 적용됩니다",6000)}}).catch(function(){})}catch(_){}}
 if(/^https?:$/.test(location.protocol)){checkBuild();setInterval(checkBuild,120000)}
-logSys("버전 "+BUILD);
+$("verTxt").textContent="버전 "+BUILD;
 $("name").focus();
 try{var agN=sessionStorage.getItem("antgo");if(agN){sessionStorage.removeItem("antgo");setTimeout(function(){$("name").value=agN;$("name").dispatchEvent(new Event("input"));if(!$("go").disabled)$("go").click()},500)}}catch(_){}   // 서버 이동으로 넘어왔으면 바로 입장한다
 
