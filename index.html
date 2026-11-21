@@ -2228,7 +2228,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211129";
+var BUILD="B11211137";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2322,7 +2322,7 @@ function startEditor(){
       if(!L.some(function(e){return e.v===mv}))L.push({nm:mn,v:mv,sg:-1})});return L}
   function nudge(dx,dy,dz){if(!sels.length)return flash("먼저 옮길 블록을 누르세요");var L,before=snapStr(),bad=false;
     if(joint){var nm=sels[0].nm,mn=mirOf(nm),a=model.off[nm]||[0,0,0],b;                         // 부위가 붙는 위치를 반 칸씩 옮긴다. 블록 모양과 움직임은 그대로
-      model.off[nm]=[a[0]+dx*.5,a[1]+dy*.5,a[2]+dz*.5];if(mirror&&mn!==nm){b=model.off[mn]||[0,0,0];model.off[mn]=[b[0]-dx*.5,b[1]+dy*.5,b[2]+dz*.5]}
+      var r2=function(v){return +v.toFixed(2)};model.off[nm]=[r2(a[0]+dx*.1),r2(a[1]+dy*.1),r2(a[2]+dz*.1)];if(mirror&&mn!==nm){b=model.off[mn]||[0,0,0];model.off[mn]=[r2(b[0]-dx*.1),r2(b[1]+dy*.1),r2(b[2]+dz*.1)]}
       commit(before);rebuild();paint();return}
     L=moveList();
     L.forEach(function(e){var M=model.parts[e.nm],i=find(M,e.v[0]+e.sg*dx,e.v[1]+dy,e.v[2]+dz);if(i>=0&&!L.some(function(q){return q.v===M[i]}))bad=true});
@@ -2357,7 +2357,7 @@ function startEditor(){
       before=snapStr();strokeId++;linePts(lineA,h).forEach(function(q){mt(lineA.nm,q).forEach(function(w){var M=model.parts[w.nm];if(find(M,w.pos[0],w.pos[1],w.pos[2])<0)M.push([w.pos[0],w.pos[1],w.pos[2],cur])})});
       lineA=null;commit(before);rebuild();paint();return}
     if(tool==="move"){
-      if(whole||joint)sels=model.parts[h.nm].map(function(v){return {nm:h.nm,v:v}});
+      if(whole)sels=model.parts[h.nm].map(function(v){return {nm:h.nm,v:v}});
       else if(multi||(ev&&(ev.shiftKey||ev.ctrlKey||ev.metaKey))){i=inSel(h.v);if(i>=0)sels.splice(i,1);else sels.push({nm:h.nm,v:h.v})}   // 다중 선택: 누를 때마다 더하거나 뺀다
       else if(sels.length===1&&sels[0].v===h.v)sels=[];
       else sels=[{nm:h.nm,v:h.v}];
@@ -2383,18 +2383,23 @@ function startEditor(){
 
   // ── 조작 손잡이(기즈모): 선택한 것 위에 뜨는 세 방향 화살표와 회전 고리. 직접 끌어서 옮기고 돌린다
   //    블록은 칸 단위로 따라 움직이고, 부위 조절에서는 위치 0.1칸 · 각도 1도씩 (Shift 를 누르면 0.02칸 · 0.1도씩) 미세하게 움직인다
-  var GZ=new THREE.Group(),gzH=[],gzRings=[],gzMats=[];GZ.visible=false;S.add(GZ);
-  (function(){var cols=[0xff5a4f,0x5fd66a,0x4f9bff],aq=[[0,0,-Math.PI/2],[0,0,0],[Math.PI/2,0,0]],rq=[[0,Math.PI/2,0],[Math.PI/2,0,0],[0,0,0]],i,mat,g,sh,hd,hit,ring,rh,inv=new THREE.MeshBasicMaterial({visible:false});
-    for(i=0;i<3;i++){mat=new THREE.MeshBasicMaterial({color:cols[i],depthTest:false,transparent:true,opacity:.95});gzMats.push(mat);g=new THREE.Group();g.rotation.set(aq[i][0],aq[i][1],aq[i][2]);
-      sh=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.8,8),mat);sh.position.y=.5;hd=new THREE.Mesh(new THREE.ConeGeometry(.075,.24,12),mat);hd.position.y=1;
-      hit=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,1.2,6),inv);hit.position.y=.6;hit.userData={ax:i,kind:"move"};sh.renderOrder=hd.renderOrder=10;g.add(sh);g.add(hd);g.add(hit);GZ.add(g);gzH.push(hit);
-      ring=new THREE.Mesh(new THREE.TorusGeometry(.74,.016,6,56),mat);ring.rotation.set(rq[i][0],rq[i][1],rq[i][2]);ring.renderOrder=10;rh=new THREE.Mesh(new THREE.TorusGeometry(.74,.075,6,28),inv);rh.rotation.copy(ring.rotation);rh.userData={ax:i,kind:"rot"};
-      GZ.add(ring);GZ.add(rh);gzH.push(rh);gzRings.push(ring)}})();
-  function updateGizmo(){var m,i,n,q,keep=drag&&drag.mode==="giz";GZ.visible=tool==="move"&&sels.length>0&&!!byNm[sels[0].nm];if(!GZ.visible)return;m=byNm[sels[0].nm];
-    if(joint){GZ.position.copy(m.position).add(G.position);GZ.quaternion.identity()}                                  // 부위 조절: 부위가 붙는 자리에서, 몸 기준 축으로
-    else if(!keep){GZ.position.set(0,0,0);n=Math.min(sels.length,80);for(i=0;i<n;i++){q=sels[i];if(byNm[q.nm])GZ.position.add(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld))}GZ.position.multiplyScalar(1/n);GZ.quaternion.copy(m.quaternion)}
-    else if(byNm[drag.nm]){q=sels[0];GZ.position.copy(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld)).add(drag.goff)}
-    GZ.scale.setScalar(C.position.distanceTo(GZ.position)*.085);for(i=0;i<3;i++)gzRings[i].visible=joint;GZ.updateMatrixWorld(true)}
+  var GZ=new THREE.Group(),gzH=[],gzA=[],gzR=[],gzHot=null,GCOL=[0xff5a4f,0x5fd66a,0x4f9bff];GZ.visible=false;S.add(GZ);
+  (function(){var aq=[[0,0,-Math.PI/2],[0,0,0],[Math.PI/2,0,0]],rq=[[0,Math.PI/2,0],[Math.PI/2,0,0],[0,0,0]],i,mat,mr,g,sh,hd,hit,ring,rh,inv=new THREE.MeshBasicMaterial({visible:false});
+    for(i=0;i<3;i++){mat=new THREE.MeshBasicMaterial({color:GCOL[i],depthTest:false,transparent:true,opacity:.95});mr=new THREE.MeshBasicMaterial({color:GCOL[i],depthTest:false,transparent:true,opacity:.95});g=new THREE.Group();g.rotation.set(aq[i][0],aq[i][1],aq[i][2]);
+      sh=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.8,8),mat);sh.position.y=.5;hd=new THREE.Mesh(new THREE.ConeGeometry(.08,.25,12),mat);hd.position.y=1;
+      hit=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,1.2,6),inv);hit.position.y=.6;hit.userData={ax:i,kind:"move"};sh.renderOrder=hd.renderOrder=10;g.add(sh);g.add(hd);g.add(hit);GZ.add(g);gzH.push(hit);gzA.push({g:g,mat:mat});
+      ring=new THREE.Mesh(new THREE.TorusGeometry(.74,.02,8,64),mr);ring.rotation.set(rq[i][0],rq[i][1],rq[i][2]);ring.renderOrder=10;rh=new THREE.Mesh(new THREE.TorusGeometry(.74,.085,6,28),inv);rh.rotation.copy(ring.rotation);rh.userData={ax:i,kind:"rot"};
+      GZ.add(ring);GZ.add(rh);gzH.push(rh);gzR.push({m:ring,mat:mr})}})();
+  function isPart(){var i,nm;if(!sels.length)return false;nm=sels[0].nm;if(sels.length!==model.parts[nm].length)return false;for(i=1;i<sels.length;i++)if(sels[i].nm!==nm)return false;return true}   // 부위 하나를 통째로 골랐는가 → 미세 이동 · 회전
+  function updateGizmo(){var m,i,n,q,act=drag&&drag.mode==="giz"?drag:null,hot=act||gzHot,on,st=function(o,isHot,dim){o.mat.color.set(isHot?0xfff06a:GCOL[i]);o.mat.opacity=dim?.22:isHot?1:.9};
+    GZ.visible=tool==="move"&&sels.length>0&&!!byNm[sels[0].nm];if(!GZ.visible)return;m=byNm[sels[0].nm];
+    if(joint){GZ.position.copy(m.position).add(G.position);GZ.quaternion.identity()}                                  // 부위: 붙는 자리에서, 몸 기준 축으로
+    else if(!act){GZ.position.set(0,0,0);n=Math.min(sels.length,80);for(i=0;i<n;i++){q=sels[i];if(byNm[q.nm])GZ.position.add(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld))}GZ.position.multiplyScalar(1/n);GZ.quaternion.copy(m.quaternion)}
+    else if(byNm[act.nm]){q=sels[0];GZ.position.copy(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld)).add(act.goff)}
+    GZ.scale.setScalar(C.position.distanceTo(GZ.position)*.085);
+    for(i=0;i<3;i++){on=hot&&hot.ax===i&&hot.kind==="move";st(gzA[i],on,act&&!on);gzA[i].g.scale.setScalar(on?1.22:1);                 // 커서를 올린 손잡이는 노랗게 · 굵게, 끄는 동안 나머지는 흐리게
+      on=hot&&hot.ax===i&&hot.kind==="rot";gzR[i].m.visible=joint;st(gzR[i],on,act&&!on);gzR[i].m.scale.setScalar(on?1.06:1)}
+    GZ.updateMatrixWorld(true)}
   function setRay(ev){var r=cv.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((ev.clientX-r.left)/r.width*2-1,-((ev.clientY-r.top)/r.height*2-1)),C)}
   function pickGiz(ev){if(!GZ.visible)return null;setRay(ev);var hs=ray.intersectObjects(gzH.filter(function(x){return joint||x.userData.kind==="move"}),false),i;for(i=0;i<hs.length;i++)if(hs[i].object.userData.kind==="move")return hs[i].object.userData;return hs.length?hs[0].object.userData:null}   // 화살표와 고리가 겹치면 화살표가 먼저
   function scrOf(v){var w=root.clientWidth,h=root.clientHeight;tmpV.copy(v).project(C);return [(tmpV.x+1)/2*w,(1-tmpV.y)/2*h]}
@@ -2404,16 +2409,18 @@ function startEditor(){
     drag={mode:"giz",ax:gh.ax,kind:gh.kind,sx:ev.clientX,sy:ev.clientY,before:snapStr(),ul:undo.length,done:0,nm:nm,sv:[(s1[0]-s0[0])/.4,(s1[1]-s0[1])/.4],c:s0,a0:Math.atan2(ev.clientY-cv.getBoundingClientRect().top-s0[1],ev.clientX-cv.getBoundingClientRect().left-s0[0]),
       sg:a.dot(C.position.clone().sub(o))>=0?1:-1,v0:(model[gh.kind==="rot"?"rot":"off"][nm]||[0,0,0])[gh.ax],acc:0,last:null,
       goff:o.clone().sub(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld))};
-    gzMats.forEach(function(m,i){m.opacity=i===gh.ax?1:.25});GH.count=0;hov.visible=false}
+    GH.count=0;hov.visible=false}
   function gizMove(ev){var d=drag,r=cv.getBoundingClientRect(),dx=ev.clientX-d.sx,dy=ev.clientY-d.sy,cells,tgt,st,val,ang,da,x0,dir,fm=function(v){return (v>0?"+":"")+(+v.toFixed(2))};
     if(d.kind==="move"){cells=(dx*d.sv[0]+dy*d.sv[1])/Math.max(1,d.sv[0]*d.sv[0]+d.sv[1]*d.sv[1])/VS;
-      if(joint){st=ev.shiftKey?.02:.1;val=+(d.v0+Math.round(cells/st)*st).toFixed(2);if(val!==(model.off[d.nm]||[0,0,0])[d.ax]){setJoint("off",d.nm,d.ax,val);rebuild()}
-        flashT=0;say(PNAME[d.nm]+" 위치 "+["좌우","위아래","앞뒤"][d.ax]+" "+fm(val)+"칸"+(ev.shiftKey?" (미세)":" · Shift 를 누르면 더 미세하게"))}
-      else{tgt=Math.round(cells);while(d.done!==tgt){dir=tgt>d.done?1:-1;x0=sels[0].v[d.ax];nudge(d.ax===0?dir:0,d.ax===1?dir:0,d.ax===2?dir:0);if(!sels.length||sels[0].v[d.ax]===x0){d.sx=ev.clientX;d.sy=ev.clientY;d.done=0;break}d.done+=dir}}}
+      if(joint){st=ev.shiftKey?.01:.05;val=+(d.v0+Math.round(cells/st)*st).toFixed(2);if(val!==(model.off[d.nm]||[0,0,0])[d.ax]){setJoint("off",d.nm,d.ax,val);rebuild()}
+        flashT=0;say(PNAME[d.nm]+" 위치 "+["좌우","위아래","앞뒤"][d.ax]+" "+fm(val)+"칸"+(ev.shiftKey?" (아주 미세하게)":" · Shift 를 누르면 더 미세하게"))}
+      else{tgt=Math.round(cells);while(d.done!==tgt){dir=tgt>d.done?1:-1;x0=sels[0].v[d.ax];
+        if(padMode==="ext"){if(Math.abs(d.done+dir)<=Math.abs(d.done)){d.done+=dir;continue}extend(d.ax===0?dir:0,d.ax===1?dir:0,d.ax===2?dir:0)}else nudge(d.ax===0?dir:0,d.ax===1?dir:0,d.ax===2?dir:0);
+        if(!sels.length||sels[0].v[d.ax]===x0){d.sx=ev.clientX;d.sy=ev.clientY;d.done=0;break}d.done+=dir}}}
     else{ang=Math.atan2(ev.clientY-r.top-d.c[1],ev.clientX-r.left-d.c[0]);da=ang-(d.last==null?d.a0:d.last);if(da>Math.PI)da-=6.2832;if(da<-Math.PI)da+=6.2832;d.last=ang;d.acc+=da;       // 고리: 화면에서 돌린 만큼 돈다
       st=ev.shiftKey?.1:1;val=+(d.v0+Math.round(-d.acc*57.2958*d.sg/st)*st).toFixed(1);if(val!==(model.rot[d.nm]||[0,0,0])[d.ax]){setJoint("rot",d.nm,d.ax,val);rebuild()}
       flashT=0;say(PNAME[d.nm]+" 각도 "+["숙임","돌림","기울임"][d.ax]+" "+fm(val)+"°"+(ev.shiftKey?" (미세)":" · Shift 를 누르면 0.1도씩"))}}
-  function gizEnd(){undo.length=Math.min(undo.length,drag.ul);commit(drag.before);gzMats.forEach(function(m){m.opacity=.95});paint()}                    // 끌기 한 번이 되돌리기 한 단계
+  function gizEnd(){undo.length=Math.min(undo.length,drag.ul);commit(drag.before);gzHot=null;paint()}                    // 끌기 한 번이 되돌리기 한 단계
   // ── 조작: 블록 위에서 누르면 도구가 동작하고(끌면 이어서), 빈 곳이나 오른쪽 버튼으로 끌면 돌려 본다. 휠·두 손가락으로 확대
   var P={},drag=null,pd=0,pmid=null;
   function strokeGo(h){var k=h.nm+":"+(tool==="add"?h.add:h.v.slice(0,3)).join(",");if(k===drag.last)return;drag.last=k;if(applyTool(h))rebuild()}
@@ -2427,7 +2434,7 @@ function startEditor(){
   cv.addEventListener("pointermove",function(ev){var ks=Object.keys(P),h,a,b,d,mx,my;
     if(drag&&drag.mode==="pinch"&&P[ev.pointerId]&&ks.length===2){P[ev.pointerId]=[ev.clientX,ev.clientY];a=P[ks[0]];b=P[ks[1]];d=Math.hypot(a[0]-b[0],a[1]-b[1]);mx=(a[0]+b[0])/2;my=(a[1]+b[1])/2;
       if(pd)cam2.dist=clamp(cam2.dist*pd/d,1.2,12);if(pmid){cam2.yaw-=(mx-pmid[0])*.008;cam2.pitch=clamp(cam2.pitch+(my-pmid[1])*.006,-1.3,1.45)}pd=d;pmid=[mx,my];return}
-    if(!drag||!P[ev.pointerId]){if(pickGiz(ev)){cv.style.cursor="grab";GH.count=0;hov.visible=false;say(joint?"화살표를 끌면 위치, 고리를 끌면 각도가 바뀝니다":"화살표를 끌면 그 방향으로 옮겨집니다")}else{cv.style.cursor="";preview(pick(ev))}return}
+    if(!drag||!P[ev.pointerId]){gzHot=pickGiz(ev);if(gzHot){cv.style.cursor="grab";GH.count=0;hov.visible=false;say(gzHot.kind==="rot"?"이 고리를 끌면 "+["앞뒤로 숙이는","좌우로 돌리는","옆으로 기울이는"][gzHot.ax]+" 각도가 바뀝니다 · Shift 는 0.1도씩":joint?"이 화살표를 끌면 "+["좌우","위아래","앞뒤"][gzHot.ax]+"로 미세하게 옮겨집니다 · Shift 는 더 미세하게":padMode==="ext"?"이 화살표를 끌면 그쪽으로 블록이 늘어납니다":"이 화살표를 끌면 그쪽으로 한 칸씩 옮겨집니다")}else{cv.style.cursor="";preview(pick(ev))}return}
     if(drag.mode==="giz"){gizMove(ev)}
     else if(drag.mode==="stroke"){h=pick(ev,tool==="add"?strokeId:0);if(h){strokeGo(h);preview(h)}}
     else if(drag.mode==="sel"){h=pick(ev);if(h){if(drag.add&&inSel(h.v)<0){sels.push({nm:h.nm,v:h.v});refreshSel()}else if(!drag.add&&inSel(h.v)>=0){sels.splice(inSel(h.v),1);refreshSel()}}}
@@ -2441,7 +2448,7 @@ function startEditor(){
     else if(drag&&drag.mode==="look"&&!drag.moved&&ev.type==="pointerup"){h=pick(ev);
       if(h&&drag.btn===2){before=snapStr();strokeId++;if(applyTool(h,"del")){commit(before);rebuild();paint()}}else if(h)clickTool(h,ev);else if(tool==="move"&&sels.length&&!multi){sels=[];refreshSel();paint()}}
     if(!Object.keys(P).length)drag=null;else if(drag&&drag.mode==="pinch"){pd=0;pmid=null}};
-  cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);cv.addEventListener("pointerleave",function(){if(!drag)idle()});
+  cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);cv.addEventListener("pointerleave",function(){if(!drag){gzHot=null;idle()}});
   cv.addEventListener("wheel",function(ev){ev.preventDefault();cam2.dist=clamp(cam2.dist*(ev.deltaY>0?1.1:.9),1.2,12)},{passive:false});
   cv.addEventListener("contextmenu",function(ev){ev.preventDefault()});
   addEventListener("keydown",function(ev){var c=ev.code,K,t;if(ev.target&&ev.target.tagName==="INPUT")return;                    // 한글 입력 상태에서도 되도록 글쇠 자리(code)로 본다
@@ -2473,18 +2480,17 @@ function startEditor(){
     "#edp .more{width:100%;margin-top:12px}#edp .nf{display:block;font-size:10px;color:#9aa3b2}#edp .nf input{display:block;width:100%;box-sizing:border-box;margin-top:2px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#eef1f6;padding:7px 6px;font:inherit}";
   document.head.appendChild(st2);
   function btn(par,label,cls,fn,sub){var b=mk("button",cls||"",label);if(sub)b.appendChild(mk("small",null,sub));b.onclick=fn;par.appendChild(b);return b}
-  function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";
+  function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
     panel.appendChild(mk("h2",null,"개미 모델 편집"));
     panel.appendChild(mk("h4",null,"도구"));g=mk("div","g g3");tools.forEach(function(t){btn(g,t[1],tool===t[0]?"on":"",function(){setTool(t[0])})});btn(g,"대칭 "+(mirror?"켬":"끔"),mirror?"on":"",function(){mirror=!mirror;paint()});panel.appendChild(g);
     g=mk("div","g");g.style.marginTop="6px";btn(g,"되돌리기","",doUndo).disabled=!undo.length;btn(g,"다시 실행","",doRedo).disabled=!redo.length;panel.appendChild(g);
-    if(tool==="move"){panel.appendChild(mk("h4",null,"선택 방식 · 지금 "+sels.length+"개"));g=mk("div","g g3");
-      btn(g,"여러 개",multi?"on":"",function(){multi=!multi;if(multi){whole=false;joint=false}paint()});
-      btn(g,"부위째",whole?"on":"",function(){whole=!whole;if(whole){multi=false;joint=false}paint()});
-      btn(g,"부위 조절",joint?"on":"",function(){joint=!joint;if(joint){multi=false;whole=false}sels=[];refreshSel();paint()});panel.appendChild(g);
-      panel.appendChild(mk("p",null,joint?"부위를 누르고 화살표(위치) · 고리(각도)를 끌어서 조절합니다. Shift 를 누르면 더 미세하게 움직입니다.":"블록을 누르면 화살표와 버튼이 뜹니다. 화살표를 끌면 그 방향으로 옮겨집니다."));
+    if(tool==="move"){panel.appendChild(mk("h4",null,"선택 방식 · 지금 "+(joint?PNAME[sels[0].nm]+" 부위":sels.length+"개")));g=mk("div","g");
+      btn(g,"블록 여러 개",multi?"on":"",function(){multi=!multi;if(multi)whole=false;paint()},"누르거나 끌어서 더하기");
+      btn(g,"부위 통째로",whole?"on":"",function(){whole=!whole;if(whole)multi=false;sels=[];refreshSel();paint()},"미세 이동 · 회전");panel.appendChild(g);
+      panel.appendChild(mk("p",null,joint?"화살표를 끌면 위치가, 고리를 끌면 각도가 미세하게 바뀝니다. Shift 를 누르면 더 미세해집니다. 아래 칸에 숫자를 직접 넣어도 됩니다.":whole?"부위를 누르세요. 화살표(위치)와 고리(각도)가 뜹니다.":"블록을 누르면 화살표가 뜹니다. 화살표를 끌면 그쪽으로 옮겨지고, 블록은 칸 단위로 움직입니다."));
       if(joint&&sels.length){var jn=sels[0].nm,num=function(kind,ax,lab,stp){var w=mk("label","nf",lab),i2=document.createElement("input");i2.type="number";i2.step=stp;i2.value=(model[kind][jn]||[0,0,0])[ax];
           i2.onchange=function(){var bf=snapStr(),v=parseFloat(i2.value);if(isNaN(v))return;setJoint(kind,jn,ax,+v.toFixed(2));commit(bf);rebuild();paint()};w.appendChild(i2);return w};
-        panel.appendChild(mk("h4",null,PNAME[jn]+" 위치 (칸)"));g=mk("div","g g3");g.appendChild(num("off",0,"좌우",.1));g.appendChild(num("off",1,"위아래",.1));g.appendChild(num("off",2,"앞뒤",.1));panel.appendChild(g);
+        panel.appendChild(mk("h4",null,PNAME[jn]+" 위치 (칸)"));g=mk("div","g g3");g.appendChild(num("off",0,"좌우",.05));g.appendChild(num("off",1,"위아래",.05));g.appendChild(num("off",2,"앞뒤",.05));panel.appendChild(g);
         panel.appendChild(mk("h4",null,PNAME[jn]+" 각도 (도)"));g=mk("div","g g3");g.appendChild(num("rot",0,"숙임",1));g.appendChild(num("rot",1,"돌림",1));g.appendChild(num("rot",2,"기울임",1));panel.appendChild(g)}}
     panel.appendChild(mk("h4",null,"색"));g=mk("div","sw role");[["B","몸 색"],["D","짙은 색"],["S","줄무늬"]].forEach(function(t){b=mk("button",cur===t[0]?"on":"",t[1]);b.style.background=cssOf(t[0]);b.onclick=function(){cur=t[0];pickCol()};g.appendChild(b)});panel.appendChild(g);
     g=mk("div","sw");g.style.marginTop="6px";PAL.forEach(function(c){b=mk("button",cur===c?"on":"","");b.style.background=cssOf(c);b.onclick=function(){cur=c;pickCol()};g.appendChild(b)});panel.appendChild(g);
@@ -2510,20 +2516,13 @@ function startEditor(){
   function ringBtn(label,cls,fn,enter){var b=mk("button",cls||"",label);b.onclick=function(ev){ev.stopPropagation();fn()};b.onpointerdown=function(ev){ev.stopPropagation()};
     if(enter){b.onmouseenter=enter;b.onmouseleave=function(){idle()}}ringEl.appendChild(b);return b}
   function dirBtns(go){DIRS.forEach(function(t){var b=ringBtn("","dir",function(){go(t[1],t[2],t[3])},function(){padShow(t[1],t[2],t[3])});b.appendChild(mk("i",null,"➜"));b.appendChild(document.createTextNode(t[0]));b._d=t})}
-  function paintRing(){var b;ringEl.textContent="";if(tool!=="move"||!sels.length){ringEl.style.display="none";ringMode="main";return}ringEl.style.display="";
-    if(joint){if(ringMode!=="pos"&&ringMode!=="rot")ringMode="jmain"}else if(ringMode==="jmain"||ringMode==="pos"||ringMode==="rot")ringMode="main";
-    if(ringMode==="main"){
-      ringBtn("이동","",function(){ringMode="move";padMode="move";paint()});ringBtn("확장","",function(){ringMode="ext";padMode="ext";paint()});
-      b=ringBtn("잇기","",joinSel);b.disabled=sels.length<2;
-      ringBtn("칠하기","",function(){paintSel();paint()}).style.boxShadow="inset 0 0 0 5px "+cssOf(cur)+",0 4px 14px rgba(0,0,0,.45)";
-      ringBtn("삭제","warn",delSel);ringBtn("여러 개",multi?"on":"",function(){multi=!multi;if(multi)whole=false;paint()});ringBtn("해제","",function(){sels=[];refreshSel();paint()})}
-    else if(ringMode==="move"||ringMode==="ext"){dirBtns(padGo);ringBtn(ringMode==="ext"?"확장 끝":"이동 끝","on",function(){ringMode="main";paint()})}
-    else if(ringMode==="jmain"){ringBtn("위치","",function(){ringMode="pos";padMode="move";paint()});ringBtn("각도","",function(){ringMode="rot";paint()});
-      ringBtn("원래대로","warn",function(){var bf=snapStr(),nm=sels[0].nm,mn=mirOf(nm);delete model.off[nm];delete model.rot[nm];if(mirror&&mn!==nm){delete model.off[mn];delete model.rot[mn]}commit(bf);rebuild();paint()});
-      ringBtn("해제","",function(){sels=[];refreshSel();paint()})}
-    else if(ringMode==="pos"){dirBtns(nudge);ringBtn("위치 끝","on",function(){ringMode="jmain";paint()})}
-    else if(ringMode==="rot"){[["숙이기",0,1],["젖히기",0,-1],["왼쪽 돌림",1,1],["오른쪽 돌림",1,-1],["왼쪽 기울임",2,1],["오른쪽 기울임",2,-1]].forEach(function(t){ringBtn(t[0],"dir",function(){turn(t[1],t[2])})});
-      ringBtn("각도 끝","on",function(){ringMode="jmain";paint()})}}
+  function paintRing(){var b;ringEl.textContent="";if(tool!=="move"||!sels.length){ringEl.style.display="none";return}ringEl.style.display="";   // 옮기기는 화살표로 하므로 여기에는 그 밖의 일만 둔다
+    if(joint){ringBtn("원래대로","warn",function(){var bf=snapStr(),nm=sels[0].nm,mn=mirOf(nm);delete model.off[nm];delete model.rot[nm];if(mirror&&mn!==nm){delete model.off[mn];delete model.rot[mn]}commit(bf);rebuild();paint()});
+      ringBtn("해제","",function(){sels=[];refreshSel();paint()});return}
+    ringBtn("확장",padMode==="ext"?"on":"",function(){padMode=padMode==="ext"?"move":"ext";paint();flash(padMode==="ext"?"확장 켬 · 화살표를 끌면 그쪽으로 블록이 늘어납니다":"확장 끔 · 화살표를 끌면 옮겨집니다")});
+    b=ringBtn("잇기","",joinSel);b.disabled=sels.length<2;
+    ringBtn("칠하기","",function(){paintSel();paint()}).style.boxShadow="inset 0 0 0 5px "+cssOf(cur)+",0 4px 14px rgba(0,0,0,.45)";
+    ringBtn("삭제","warn",delSel);ringBtn("여러 개",multi?"on":"",function(){multi=!multi;if(multi)whole=false;paint()});ringBtn("해제","",function(){sels=[];refreshSel();paint()})}
   function layoutRing(){if(ringEl.style.display==="none")return;var n=Math.min(sels.length,80),i,j,q,m,cx=0,cy=0,pts=[],w=root.clientWidth,h=root.clientHeight,Rr=0,ch=ringEl.children,A=[],todo=[],ord,d,k,pass,best,gap,P0,P1,pl=w>700?272:0;
     var scr=function(nm,x,y,z){tmpV.set(x*VS,y*VS,z*VS).applyMatrix4(byNm[nm].matrixWorld).project(C);return [(tmpV.x+1)/2*w,(1-tmpV.y)/2*h]};
     for(i=0;i<n;i++){q=sels[i];if(byNm[q.nm])pts.push(scr(q.nm,q.v[0],q.v[1],q.v[2]))}if(!pts.length)return;
@@ -2537,7 +2536,7 @@ function startEditor(){
       todo.forEach(function(t){ord=[];for(i=0;i<ch.length;i++)if(A[i]!=null)ord.push(A[i]);ord.sort(function(x,y){return x-y});best=0;gap=-1;                 // 남은 버튼은 가장 넓은 빈자리에
         if(!ord.length){A[t]=-1.5708;return}for(k=0;k<ord.length;k++){d=k+1<ord.length?ord[k+1]-ord[k]:ord[0]+6.2832-ord[k];if(d>gap){gap=d;best=ord[k]+d/2}}A[t]=best;
         if(ch[t].firstChild&&ch[t].firstChild.style)ch[t].firstChild.style.transform="rotate("+A[t]+"rad)"})}
-    else for(i=0;i<ch.length;i++)A[i]=-1.5708+i*6.2832/ch.length;
+    else for(i=0;i<ch.length;i++)A[i]=ch.length===2?[.95,2.19][i]:-1.5708+i*6.2832/ch.length;
     for(i=0;i<ch.length;i++){ch[i].style.left=(cx+Math.cos(A[i])*Rr)+"px";ch[i].style.top=(cy+Math.sin(A[i])*Rr)+"px"}}
   function size(){var w=root.clientWidth,h=root.clientHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()}
   addEventListener("resize",size);size();rebuild();paint();
@@ -2547,7 +2546,7 @@ function startEditor(){
     if(anim){G.updateMatrixWorld(true);refreshSel()}
     if(flashT&&performance.now()>flashT){flashT=0;idle()}updateGizmo();layoutRing();R.render(S,C)})();
   window.__ed={model:function(){return model},sels:function(){return sels},undoN:function(){return [undo.length,redo.length]},nudge:nudge,delSel:delSel,doUndo:doUndo,doRedo:doRedo,resetAll:resetAll,linePts:linePts,
-    click:function(h,ev){clickTool(h,ev)},ring:function(){return [ringMode,[].map.call(ringEl.children,function(b){return b.textContent+"@"+Math.round(parseFloat(b.style.left))+","+Math.round(parseFloat(b.style.top))})]},ringGo:function(i){ringEl.children[i].click()},giz:function(){return {vis:GZ.visible,pos:GZ.position.toArray(),scr:scrOf(GZ.position.clone()),tip:[0,1,2].map(function(i){var a=new THREE.Vector3(i===0?1:0,i===1?1:0,i===2?1:0).applyQuaternion(GZ.quaternion).multiplyScalar(GZ.scale.x*.8).add(GZ.position);return scrOf(a)}),rings:gzRings[0].visible}},extend:extend,joinSel:joinSel,paintSel:paintSel,stroke:function(h,t){var bf=snapStr();strokeId++;if(applyTool(h,t)){commit(bf);rebuild();paint()}},preview:preview,ghosts:function(){return GH.count},hint:function(){return hint.textContent},
+    click:function(h,ev){clickTool(h,ev)},ring:function(){return [ringMode,[].map.call(ringEl.children,function(b){return b.textContent+"@"+Math.round(parseFloat(b.style.left))+","+Math.round(parseFloat(b.style.top))})]},ringGo:function(i){ringEl.children[i].click()},giz:function(){return {vis:GZ.visible,pos:GZ.position.toArray(),scr:scrOf(GZ.position.clone()),tip:[0,1,2].map(function(i){var a=new THREE.Vector3(i===0?1:0,i===1?1:0,i===2?1:0).applyQuaternion(GZ.quaternion).multiplyScalar(GZ.scale.x*.8).add(GZ.position);return scrOf(a)}),rings:gzR[0].m.visible,hot:gzHot}},extend:extend,joinSel:joinSel,paintSel:paintSel,stroke:function(h,t){var bf=snapStr();strokeId++;if(applyTool(h,t)){commit(bf);rebuild();paint()}},preview:preview,ghosts:function(){return GH.count},hint:function(){return hint.textContent},
     set:function(k,v){if(k==="tool")return setTool(v);if(k==="cur")cur=v;if(k==="mirror")mirror=v;if(k==="whole")whole=v;if(k==="multi")multi=v;if(k==="pad")padMode=v;if(k==="joint")joint=v;if(k==="anim")anim=v;if(k==="pv"){pv=v;grid.visible=!v;rebuild()}paint()},turn:turn,meshes:function(){return meshes},cam:cam2};
 }
 
