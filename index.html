@@ -966,7 +966,7 @@ function buildVox(L){
       cube(amp,0,-7*VS,0,2,2,2,OR);cube(amp,0,-6.5*VS,VS*.7,1,1,1,OR);                                                                                             // 주황 손
       anp=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3);anp.h=1;rw=L.ant;seg(anp,[0,0,0],[sx*.08,.42*rw,-.06],ANB);seg(anp,[sx*.08,.42*rw,-.06],[sx*.15,.5*rw,.24],ANB);put(anp,sx*.15,.5*rw-VS*.7,.24+VS,ANB);put(anp,sx*.15,.5*rw-VS*.7,.24,ANB)}   // 더듬이: 개미와 같은 모양
     var HH=part([0,HY,.02],null,4);HH.h=1;blob(HH,0,0,0,.44,hry,.39,2.6,function(mi,j,k,front){
-      if(front){if(mi>=1&&mi<=3&&(j===0||j===1))return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-2)return MOUTH;if(mi===0&&j===-3)return RED}return OR});
+      if(front){if(mi>=1&&mi<=3&&(j===0||j===1))return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-2)return MOUTH;if(mi===0&&j===-3)return RED}return OR},.39*.8);   // 앞으로 튀어나오는 층을 잘라 얼굴을 평평하게
     blob(HH,0,hry-.03,0,.22,.07,.2,2,function(){return OR});
     if(L.acc==="crown"){var cr2=NV(.2),ck2;for(i=-cr2;i<cr2;i++)for(ck2=-cr2;ck2<cr2;ck2++){if(i>-cr2&&i<cr2-1&&ck2>-cr2&&ck2<cr2-1)continue;put(HH,(i+.5)*VS,hry+.06,(ck2+.5)*VS,V_GOLD);if((i+ck2)&1)put(HH,(i+.5)*VS,hry+.06+VS,(ck2+.5)*VS,V_GOLD)}}
     return fin()}
@@ -998,7 +998,7 @@ function buildVox(L){
       return body}
     if(front&&NA){                                                                            // 리디자인 얼굴: 흰자 옆에 안쪽으로 몰린 검은 눈동자, 작은 붉은 입
       if(L.acc==="glasses"&&mi<=4&&j>=-2&&j<=2&&(mi===4||j===2||j===-2))return V_BLACK;
-      if(mi>=1&&mi<=3&&j>=-1&&j<=1)return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-3)return MOUTH;return body}
+      if(mi>=1&&mi<=2&&j>=-1&&j<=1)return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-3)return MOUTH;return body}   // 눈: 검은 눈동자 한 칸 + 흰자 한 칸
     if(front){
       var eyeTop=big?1:0;
       if((mi===1||mi===2)&&j>=-1&&j<=eyeTop)return (mi===1&&j<=0)?V_BLACK:V_WHITE;
@@ -2264,7 +2264,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211212";
+var BUILD="B11211213";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
