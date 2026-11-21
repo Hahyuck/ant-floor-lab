@@ -1482,9 +1482,10 @@ function buildComposer(){
 buildComposer();
 /* ───────────── 그래픽 강도 조절 (테스트용) ─────────────
    효과마다 0~2배로 조절한다. "전체 강도"는 후처리 효과 전부에 곱해진다. 값은 이 브라우저에만 저장된다 */
-var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6,dens:3,cdens:2},GFX={},FOG0=scene.fog.density,
+var GFX_DEF={all:.3,bloom:1.65,dof:.5,flare:1.25,ao:1.2,ca:1,vig:.4,grain:.45,sat:1.5,con:.65,exp:.65,fog:.25,glow:1.6,dens:1,cdens:2},GFX={},FOG0=scene.fog.density,
     GFX_LBL={all:"전체 강도",bloom:"빛 번짐",dof:"심도 흐림",flare:"렌즈 플레어",ao:"그늘 (AO)",ca:"색수차",vig:"비네트",grain:"필름 그레인",sat:"채도",con:"대비",exp:"노출 (밝기)",fog:"안개",glow:"조명 소품 (등불·빛줄)"};
-(function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k]})();
+(function(){var k,sv=null;try{sv=JSON.parse(localStorage.getItem("antgfx2")||"null")}catch(_){}for(k in GFX_DEF)GFX[k]=sv&&typeof sv[k]==="number"?sv[k]:GFX_DEF[k];
+  try{if(!localStorage.getItem("antgfxD2")){localStorage.setItem("antgfxD2","1");if(sv&&GFX.dens!==1){GFX.dens=1;localStorage.setItem("antgfx2",JSON.stringify(GFX))}}}catch(_){}})();   // 픽셀 밀도의 기본값을 −2 로 바꾸면서, 예전 값이 저장돼 있던 기기도 한 번은 −2 로 맞춘다 (그 뒤에 고른 값은 그대로 둔다)
 setVS();
 function applyGfx(){
   var m=GFX.all,u=finalPass.uniforms;bloom.strength=.7*GFX.bloom*m;flare.uniforms.amt.value=GFX.flare*m;gtao.blendIntensity=clamp(GFX.ao*m,0,1);
@@ -2418,7 +2419,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211600";
+var BUILD="B11211606";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2742,7 +2743,8 @@ function startEditor(){
   function nowStr(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
   function saveNow(){rebuild();histPush("저장");var made=bakPush();lastSave=nowStr();paint();flash("저장되었습니다 · "+(made?"백업을 만들었습니다 (백업 "+bakGet().length+"개)":"바뀐 것이 없어 기존 백업 그대로입니다")+(on?" · 게임에 적용 중":""))}
   function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,(lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장")+" · 백업 "+bakGet().length+"개"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
-    b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem(ONKEY,on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
+    b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem(ONKEY,on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b);
+    b=mk("button","","✕ 나가기");b.title="편집을 마치고 게임으로 돌아갑니다 (고친 내용은 이미 저장돼 있습니다)";b.onclick=function(){rebuild();try{if(window.opener&&!window.opener.closed){window.close()}}catch(_){}setTimeout(function(){location.href=location.pathname},180)};bar.appendChild(b)}   // 게임에서 새 창으로 열었으면 창을 닫고, 아니면 게임 화면으로 간다
   function bakGet(){try{return JSON.parse(localStorage.getItem(KEY+"_bak"))||[]}catch(_){return []}}
   function bakPush(){var h=bakGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}),n=0,q;for(q in model.parts)n+=model.parts[q].length;
     if(h.length&&h[0].d===d)return false;                                                                                       // 바뀐 것이 없으면 같은 백업을 또 만들지 않는다
