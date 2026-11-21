@@ -1221,7 +1221,7 @@ function bossGen(){
     var B1=lin(0xf2694f),B2=lin(0xf9a48c),B3=lin(0xe2543c),LEGC=lin(0xb02f1c),CP=lin(0xb3162a),CP2=lin(0xcf2338),EW=lin(0xf4efe6),EK=lin(0x1c1a1c),q,tt,rr2,py,
         pl=function(c){return function(){return c}},
         ln=function(x0,y0,z0,x1,y1,z1,c){var n2=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0,z1-z0)/(VS*.9))),w;for(w=0;w<=n2;w++)put(x0+(x1-x0)*w/n2,y0+(y1-y0)*w/n2,z0+(z1-z0)*w/n2,c)};
-    gcur="bHead";blob(0,2.45,.5,.56,.52,.62,2.2,pl(B1));gcur="boss";blob(0,2.08,-.2,.5,.34,.46,2.2,pl(B1));gcur="bHead";                                   // 머리통과 목
+    gcur="bHead";blob(0,2.45,.5,.56,.52,.62,2.2,pl(B1));gcur="bNeck";blob(0,2.08,-.2,.5,.34,.46,2.2,pl(B1));gcur="bHead";                                   // 머리통과 목
     for(q=0;q<8;q++){tt=q/7;rr2=.44*(1-tt)+.05;blob(0,2.42-tt*.1,.92+tt*.86,rr2,rr2*.9,.2,2,pl(tt>.55?B3:B1))}        // 앞으로 가늘어지는 뿔
     for(sx=-1;sx<=1;sx+=2){blob(sx*.5,2.47,.72,.1,.3,.3,2,pl(EW));                                                   // 눈: 흰자, 뒤가 올라간 눈썹, 눈동자
       for(q=0;q<5;q++)put(sx*.6,2.64-q*.035,.5+q*VS,EK);put(sx*.6,2.47,.72,EK);put(sx*.6,2.47-VS,.72,EK);put(sx*.6,2.47,.72+VS,EK);put(sx*.6,2.47-VS,.72+VS,EK)}
@@ -2349,7 +2349,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211448";
+var BUILD="B11211451";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2386,7 +2386,7 @@ function startEditor(){
       m.parts[q.nm]=arr;if(q.sb){m.sub=m.sub||{};m.sub[q.nm]={par:q.sb.par,c:q.sb.c.slice(),mir:q.sb.mir}}else m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]],a:q.a||0}}
     return m}
   var BASE0=base();if(edSp===3){PNAME.legL=PNAME.legR="허벅지"}
-  if(edBoss){PNAME.boss=edBV?"목":"새우";PNAME.bHead="머리";PNAME.bCrown="왕관";PNAME.bCape="망토";PNAME.bAntL=PNAME.bAntR="더듬이";PNAME.bSeg1="몸 마디 1";PNAME.bSeg2="몸 마디 2";PNAME.bSeg3="몸 마디 3";PNAME.bSeg4="몸 마디 4";PNAME.bSeg5="몸 마디 5";PNAME.bPaper="신문";PNAME.bTail="꼬리 끝";PNAME.bTailL=PNAME.bTailR="꼬리 부채";for(var pli=1;pli<=6;pli++)PNAME["bLeg"+pli]="헤엄다리 "+pli;PNAME.bLegA="헤엄다리 위";PNAME.bLegB="헤엄다리 아래"}
+  if(edBoss){PNAME.boss="새우";PNAME.bNeck="목";PNAME.bHead="머리";PNAME.bCrown="왕관";PNAME.bCape="망토";PNAME.bAntL=PNAME.bAntR="더듬이";PNAME.bSeg1="몸 마디 1";PNAME.bSeg2="몸 마디 2";PNAME.bSeg3="몸 마디 3";PNAME.bSeg4="몸 마디 4";PNAME.bSeg5="몸 마디 5";PNAME.bPaper="신문";PNAME.bTail="꼬리 끝";PNAME.bTailL=PNAME.bTailR="꼬리 부채";for(var pli=1;pli<=6;pli++)PNAME["bLeg"+pli]="헤엄다리 "+pli;PNAME.bLegA="헤엄다리 위";PNAME.bLegB="헤엄다리 아래"}
   try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.parts&&(sv.parts.head||sv.parts.boss)&&sv.v===2){model=sv;model.xf=BASE0.xf}else if(sv&&sv.parts){localStorage.setItem(KEY+"_v1",JSON.stringify(sv));var h0=[];try{h0=JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(e){}h0.unshift({t:"예전 형식",w:"건너뛴 편집본",d:JSON.stringify({parts:sv.parts,off:sv.off||{},rot:sv.rot||{}})});if(h0.length>8)h0.length=8;localStorage.setItem(KEY+"_hist",JSON.stringify(h0))}}catch(_){}   // 예전 모양의 편집본은 따로 보관만 하고 새 디자인에서 시작한다
   if(!model)model=JSON.parse(JSON.stringify(BASE0));
   if(edBoss&&BASE0.sub&&Object.keys(BASE0.sub).length&&model.parts.boss&&!(model.sub&&Object.keys(model.sub).length))(function(){
@@ -2401,6 +2401,7 @@ function startEditor(){
         if(!made[gn]){made[gn]=1;model.parts[gn]=[];model.sub[gn]={par:"boss",c:(turned?su.c:BASE0.sub[gn].c).slice(),mir:BASE0.sub[gn].mir};if(of)model.off[gn]=of.slice();if(rt)model.rot[gn]=rt.slice()}
         model.parts[gn].push(v)});
       if(keep.length)model.parts[old]=keep;else{delete model.parts[old];delete model.sub[old];delete model.off[old];delete model.rot[old]}});
+    if(model.parts.boss&&model.parts.boss.length&&BASE0.sub.bNeck){model.parts.bNeck=(model.parts.bNeck||[]).concat(model.parts.boss);model.parts.boss=[];if(!model.sub.bNeck)model.sub.bNeck=JSON.parse(JSON.stringify(BASE0.sub.bNeck));delete model.off.boss;delete model.rot.boss}   // 바탕에 남아 있던 블록(목)을 목 조각으로 옮긴다
     ["bTailL","bTailR"].forEach(function(k){if(model.sub[k])model.sub[k].mir=null});
     var pp;try{if(!localStorage.getItem(KEY+"_paper")){localStorage.setItem(KEY+"_paper","1");                              // 신문이 없던 때 저장한 편집본에는 신문 조각을 한 번만 더해 준다 (그 뒤에 지우면 다시 생기지 않는다)
       if(!model.parts.bPaper&&BASE0.parts.bPaper){localStorage.setItem(KEY+"_paper2","1");model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper));model.sub.bPaper=JSON.parse(JSON.stringify(BASE0.sub.bPaper))}}
@@ -2448,7 +2449,7 @@ function startEditor(){
     var mkM=function(nm){M=model.parts[nm];m=new THREE.InstancedMesh(boxGeo,antMat,M.length);col=new Float32Array(M.length*3);
       for(i=0;i<M.length;i++){mt.makeScale(sc,sc,sc).setPosition(M[i][0]*VS,M[i][1]*VS,M[i][2]*VS);m.setMatrixAt(i,mt);c=colOf(M[i][3]);ck=pv?.9+((i*7919)%13)/100:((Math.floor(M[i][0])+Math.floor(M[i][1])+Math.floor(M[i][2]))&1)?.86:1;col[i*3]=c[0]*ck;col[i*3+1]=c[1]*ck;col[i*3+2]=c[2]*ck}   // 블록 경계가 보이게 한 칸 걸러 살짝 어둡게
       m.instanceColor=new THREE.InstancedBufferAttribute(col,3);m.userData.nm=nm;m.frustumCulled=false;meshes.push(m);byNm[nm]=m;return m};
-    for(nm in model.parts){M=model.parts[nm];tot+=M.length;if(!M.length||model.sub[nm]||!model.xf[nm])continue;mkM(nm);
+    for(nm in model.parts){M=model.parts[nm];tot+=M.length;if((!M.length&&!(edBoss&&nm==="boss"))||model.sub[nm]||!model.xf[nm])continue;mkM(nm);
       of=model.off[nm]||[0,0,0];xp=model.xf[nm].p;m.position.set(xp[0]+of[0]*VS,xp[1]+of[1]*VS,xp[2]+of[2]*VS);rt=model.rot[nm]||[0,0,0];xr=model.xf[nm].r;m.userData.r=[xr[0]+rt[0]*.017453,xr[1]+rt[1]*.017453,xr[2]+rt[2]*.017453];m.userData.a=model.xf[nm].a;m.rotation.set(m.userData.r[0],m.userData.r[1],m.userData.r[2]);G.add(m)}
     for(nm in model.sub){su=model.sub[nm];pm=byNm[su.par];if(!pm||!model.parts[nm]||!model.parts[nm].length)continue;if(!PNAME[nm])PNAME[nm]="분리한 조각";mkM(nm);             // 조각: 회전 중심(c)을 축으로 돌고 옮겨진다
       of=model.off[nm]||[0,0,0];rt=model.rot[nm]||[0,0,0];pg=new THREE.Group();pg.position.set((su.c[0]+of[0])*VS,(su.c[1]+of[1])*VS,(su.c[2]+of[2])*VS);pg.rotation.set(rt[0]*.017453,rt[1]*.017453,rt[2]*.017453);
