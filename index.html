@@ -503,6 +503,45 @@ var NAMES=["개미전자","존버바이오","떡상화학","물타기건설","�
 var bd={cv:document.createElement("canvas"),p:[],c:[],t:0};bd.cv.width=512;bd.cv.height=288;
 (function(){var r=rng(99);for(var i=0;i<NAMES.length;i++){bd.p.push(Math.round((5+r()*295))*100);bd.c.push((r()-.5)*6)}})();
 var bdTex=new THREE.CanvasTexture(bd.cv);bdTex.colorSpace=THREE.SRGBColorSpace;
+// 주식시장 뒷벽의 가로로 긴 전광판: 생성한 그림(지수 · 봉 차트 · 업종 지도)을 바탕에 깔고, 가운데 칸에 살아 움직이는 시세를 코드로 그린다
+var wb={cv:document.createElement("canvas"),img:new Image(),ok:false,asked:false};wb.cv.width=2048;wb.cv.height=640;
+var wbTex=new THREE.CanvasTexture(wb.cv);wbTex.colorSpace=THREE.SRGBColorSpace;wbTex.anisotropy=8;
+wb.img.onload=function(){wb.ok=true;bd.t=0};
+var WB={ix:[{n:"개미종합",s:"아시아",v:2684.3,b:2684.3,h:[]},{n:"야수100",s:"북미",v:18420.5,b:18420.5,h:[]}]};   // 지수 두 개의 흐름 (꾸며 낸 값이 조금씩 움직인다)
+(function(){var r=rng(77),i,v;WB.ix.forEach(function(q){v=q.b;for(i=0;i<60;i++){v*=1+(r()-.5)*.004;q.h.push(v)}q.v=v})})();
+function wbClock(tz){var d=new Date(),p={},o;try{new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(d).forEach(function(q){p[q.type]=q.value})}catch(_){return {t:"--:--:--",open:false}}
+  o=(+p.hour%24)*60+(+p.minute);return {t:(p.hour==="24"?"00":p.hour)+":"+p.minute+":"+p.second,open:p.weekday!=="Sat"&&p.weekday!=="Sun"&&(tz==="Asia/Seoul"?o>=540&&o<930:o>=570&&o<960)}}   // 장 시간: 서울 09:00~15:30, 뉴욕 09:30~16:00 (평일)
+function drawWide(){
+  if(!wb.asked){wb.asked=true;wb.img.src="art/board/stock-board-wide.png"}
+  var g=wb.cv.getContext("2d"),i,y,up,x0=690,w=668,RED="#ff4b4b",BLU="#4a8dff",AMB="#f7c62b",k,lo,hi,c,n,hw=(w-36)/2;
+  WB.ix.forEach(function(q){q.v*=1+(Math.random()-.5)*.0036;q.h.push(q.v);if(q.h.length>60)q.h.shift()});
+  g.fillStyle="#04060a";g.fillRect(0,0,2048,640);if(wb.ok)g.drawImage(wb.img,0,0,2048,640);                        // 양옆: 생성한 그림 (지수 · 봉 차트 · 업종 지도 · 호가 · 계기)
+  g.fillStyle="#04060a";g.fillRect(x0,6,w,628);g.strokeStyle="rgba(127,216,255,.55)";g.lineWidth=2;g.strokeRect(x0+1,7,w-2,626);g.textBaseline="middle";
+  // 가운데 맨 위: 아시아(서울) · 북미(뉴욕) 시각과 장 상태
+  [["아시아 · 서울","Asia/Seoul"],["북미 · 뉴욕","America/New_York"]].forEach(function(z,zi){var t=wbClock(z[1]),X=x0+14+zi*(hw+8);
+    g.textAlign="left";g.font="700 22px "+FONT;g.fillStyle="#9fb0c8";g.fillText(z[0],X+4,30);
+    g.textAlign="right";g.fillStyle=t.open?"#5fe08a":"#8a93a3";g.fillText(t.open?"● 장중":"○ 장 마감",X+hw-4,30);
+    g.textAlign="left";g.font="800 42px "+FONT;g.fillStyle="#f2f5fa";g.fillText(t.t,X+4,68)});
+  g.fillStyle=AMB;g.fillRect(x0+12,94,w-24,2);
+  // 지수 두 개의 선 그래프 (점선은 어제 종가)
+  WB.ix.forEach(function(q,qi){var X=x0+14+qi*(hw+8),Y=104,H=146,gx=X+4,gy=Y+40,gw=hw-8,gh=H-46,py;up=q.v>=q.b;c=up?RED:BLU;
+    g.textAlign="left";g.fillStyle="#e6ebf3";g.font="800 24px "+FONT;g.fillText(q.n,X+4,Y+18);
+    g.textAlign="right";g.fillStyle=c;g.font="800 24px "+FONT;g.fillText(q.v.toLocaleString("ko-KR",{maximumFractionDigits:0})+"  "+(up?"▲":"▼")+Math.abs((q.v/q.b-1)*100).toFixed(2)+"%",X+hw-4,Y+18);
+    lo=Math.min.apply(null,q.h.concat([q.b]));hi=Math.max.apply(null,q.h.concat([q.b]));if(hi-lo<1e-6)hi=lo+1;n=q.h.length;py=function(v){return gy+gh-(v-lo)/(hi-lo)*gh};
+    g.strokeStyle="rgba(127,216,255,.16)";g.lineWidth=1;for(k=0;k<=3;k++){g.beginPath();g.moveTo(gx,gy+gh*k/3);g.lineTo(gx+gw,gy+gh*k/3);g.stroke()}for(k=0;k<=6;k++){g.beginPath();g.moveTo(gx+gw*k/6,gy);g.lineTo(gx+gw*k/6,gy+gh);g.stroke()}
+    g.setLineDash([6,6]);g.strokeStyle="rgba(255,255,255,.45)";g.beginPath();g.moveTo(gx,py(q.b));g.lineTo(gx+gw,py(q.b));g.stroke();g.setLineDash([]);
+    g.beginPath();for(k=0;k<n;k++)g[k?"lineTo":"moveTo"](gx+gw*k/(n-1),py(q.h[k]));g.strokeStyle=c;g.lineWidth=3.5;g.stroke();
+    g.lineTo(gx+gw,gy+gh);g.lineTo(gx,gy+gh);g.closePath();g.globalAlpha=.18;g.fillStyle=c;g.fill();g.globalAlpha=1;
+    g.beginPath();g.arc(gx+gw,py(q.v),6,0,6.3);g.fillStyle=c;g.fill()});
+  g.fillStyle=AMB;g.fillRect(x0+12,258,w-24,2);
+  // 종목 시세
+  for(i=0;i<NAMES.length;i++){y=284+i*35;up=bd.c[i]>=0;
+    g.fillStyle=i&1?"rgba(255,255,255,.045)":"rgba(255,255,255,0)";g.fillRect(x0+10,y-17,w-20,34);
+    g.textAlign="left";g.fillStyle="#e6ebf3";g.font="700 28px "+FONT;g.fillText(NAMES[i],x0+22,y);
+    g.fillStyle=up?RED:BLU;g.textAlign="right";g.fillText(bd.p[i].toLocaleString("ko-KR"),x0+418,y);
+    g.font="700 25px "+FONT;g.fillText((up?"▲ ":"▼ ")+Math.abs(bd.c[i]).toFixed(2)+"%",x0+574,y);
+    k=Math.min(14,Math.abs(bd.c[i])*3+2);g.fillRect(x0+590,up?y-k:y,56,k)}                              // 등락 크기 막대
+  wbTex.needsUpdate=true}
 function drawBoard(time){
   if(time-bd.t<.6)return;bd.t=time;var g=bd.cv.getContext("2d"),i=(Math.random()*NAMES.length)|0,d=(Math.random()-.5)*.9;
   bd.c[i]=clamp(bd.c[i]+d,-9.9,9.9);bd.p[i]=Math.max(100,Math.round(bd.p[i]*(1+d/100)/10)*10);
@@ -512,7 +551,7 @@ function drawBoard(time){
     g.textAlign="left";g.fillStyle="#dfe5ee";g.fillText(NAMES[i],14,y);
     g.fillStyle=up?"#ff4b4b":"#4a8dff";g.textAlign="right";g.fillText(bd.p[i].toLocaleString("ko-KR"),366,y);
     g.fillText((up?"▲ ":"▼ ")+Math.abs(bd.c[i]).toFixed(2)+"%",500,y)}
-  bdTex.needsUpdate=true;
+  bdTex.needsUpdate=true;if(STOCK)drawWide();
 }
 var ck={cv:document.createElement("canvas"),s:""};ck.cv.width=256;ck.cv.height=96;
 var ckTex=new THREE.CanvasTexture(ck.cv);ckTex.colorSpace=THREE.SRGBColorSpace;
@@ -840,6 +879,7 @@ function buildProps(){
   }
   if(FLOOR){B(0,2,RD-.12,RW*2,4,.24,WOOD);B(0,4.07,RD-.2,RW*2,.14,.4,BRASS)}
   if(RAID)for(sx=-1;sx<=1;sx+=2){B(sx*((RW+5.6)/2),9,RD-.14,9.3,5.8,.2,GOLD);B(sx*((RW+5.6)/2),9,RD-.2,8.8,5.3,.3,DARK);glowPlane(8,4.5,bdTex,1.35,sx*((RW+5.6)/2),9,RD-.37,Math.PI)}   // 문 양옆 시세판
+  else if(STOCK){B(0,9,RD-.2,25.2,8.4,.3,DARK);glowPlane(24.4,7.62,wbTex,1.25,0,9,RD-.37,Math.PI)}       // 주식시장: 벽을 가로지르는 긴 전광판
   else if(!BASE){B(0,9,RD-.2,12.8,7.4,.3,DARK);glowPlane(12,6.75,bdTex,1.35,0,9,RD-.37,Math.PI)}            // 뒤쪽 대형 시세판
   if(FLOOR){B(0,.3,zb+1.5,24,.6,3,0x5b4334);B(0,.62,zb+2.9,24,.06,.2,BRASS)}                            // 무대
   B(0,y1+.3,zb+.25,SCR.w+1.2,.6,.5,DARK);B(0,SCR.y0-.3,zb+.25,SCR.w+1.2,.6,.5,DARK);
@@ -2329,7 +2369,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211516";
+var BUILD="B11211526";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
