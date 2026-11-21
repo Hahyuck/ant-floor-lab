@@ -1196,7 +1196,7 @@ var ants=new AntMesh(MAXA);scene.add(ants.mesh);
    무대 왼쪽 단상에 선다. 계란·토마토는 영상이 아니라 이 캐릭터가 맞는다 (영상 위에 아무것도 올리지 않기 위해).
    실제 서비스에서는 슈카월드 공식 캐릭터 원본으로 교체한다 */
 var BOSS={x:0,y:0,z:0,ry:0,hit:0,hop:0};
-function setBoss(){var p=RAID?[0,1.2,-RD+1.5,0]:BASE?[14.6,3.3,-RD+3.2,-.4]:[-11.3,.6,-RD+2.5,.35];BOSS.x=p[0];BOSS.y=p[1];BOSS.z=p[2];BOSS.ry=p[3];if(bossG)bossG.position.set(p[0],p[1],p[2])}   // 테마마다 새우가 서는 자리
+function setBoss(){var p=RAID?[0,1.2,-RD+1.5,0]:BASE?[14.6,3.3,-RD+3.2,-.836]:[-11.3,.6,-RD+2.5,.35];BOSS.x=p[0];BOSS.y=p[1];BOSS.z=p[2];BOSS.ry=p[3];if(bossG)bossG.position.set(p[0],p[1],p[2])}   // 테마마다 새우가 서는 자리
 setBoss();
 var bossG=new THREE.Group();BOSS.on=0;BOSS.until=0;BOSS.sc=0;   // 평소에는 숨어 있다가 연설할 때 나타나고, 끝나면 뽕~ 하고 사라진다
 var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT:0,megaT:0,look:{title:"공대장 · 대역 캐릭터",scale:1,color:"#f0826a"}};
@@ -2329,7 +2329,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211513";
+var BUILD="B11211516";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
