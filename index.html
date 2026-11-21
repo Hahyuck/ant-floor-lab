@@ -2335,7 +2335,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211502";
+var BUILD="B11211507";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2356,7 +2356,8 @@ function startEditor(){
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
       BODYS=["#f5821f","#b5532a","#2a2320","#d9362f","#6b4a32"],bodyHex=BODYS[0],model,tool="move",padMode="move",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
       sels=[],whole=false,multi=false,joint=false,fine=true,anim=0,pv=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
-  try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
+  var ONKEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+"antmodelOn";   // 게임에 적용 스위치 (시험 칸은 따로 둔다)
+  try{on=localStorage.getItem(ONKEY)==="1"}catch(_){}
   if(edBoss&&BVER!==edBV){BVER=edBV;bossGen()}                                                        // 편집할 새우 버전의 처음 모양을 준비한다 (게임 설정은 바꾸지 않는다)
   function base(){if(edBoss){edB=lin(0xf0826a);edD=lin(0xb9432f);var bm=JSON.parse(JSON.stringify(BOSS_STD));bm.xf={boss:{p:[0,0,0],r:[0,0,0],a:0}};return bm}   // 새우의 처음 모양 = 표준 새우
     var L=lookOf("기본개미"),P,b,m={v:2,parts:{},xf:{}},i,k,q,c,arr;L.color="#f5821f";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=edSp;L.raw=true;
@@ -2638,8 +2639,8 @@ function startEditor(){
   var tools=[["move","선택"],["add","쌓기"],["del","지우기"],["paint","칠하기"],["pick","색 뽑기"]];
   function armBtn(b,key,label,fn){if(arm===key){b.textContent="한 번 더 누르면 실행";b.className="warn"}else b.textContent=label;
     b.onclick=function(){clearTimeout(armT);if(arm===key){arm=null;fn()}else{arm=key;armT=setTimeout(function(){arm=null;paint()},3500)}paint()}}
-  function resetAll(){histPush("완전 초기화 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off=JSON.parse(JSON.stringify(BASE0.off||{}));model.rot=JSON.parse(JSON.stringify(BASE0.rot||{}));model.sub=JSON.parse(JSON.stringify(BASE0.sub||{}));undo=[];redo=[];sels=[];lineA=null;tool="move";padMode="move";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=edBoss?9.5:4.6;
-    try{localStorage.removeItem(KEY);localStorage.setItem("antmodelOn","0")}catch(_){}rebuild();try{localStorage.removeItem(KEY)}catch(_){}paint();flash("처음 상태로 모두 되돌렸습니다")}
+  function resetAll(){histPush("완전 초기화 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off=JSON.parse(JSON.stringify(BASE0.off||{}));model.rot=JSON.parse(JSON.stringify(BASE0.rot||{}));model.sub=JSON.parse(JSON.stringify(BASE0.sub||{}));undo=[];redo=[];sels=[];lineA=null;tool="move";padMode="move";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=edBoss?9.5:4.6;
+    try{localStorage.removeItem(KEY)}catch(_){}rebuild();try{localStorage.removeItem(KEY)}catch(_){}paint();flash("처음 상태로 모두 되돌렸습니다")}
   // ── 패널: 꼭 필요한 것만. 선택한 블록으로 하는 일은 블록 둘레의 동그란 버튼(고리 메뉴)으로 한다
   var more=false,ringMode="main",ringEl=mk("div"),st2=document.createElement("style");ringEl.id="edr";root.appendChild(ringEl);
   st2.textContent="#edr{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}"+
@@ -2657,7 +2658,7 @@ function startEditor(){
   function nowStr(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
   function saveNow(){rebuild();histPush("저장");var made=bakPush();lastSave=nowStr();paint();flash("저장되었습니다 · "+(made?"백업을 만들었습니다 (백업 "+bakGet().length+"개)":"바뀐 것이 없어 기존 백업 그대로입니다")+(on?" · 게임에 적용 중":""))}
   function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,(lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장")+" · 백업 "+bakGet().length+"개"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
-    b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
+    b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem(ONKEY,on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
   function bakGet(){try{return JSON.parse(localStorage.getItem(KEY+"_bak"))||[]}catch(_){return []}}
   function bakPush(){var h=bakGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}),n=0,q;for(q in model.parts)n+=model.parts[q].length;
     if(h.length&&h[0].d===d)return false;                                                                                       // 바뀐 것이 없으면 같은 백업을 또 만들지 않는다
