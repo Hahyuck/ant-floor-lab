@@ -967,7 +967,7 @@ function buildVox(L){
   // 동물 투자자: 개미와 같은 뼈대(배·가슴·머리·네 다리·두 팔)에 색과 귀·주둥이·꼬리만 바꿔 입힌다. 1 고양이 2 곰 3 고릴라 4 앵무새 5 펭귄 6 토끼 7 레서판다
   var SP=CUTE?0:(L.sp|0),A=SP>0,PAL=A?SPAL[SP]:null,TB,LEGL,lite,hcol,legc,pink=[.96,.58,.66],YEL=lin(0xf2c230);
   if(A){var kv=L.raw?1:.93+r()*.12,bb0=lin(PAL.b);body=[bb0[0]*kv,bb0[1]*kv,bb0[2]*kv];lite=lin(PAL.l);dark=lin(PAL.d);hcol=PAL.h?lin(PAL.h):body;legc=PAL.g?lin(PAL.g):body;TB=SPB[SP];LEGL=1.1-2*TB[1];h=L.head*TB[4];HY=1.04+.32*h*.74}
-  var NA=!A&&!CUTE,MOUTH=lin(0x8a1a12),ARM=[];                                                   // ARM: 왼팔 · 오른팔 (무기나 방패를 들면 그 팔은 흔들지 않는다)
+  var NA=!A&&!CUTE,MOUTH=lin(0x8a1a12),ARM=[],MID=[];                                                   // ARM: 왼팔 · 오른팔 (무기나 방패를 들면 그 팔은 흔들지 않는다)
                                                          // NA: 리디자인한 기본 개미 (큰 둥근 머리, 가는 가슴, 공 같은 배, 무릎 있는 긴 다리)
   if(NA){dark=[body[0]*.3,body[1]*.27,body[2]*.5];HY=1.37-VS}                                    // 팔다리 · 더듬이는 몸 색을 눌러 만든 갈색
   function seg(o,a,b2,c,th){var n2=Math.max(1,Math.ceil(Math.hypot(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2])/(VS*.85))),t,x,y,z;      // 두 점을 잇는 복셀 줄 (th 2: 두 줄 굵기)
@@ -1129,7 +1129,7 @@ function buildVox(L){
       for(i=0;i<na;i++)for(aa=0;aa<aw;aa++)for(bb=0;bb<ad;bb++)put(am,aa*sx*VS,-(i+.5)*VS,(bb-(ad-1)/2)*VS,i>=na-(SP===4?2:1)?tipc:body);                           // 팔 · 날개 · 지느러미
       if(SP===3)cube(am,sx*VS*.5,-(na+1)*VS,0,3,2,3,dark);
       var sdA=sx<0?"L":"R";cust(lg,"leg"+sdA);cust(am,"arm"+sdA);continue}
-    if(NA){var lgN=part([sx*.14,.58-VS,.04],null,sx<0?1:2),amN=ARM[sx<0?0:1]=part([sx*.17,.98-VS,.1],null,sx<0?2:1),mdN=part([sx*.14,.6-VS,-.3],null,sx<0?2:1),anN=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3),al=L.ant,sdN=sx<0?"L":"R";anN.h=1;
+    if(NA){var lgN=part([sx*.14,.58-VS,.04],null,sx<0?1:2),amN=ARM[sx<0?0:1]=part([sx*.17,.98-VS,.1],null,sx<0?2:1),mdN=MID[sx<0?0:1]=part([sx*.14,.6-VS,-.3],null,sx<0?2:1),anN=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3),al=L.ant,sdN=sx<0?"L":"R";anN.h=1;
       seg(lgN,[0,0,0],[sx*.2,-.14,.06],dark);seg(lgN,[sx*.2,-.14,.06],[sx*.3,-.54+VS,.08],dark);put(lgN,sx*.3,-.54+VS,.08+VS,dark);put(lgN,sx*.3,-.54+VS,.08+VS*2,dark);              // 앞다리: 무릎에서 꺾여 내려오고 발끝이 앞으로
       seg(mdN,[0,0,0],[sx*.22,-.1,-.1],dark);seg(mdN,[sx*.22,-.1,-.1],[sx*.34,-.56+VS,-.16],dark);put(mdN,sx*.34,-.56+VS,-.16+VS,dark);                                              // 뒷다리
       seg(amN,[0,0,0],[sx*.16,-.12,.1],dark);seg(amN,[sx*.16,-.12,.1],[sx*.2,.06,.2],dark);put(amN,sx*.2-sx*VS,.06,.2+VS*.6,dark);                                             // 팔: 팔꿈치에서 꺾여 들어 올린 손
@@ -1137,7 +1137,7 @@ function buildVox(L){
       cust(lgN,"leg"+sdN);cust(amN,"arm"+sdN);cust(mdN,"mid"+sdN);cust(anN,"ant"+sdN);continue}
     var leg=part([sx*.15,.58,-.04],null,sx<0?1:2);for(i=0;i<NV(.56);i++)put(leg,0,-(i+.5)*VS,0,dark);put(leg,0,-(NV(.56)-.5)*VS,VS,dark);
     var arm=ARM[sx<0?0:1]=part([sx*.27,.93,0],[0,0,sx*.32],sx<0?2:1);for(i=0;i<NV(.42);i++)put(arm,0,-(i+.5)*VS,0,dark);
-    var mid=part([sx*.33,.58,-.27],[0,0,sx*.1],sx<0?2:1);for(i=0;i<NV(.56);i++)put(mid,0,-(i+.5)*VS,0,dark);put(mid,0,-(NV(.56)-.5)*VS,VS,dark);   // 뒷다리: 앞다리와 엇박으로 걷는다
+    var mid=MID[sx<0?0:1]=part([sx*.33,.58,-.27],[0,0,sx*.1],sx<0?2:1);for(i=0;i<NV(.56);i++)put(mid,0,-(i+.5)*VS,0,dark);put(mid,0,-(NV(.56)-.5)*VS,VS,dark);   // 뒷다리: 앞다리와 엇박으로 걷는다
     var n=NV(.42*L.ant),an=part([sx*.14,HY+top-.04,.12],[-.22,0,-sx*(.24+.14*L.antSpread)],3);an.h=1;
     for(i=0;i<n;i++)put(an,0,(i+.5)*VS,(i/n)*(i/n)*.12,dark);put(an,0,(n+.5)*VS,.12,dark,1.5);put(an,0,(n+.5)*VS,.12+VS,dark,1.5);
     if(CUTE){for(i=0;i<NV(.56);i++){put(leg,sx*VS,-(i+.5)*VS,0,dark);put(leg,0,-(i+.5)*VS,-VS,dark);put(mid,sx*VS,-(i+.5)*VS,0,dark);put(mid,0,-(i+.5)*VS,-VS,dark)}put(mid,sx*VS,-(NV(.56)-.5)*VS,VS,dark);put(leg,sx*VS,-(NV(.56)-.5)*VS,VS,dark);                  // 통통한 다리
@@ -1184,8 +1184,9 @@ function buildVox(L){
         for(lv=0;lv<8;lv++){rr=.34-lv*.042;np=Math.max(1,Math.ceil(6.283*rr/VS));for(a2=0;a2<np;a2++){ang=a2/np*6.283;put(H,Math.cos(ang)*rr,top+.03+lv*VS,Math.sin(ang)*rr-lv*.02,lv===0?TRIM:CC)}}}   // 뾰족 모자
       else blob(H,0,0,-.03,.35*h+.08,hry+.08,.32*h+.08,3,function(mi,j,k){return (k<0||j>=3)?HOOD:null});                                                            // 두건
     }
-    if(ARM.length){if((cl===0||cl===3)&&ARM[0])ARM[0].a=0;if(cl!==0&&ARM[1])ARM[1].a=0;                            // 방패는 왼팔, 등불 · 지팡이는 오른팔, 단검은 양팔: 든 팔은 걷는 동안에도 가만히 둔다
-      parts.forEach(function(q){if(q.par&&(q.par===ARM[0]||q.par===ARM[1])&&q.par.a===0)q.a=0})}
+    var HOLD=[cl===0||cl===3,cl!==0],hs;                                                                             // 든 쪽: 방패는 왼쪽, 등불 · 지팡이는 오른쪽, 단검은 양쪽
+    for(hs=0;hs<2;hs++)if(HOLD[hs]){if(ARM[hs])ARM[hs].a=0;if(MID[hs])MID[hs].a=0}                                   // 든 쪽의 팔(앞팔 · 가운데 팔)은 걷는 동안에도 가만히 둔다. 다리와 반대쪽 팔은 그대로 움직인다
+    parts.forEach(function(q){if(q.par&&q.par.a===0&&(q.par===ARM[0]||q.par===ARM[1]||q.par===MID[0]||q.par===MID[1]))q.a=0});
     if(cl===0){it=part([-.46,.72,.06]);for(a2=-4;a2<=4;a2++)for(b2=-5;b2<=5;b2++){if(Math.abs(a2)+Math.abs(b2)>7)continue;
       put(it,0,b2*VS,a2*VS,(Math.abs(a2)===4||Math.abs(b2)===5||Math.abs(a2)+Math.abs(b2)===7||a2===0||b2===1)?TRIM:CC)}}                                    // 방패
     else if(cl===1){it=part([.46,.6,.12]);for(a2=0;a2<2;a2++)for(b2=0;b2<3;b2++)for(q=0;q<2;q++)put(it,a2*VS,b2*VS,q*VS,[2.2,1.5,.45]);
@@ -2369,7 +2370,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211526";
+var BUILD="B11211532";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
