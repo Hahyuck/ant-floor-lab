@@ -73,6 +73,17 @@
   #thbar button.lock{opacity:.55}
   #thbar button:hover::after,#thbar button:focus-visible::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;
     background:var(--panel);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:10px;pointer-events:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #thbar .sep{width:1px;align-self:stretch;margin:4px 3px;background:var(--line)}
+  /* 아이콘 버튼과 이름표 (마우스를 올리면 아래에 뜬다) */
+  .tipb{position:relative;overflow:visible!important}
+  .tipb:hover::after,.tipb:focus-visible::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;z-index:9;
+    background:var(--panel);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:10px;pointer-events:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #quick .pill.ic{padding:8px 13px;font-size:17px;line-height:1.1}
+  #quick .pill.lead{background:#b4281f;border-color:#ff8a7a;color:#fff;font-weight:700}          /* 공대장 메뉴: 공대장에게만 위쪽에 눈에 띄는 색으로 */
+  #topleft #bFull{width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.1);font-size:15px;line-height:1;padding:0;margin:-4px -6px -4px 0;cursor:pointer}
+  #topleft #bFull:hover{background:rgba(255,255,255,.22)}
+  #chatbar #bSrv{display:none;width:auto;border-radius:999px;padding:0 13px;font-size:13px;font-weight:700;white-space:nowrap;flex:none}   /* 서버 이동: 대화창을 쓸 때만 함께 보인다 */
+  #chatbar:focus-within #bSrv{display:block}
   @media (max-width:1180px){#thbar{top:62px}}
   @media (max-width:560px){#thbar{top:106px}}
   #bMenu{font-weight:700}
@@ -236,29 +247,23 @@
   <canvas id="lb"></canvas>
   <div id="fade"></div>
 
-  <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small></div>
+  <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small><button id="bFull" class="tipb" data-tip="전체화면" aria-label="전체화면">⛶</button></div>
   <div id="thbar" role="group" aria-label="테마 고르기"></div>
   <div id="quick">
-    <button class="pill" id="bSound">소리 켜기</button>
+    <button class="pill ic tipb" id="bSound" data-tip="소리 켜기" aria-label="소리 켜기">🔇</button>
     <button class="pill" id="bFocus">방송 집중</button>
     <button class="pill" id="bInv">상점·가방</button>
     <button class="pill" id="bMenu">☰ 메뉴</button>
   </div>
   <div id="topright">
-    <div class="mh">꾸미기</div>
-    <button class="pill" id="bCute">개미: 기본</button>
-    <button class="pill" id="bEdit">개미 모델 편집</button>
     <div class="mh">방</div>
     <button class="pill" id="bInvite">초대 링크 복사</button>
-    <button class="pill" id="bSrv">서버 이동</button>
     <button class="pill" id="bSet">방 설정</button>
     <button class="pill" id="bChat">채팅</button>
-    <div class="mh">화면 · 조작</div>
-    <button class="pill" id="bFull">전체화면</button>
-    <button class="pill" id="bPass" title="켜면 유튜브 화면을 직접 클릭할 수 있습니다">화면 직접 조작</button>
-    <button class="pill" id="bWalk">자동 산책</button>
-    <button class="pill" id="bQ">그래픽: 고급</button>
-    <button class="pill" id="bGfx">그래픽 테스트</button>
+    <div class="mh">설정</div>
+    <button class="pill" id="bQ">그래픽 설정</button>
+    <button class="pill" id="bGfx">그래픽 옵션 설정</button>
+    <button class="pill" id="bEdit">개미 모델 편집</button>
   </div>
   <div id="pop"><button class="x" aria-label="닫기">✕</button>
     <h3>방 설정</h3>
@@ -294,6 +299,7 @@
   <div id="hot"><button><i class="ic"></i><span class="ky">1</span><span class="ct"></span></button><button><i class="ic"></i><span class="ky">2</span><span class="ct"></span></button><button><i class="ic"></i><span class="ky">3</span><span class="ct"></span></button></div>
   <div id="inv"><button class="x" aria-label="닫기">✕</button><h3>상점·가방</h3><div id="invList"></div><p>숫자 버튼을 누르면 그 단축 버튼에 배정됩니다. PC는 1 · 2 · 3 키, 모바일은 오른쪽 패드의 세 버튼입니다. 설탕과 충전은 시연용이며 실제 결제는 일어나지 않습니다.</p></div>
   <form id="chatbar" class="pill" autocomplete="off">
+    <button type="button" id="bSrv">서버 이동</button>
     <input id="chat" maxlength="60" placeholder="한마디 남기기">
     <button type="submit" aria-label="보내기">→</button>
   </form>
@@ -1478,7 +1484,7 @@ function renderGfx(){
 function applyQuality(){
   var hi=quality==="high";
   sun.shadow.mapSize.set(hi?2048:1024,hi?2048:1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}
-  $("bQ").textContent=hi?"그래픽: 고급":"그래픽: 가벼움";resize();
+  $("bQ").textContent=hi?"그래픽 설정 · 고급":"그래픽 설정 · 가벼움";resize();
 }
 function resize(){
   var W=innerWidth,H=innerHeight,hi=quality==="high",d=Math.min(devicePixelRatio||1,hi?2:1.25,Math.sqrt((hi?4.2e6:2e6)/(W*H)));
@@ -2012,7 +2018,7 @@ function ytPoll(now){
   if(Math.abs(ytNow()-want)>(live?12:2.5)){ytCmd("seekTo",[want+.4,true]);seekLast=now}
 }
 function setVideo(id,fromNet){
-  video=/^(list:[\w-]{10,64}|live:UC[\w-]{22}|[\w-]{11})$/.test(id||"")?id:"";yt.ok=false;yt.st=-1;yt.pi=-1;yt.t=0;yt.dur=0;yt.live=false;vsync=null;room.ok=false;var w=$("ytwrap");w.innerHTML="";ytFrame=null;muted=true;$("bSound").textContent="소리 켜기";$("bSound").classList.remove("on");
+  video=/^(list:[\w-]{10,64}|live:UC[\w-]{22}|[\w-]{11})$/.test(id||"")?id:"";yt.ok=false;yt.st=-1;yt.pi=-1;yt.t=0;yt.dur=0;yt.live=false;vsync=null;room.ok=false;var w=$("ytwrap");w.innerHTML="";ytFrame=null;muted=true;soundBtn(true);
   if(video){
     var f=document.createElement("iframe"),q="autoplay=1&mute=1&playsinline=1&enablejsapi=1&rel=0";
     if(/^https?:$/.test(location.protocol))q+="&origin="+encodeURIComponent(location.origin);
@@ -2209,10 +2215,8 @@ $("bInvite").onclick=function(){var l=inviteLink();$("link").value=l;
   p.then(function(){toast("초대 링크를 복사했습니다")},function(){$("pop").classList.add("show");$("link").focus();$("link").select();toast("링크를 직접 복사해 주세요")})};
 $("bSound").onclick=function(){if(!ytFrame){toast("아직 방송이 없습니다");return}
   muted=!muted;if(muted)ytCmd("mute");else{ytCmd("unMute");ytCmd("setVolume",[100]);ytCmd("playVideo")}
-  this.textContent=muted?"소리 켜기":"소리 끄기";this.classList.toggle("on",!muted)};
-$("bPass").onclick=function(){var on=$("cv").classList.toggle("pass");this.classList.toggle("on",on);
-  toast(on?"유튜브 화면을 직접 클릭할 수 있습니다. 다시 누르면 개미 조작으로 돌아옵니다":"개미 조작으로 돌아왔습니다",3500)};
-$("bWalk").onclick=function(){autoWalk=!autoWalk;this.classList.toggle("on",autoWalk);if(me)me.ai=null};
+  soundBtn(muted)};
+function soundBtn(m){var b=$("bSound"),t=m?"소리 켜기":"소리 끄기";b.textContent=m?"🔇":"🔊";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m)}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
 var focusMode=false;
 $("bFocus").onclick=function(){focusMode=!focusMode;this.classList.toggle("on",focusMode);toast(focusMode?"방송 집중: 화면을 크게 잡고 객장 조명을 낮춥니다":"객장 시점으로 돌아왔습니다",2600)};
 $("rwGo").onclick=function(){var s=clean($("rwText").value,40);if(!s||!isHost)return;$("rwText").value="";raidWarn(s);castAll({t:"rw",s:s});closePops()};
@@ -2252,13 +2256,13 @@ if(isTouch)touchOn();addEventListener("touchstart",touchOn,{once:true,passive:tr
   renderHot();setInterval(renderHot,250);
   logSys("이동 WASD · 점프 스페이스 · 아이템 1 2 3 · 채팅 Enter");
 })();
-function paintCute(){$("bCute").textContent=CUTE?"개미: 귀요미":mySp?"캐릭터: "+SPN[mySp]:"개미: 기본";$("bCute").classList.toggle("on",CUTE||mySp>0)}
+function paintCute(){paintThemes()}
 function remakeAnts(){for(var k in ents)ents[k].parts=null;ants.dirty=true;pvEnt.parts=null;pvAnts.dirty=true}
 
 function paintSp(){var box=$("spIn");box.textContent="";SPOK.forEach(function(i){var nm=SPN[i],b=mk("button","btn"+(!CUTE&&mySp===i?" on":""),""),ic=mk("i",null,SPI[i]);b.appendChild(ic);b.appendChild(document.createTextNode(nm));
     b.onclick=function(){setSp(i);paintCute();paintSp();toast(SPI[i]+" "+nm+" 투자자로 바꿨습니다",2200)};box.appendChild(b)});
 }
-$("bCute").onclick=function(){var on=!$("spp").classList.contains("show");closePops();if(on){paintSp();$("spp").classList.add("show")}};
+
 paintCute();
 // 서버 이동: 채널을 골라 그 자리에서 옮겨 간다 (이름은 그대로 들고 간다)
 $("bSrv").onclick=function(){var on=!$("svp").classList.contains("show");closePops();if(!on)return;var box=$("svIn");box.textContent="";
@@ -2278,6 +2282,7 @@ function fail(s){status(s,true);$("go").disabled=false;$("alt").style.display=""
 function enterRoom(){
   inRoom=true;$("entry").classList.add("hide");applyQuality();
   $("hostOnly").style.display=isHost?"":"none";$("bSet").textContent=isHost?"공대장 메뉴":"방 설정";
+  if(isHost||/[?&](bc|dev)(=|&|$)/.test(location.search)){$("bSet").classList.add("lead");$("quick").insertBefore($("bSet"),$("bMenu"))}   // 공대장(과 개발자 모드)에게는 메뉴 안에 숨기지 않고 위쪽에 따로 보인다
   save();
   bossEnt.say="어서 오세요, 공대원 여러분";bossEnt.sayT=performance.now()+5000;bossShow(5500);
   if(me)setTimeout(function(){if(me)toast("당신은 "+PARTY[me.party].s+" "+PARTY[me.party].n+" 파티입니다. 공대장이 집결을 걸면 징표가 뜹니다",4500)},1500);
@@ -2332,7 +2337,7 @@ function isFull(){return !!(document.fullscreenElement||document.webkitFullscree
 function goFull(on){var el=document.documentElement;try{
   if(on){var f=el.requestFullscreen||el.webkitRequestFullscreen;if(!f)return false;var pr=f.call(el,{navigationUI:"hide"});if(pr&&pr.catch)pr.catch(function(){})}
   else{var x=document.exitFullscreen||document.webkitExitFullscreen;if(x)x.call(document)}}catch(_){return false}return true}
-function fullCh(){$("bFull").textContent=isFull()?"전체화면 끄기":"전체화면";setTimeout(resize,60)}
+function fullCh(){var ft=isFull()?"전체화면 끄기":"전체화면";$("bFull").setAttribute("data-tip",ft);$("bFull").setAttribute("aria-label",ft);$("bFull").classList.toggle("on",isFull());setTimeout(resize,60)}
 document.addEventListener("fullscreenchange",fullCh);document.addEventListener("webkitfullscreenchange",fullCh);
 $("bFull").onclick=function(){if(!goFull(!isFull()))toast("이 브라우저는 전체화면을 지원하지 않습니다. 크롬이나 삼성 인터넷에서 열어 주세요",5000)};
 function closePops(){$("pop").classList.remove("show");$("inv").classList.remove("show");$("gfx").classList.remove("show");$("spp").classList.remove("show");$("svp").classList.remove("show")}
@@ -2373,17 +2378,20 @@ var invited=!!joinCode;
     ch.onclick=function(){sugar+=500;save();draw()};sg.appendChild(ch)};
   sg.style.cssText="font-size:12px;color:var(--dim);margin-top:8px";box.parentNode.insertBefore(sg,box.nextSibling);draw();
   if(!ownsTheme(THEME))status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다. 위에서 구입하거나 노멀을 골라 주세요",true)})();
-var TICON={normal:"🏠",stock:"📈",raid:"⚔️",river:"🌊"};
-function paintThemes(){                                                              // 위 가운데 테마 아이콘: 지금 테마는 노랗게, 보유하지 않은 테마는 흐리게 (이름과 가격은 마우스를 올리면 뜬다)
-  var box=$("thbar");box.textContent="";TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",(id===THEME?"on":"")+(has?"":" lock"),TICON[id]||"•"),tip=TSHORT[id]+" 테마"+(id===THEME?" · 지금":has?"":" · 🔒 🍬"+TPRICE[id].toLocaleString("ko-KR"));
-    b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();setTheme(id)};box.appendChild(b)})}
+function paintThemes(){                                                              // 위 가운데 아이콘 줄: 테마 넷 | 내 캐릭터 셋. 지금 고른 것은 노랗게, 이름은 마우스를 올리면 뜬다
+  var TICON={normal:"🏠",stock:"📈",raid:"⚔️",river:"🌊"},box=$("thbar");if(!box)return;box.textContent="";
+  TLIST.forEach(function(id){var has=ownsTheme(id),b=mk("button",(id===THEME?"on":"")+(has?"":" lock"),TICON[id]||"•"),tip=TSHORT[id]+" 테마"+(id===THEME?" · 지금":has?"":" · 🔒 🍬"+TPRICE[id].toLocaleString("ko-KR"));
+    b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();setTheme(id)};box.appendChild(b)});
+  box.appendChild(mk("span","sep",""));
+  SPOK.forEach(function(i){var b=mk("button",mySp===i?"on":"",SPI[i]),tip="내 캐릭터: "+SPN[i]+(mySp===i?" · 지금":"");
+    b.setAttribute("data-tip",tip);b.setAttribute("aria-label",tip);b.onclick=function(){b.blur();if(mySp===i)return;setSp(i);paintThemes();toast(SPI[i]+" "+SPN[i]+" 투자자로 바꿨습니다",2200)};box.appendChild(b)})}
 paintThemes();
 // 테마를 바꾸며 넘어온 경우: 같은 이름으로 같은 방에 자동으로 다시 들어간다
 (function(){var a=null;try{a=JSON.parse(sessionStorage.getItem("antauto")||"null");sessionStorage.removeItem("antauto")}catch(_){}
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211538";
+var BUILD="B11211545";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
