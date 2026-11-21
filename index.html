@@ -325,7 +325,117 @@ body.touch #btns{right:12px;bottom:10px;gap:8px}
 body.touch #btns button{width:48px;height:48px;font-size:21px!important}
 body.touch #chatOpen{right:184px}
 body.touch #log{bottom:72px}
+/* ═══ 리뉴얼 스킨: 거의 검은 바탕 · 가는 선 · 금색 포인트 · 짧고 부드러운 등장 모션 ═══ */
+:root{--bg:#09090b;--panel:rgba(23,23,25,.95);--panel2:#1f1f22;--hover:#2a2a2e;--line:#37363a;--line2:#5a585f;--text:#f3f0e9;--dim:#aaa69d;--amber:#d4af37;--asoft:#231f11;--abd:#6a5920;
+  --ui:"Space Grotesk","Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;--ease:cubic-bezier(.2,.8,.2,1);--shadow:0 24px 90px rgba(0,0,0,.47);
+  --rainbow:linear-gradient(90deg,#ef8fba 0%,#b59cfa 10%,#85bfff 20%,#8ed9bd 30%,#f4d58c 40%,#ef8fba 50%,#b59cfa 60%,#85bfff 70%,#8ed9bd 80%,#f4d58c 90%,#ef8fba 100%)}
+html,body{font-family:var(--ui)}
+*{scrollbar-width:thin;scrollbar-color:#55545a transparent}
+@keyframes uiArrive{from{opacity:0;translate:0 13px}}
+@keyframes uiPop{from{opacity:0;translate:0 9px;scale:.985}}
+@keyframes uiDrop{from{opacity:0;translate:0 -6px;scale:.98}}
+@keyframes uiModal{from{opacity:0;translate:0 20px;scale:.97}}
+@keyframes uiRow{from{opacity:0;translate:0 8px}}
+@keyframes uiFlow{to{background-position:100% 0}}
+/* 면: 유리 흐림을 걷고 단단한 어두운 면 + 가는 선 */
+.pill,#hot,#inv,#pop,#gfx,.ppx,#thp,#vote,#exitp,#thbar .grp,body #topright,body.compact #topright,body.chatting #log{-webkit-backdrop-filter:none;backdrop-filter:none}
+.pill,#hot,#thbar .grp{background:var(--panel);border-color:var(--line);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+#inv,#pop,#gfx,.ppx,#thp,#vote,#exitp,body #topright,body.compact #topright{background:var(--panel);border-color:var(--line);border-radius:14px;box-shadow:var(--shadow)}
+body.touch.chat #chatpop{background:rgba(16,16,18,.97);border-color:var(--line);border-radius:16px;box-shadow:var(--shadow)}
+/* 버튼: 누르면 살짝 줄고, 올리면 면이 밝아진다 */
+button{transition:background .2s,border-color .2s,transform .2s,color .2s,opacity .2s}
+button:active{transform:scale(.97)}
+button.pill:hover{background:var(--hover);border-color:var(--line2)}
+button.pill.on{border-color:var(--abd);color:var(--amber);background:var(--asoft)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.x,#chatX{background:transparent;border-radius:9px}
+.x:hover,#chatX:hover{background:var(--hover)}
+#topleft .dot{background:var(--amber);box-shadow:0 0 0 3px rgba(212,175,55,.18)}
+#topleft #bFull{background:transparent;border-radius:9px}
+#topleft #bFull:hover{background:var(--hover)}
+#thbar button{background:transparent}
+#thbar button:hover{background:var(--hover)}
+#thbar button.on{background:var(--panel2);box-shadow:0 0 0 1.5px var(--text)}
+#hot button{background:var(--panel2)}
+#hot button:hover{background:var(--hover)}
+#chatbar button{background:var(--panel2)}
+#chatbar button:hover{background:var(--hover)}
+#chatbar button[type=submit]{background:var(--dim);color:#09090b}
+#chatbar:focus-within button[type=submit]{background:var(--text)}
+#chatbar:focus-within{border-color:var(--line2)}
+#chatpop .hd #bSrv{background:var(--panel2)}
+/* 메뉴: 줄은 평평하게, 올리거나 누를 때만 면이 생긴다. 묶음 제목 위에는 가는 선 */
+body #topright,body.compact #topright{padding:6px;gap:2px;border-radius:12px}
+body #topright .pill,body.compact #topright .pill,body.compact #topright #thbar button,body.compact #topright #bgmBox{background:transparent;border-color:transparent;box-shadow:none;border-radius:9px}
+body #topright button.pill:hover,body.compact #topright #thbar button:hover{background:var(--hover)}
+body #topright .pill.lead{background:var(--asoft);border-color:var(--abd);color:var(--amber);font-weight:700}
+#quick .pill.lead{background:var(--asoft);border-color:var(--abd);color:var(--amber)}
+body.compact #topright #thbar button.on{background:var(--panel2);border-color:var(--text)}
+#topright .mh{font-weight:500;letter-spacing:.02em;padding:9px 8px 3px}
+#topright .mh~.mh{border-top:1px solid var(--line);margin-top:4px}
+body.compact #topright #thbar .mh{border-top:1px solid var(--line);margin-top:4px}
+#topright #verTxt{border-top:0;margin-top:0}
+/* 창 안의 단추 · 입력 */
+#pop input[type=text],.card input{background:var(--bg);border-color:var(--line)}
+#pop input[type=text]:focus,.card input:focus{outline:0;border-color:var(--amber);box-shadow:0 0 0 3px rgba(212,175,55,.16)}
+#pop .btn,#exitp #exGo,#inv .buy.on,#inv .bs button.on{background:var(--amber);color:#17191d;border-color:var(--amber)}
+#pop .alt2,#inv .sg button,#inv .buy,#inv .bs button,#gfx .rst,.ppx .btn,#thp .btn,#vote .row button,#exitp button{background:transparent;border:1px solid var(--line);color:var(--text)}
+#pop .alt2:hover,#inv .sg button:hover,#inv .buy:hover,#inv .bs button:hover,#gfx .rst:hover,.ppx .btn:hover,#thp .btn:hover,#vote .row button:hover,#exitp button:hover{background:var(--hover);border-color:var(--line2)}
+#exitp #exGo:hover,#inv .buy.on:hover{background:#e2c05a}
+.ppx .btn.on,#vote .row button.on{border-color:var(--abd);color:var(--amber);background:var(--asoft)}
+.ppx .btn,#thp .btn{border-radius:13px}
+.ppx .btn:hover,#thp .btn:hover{transform:translateY(-3px)}
+.raidbox{border-color:var(--abd);background:var(--asoft)}
+.raidbox b,#inv .sg{color:var(--amber)}
+#exitp{border-color:var(--abd)}
+#exitp b{color:var(--amber)}
+input[type=range]{accent-color:var(--amber)}
+#bgmV{background:linear-gradient(90deg,var(--amber) var(--v,45%),#37363a var(--v,45%))}
+#banner{color:var(--amber);background:#171719;border:1px solid var(--abd);box-shadow:var(--shadow)}
+#log .ln{background:rgba(9,9,11,.6)}
+#log .ln.me{background:rgba(35,31,17,.86)}
+body.chatting #log .ln.me{background:var(--asoft)}
+#chatpop #log{background:var(--bg)}
+#btns button{background:rgba(23,23,25,.82);border-color:var(--line2)}
+#btns button:active{background:var(--asoft);border-color:var(--amber)}
+#btns button[data-n]:not([data-n=""])::after{background:var(--bg)}
+/* 등장 모션 */
+#pop.show,#inv.show,#gfx.show,.ppx.show,#thp.show{animation:uiPop .25s var(--ease) both}
+#vote.show,#exitp.show{animation:uiArrive .35s var(--ease) both}
+#toast.show,#banner.show{animation:uiDrop .3s var(--ease) both}
+body.menu #topright{animation:uiDrop .25s var(--ease) both;transform-origin:100% 0}
+body.menu #topright>*,body.compact.menu #topright #thbar>*,body.compact.menu #topright #thbar .grp>*{animation:uiRow .3s var(--ease) both}
+body.menu #topright>*:nth-child(2){animation-delay:.02s}body.menu #topright>*:nth-child(3){animation-delay:.04s}body.menu #topright>*:nth-child(4){animation-delay:.06s}
+body.menu #topright>*:nth-child(5){animation-delay:.08s}body.menu #topright>*:nth-child(6){animation-delay:.1s}body.menu #topright>*:nth-child(7){animation-delay:.12s}
+body.menu #topright>*:nth-child(8){animation-delay:.14s}body.menu #topright>*:nth-child(n+9){animation-delay:.16s}
+body.touch.chat #chatpop{animation:uiModal .3s var(--ease) both}
+#log .ln{animation:uiArrive .3s ease both}
+.tipb:hover::after,#thbar button:hover::after{animation:uiDrop .18s ease both}
+body.compact #topright .tipb::after,body.compact #topright #thbar button::after{animation:none}
+#fade{background:var(--bg)}
+/* 입장 화면: 무지개 키워드 제목 · 알약 입력 · 카드형 채널 버튼 */
+.card{width:min(440px,100%);background:rgba(16,16,18,.93);border-color:var(--line);border-radius:20px;box-shadow:var(--shadow);animation:uiModal .45s var(--ease) both}
+.card>*{animation:uiArrive .5s var(--ease) both}
+.card>*:nth-child(2){animation-delay:.05s}.card>*:nth-child(3){animation-delay:.1s}.card>*:nth-child(4){animation-delay:.14s}.card>*:nth-child(5){animation-delay:.18s}
+.card>*:nth-child(n+6){animation-delay:.22s}.card>*:nth-child(n+8){animation-delay:.27s}
+.card h1{font-size:27px;font-weight:500;letter-spacing:-.04em}
+.card h1 .kw{background-image:var(--rainbow);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:uiFlow 6.5s linear infinite}
+#pvtitle{color:var(--amber);font-weight:500}
+.card input{border-radius:999px;height:52px;padding:0 18px}
+#reroll{background:transparent;border-color:var(--line);border-radius:9px}
+#reroll:hover{background:var(--hover)}
+#chs{gap:8px}
+#chs button,#ths button{border-radius:13px;background:transparent;border-color:var(--line);padding:12px 0;font-weight:500}
+#chs button:hover,#ths button:hover{transform:translateY(-3px);background:var(--panel2);border-color:var(--dim)}
+#chs button.on{border-color:var(--abd);color:var(--amber);background:var(--asoft)}
+#ths button.on{background:var(--amber);color:#17191d;border-color:var(--amber)}
+.card .go{border-radius:999px;height:50px;padding:0;color:#17191d;font-weight:700;margin-top:12px}
+.card .go:not(:disabled):hover{background:#e2c05a;transform:translateY(-2px)}
+.card .go:disabled{background:var(--panel2);color:var(--dim);opacity:1}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
 </head>
 <body>
 <div id="stage">
@@ -2553,7 +2663,7 @@ if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status
     $("go").textContent="채널 "+i+" 입장";$("alt").style.display="";$("alt").textContent="채널 말고 새 방 만들기";status("채널 "+i+" · 정식 서비스에서는 빈 채널로 자동 배정됩니다")};
   box.appendChild(b)})(i)})();
 function themeUI(){
-  document.title=TNAME[THEME];document.querySelector(".card h1").textContent=TNAME[THEME];(function(){var el=$("topleft").firstElementChild,nm=TNAME[THEME],pre="슈카친구들 ";el.textContent="";if(nm.indexOf(pre)===0){el.appendChild(mk("i","tpre",pre));nm=nm.slice(pre.length)}el.appendChild(document.createTextNode(nm))})();   // 좁은 화면에서는 앞의 "슈카친구들"을 감춰 짧게 쓴다
+  document.title=TNAME[THEME];(function(){var h=document.querySelector(".card h1"),nm=TNAME[THEME],pre="슈카친구들";h.textContent="";if(nm.indexOf(pre)===0){h.appendChild(mk("span","kw",pre));nm=nm.slice(pre.length)}h.appendChild(document.createTextNode(nm))})();(function(){var el=$("topleft").firstElementChild,nm=TNAME[THEME],pre="슈카친구들 ";el.textContent="";if(nm.indexOf(pre)===0){el.appendChild(mk("i","tpre",pre));nm=nm.slice(pre.length)}el.appendChild(document.createTextNode(nm))})();   // 좁은 화면에서는 앞의 "슈카친구들"을 감춰 짧게 쓴다
   
   document.querySelector(".card .sub").textContent=RAID?"이름을 넣으면 그 이름의 개미와 직업이 정해집니다":"이름을 넣으면 그 이름의 개미가 만들어집니다";
   $("entry").style.background=FLOOR?"":"linear-gradient(rgba(8,9,13,.5),rgba(8,9,13,.8)),url(art/keyart-"+THEME+".jpg?2) center/cover no-repeat";
@@ -2587,7 +2697,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211916";
+var BUILD="B11212035";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
