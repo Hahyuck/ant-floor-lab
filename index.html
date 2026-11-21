@@ -926,7 +926,7 @@ function buildVox(L){
   var SP=CUTE?0:(L.sp|0),A=SP>0,PAL=A?SPAL[SP]:null,TB,LEGL,lite,hcol,legc,pink=[.96,.58,.66],YEL=lin(0xf2c230);
   if(A){var kv=.93+r()*.12,bb0=lin(PAL.b);body=[bb0[0]*kv,bb0[1]*kv,bb0[2]*kv];lite=lin(PAL.l);dark=lin(PAL.d);hcol=PAL.h?lin(PAL.h):body;legc=PAL.g?lin(PAL.g):body;TB=SPB[SP];LEGL=1.1-2*TB[1];h=L.head*TB[4];HY=1.04+.32*h*.74}
   var NA=!A&&!CUTE,MOUTH=lin(0x8a1a12);                                                        // NA: 리디자인한 기본 개미 (큰 둥근 머리, 가는 가슴, 공 같은 배, 무릎 있는 긴 다리)
-  if(NA){dark=[body[0]*.3,body[1]*.27,body[2]*.5];HY=1.37}                                    // 팔다리 · 더듬이는 몸 색을 눌러 만든 갈색
+  if(NA){dark=[body[0]*.3,body[1]*.27,body[2]*.5];HY=1.37-VS}                                    // 팔다리 · 더듬이는 몸 색을 눌러 만든 갈색
   function seg(o,a,b2,c,th){var n2=Math.max(1,Math.ceil(Math.hypot(b2[0]-a[0],b2[1]-a[1],b2[2]-a[2])/(VS*.85))),t,x,y,z;      // 두 점을 잇는 복셀 줄 (th 2: 두 줄 굵기)
     for(t=0;t<=n2;t++){x=a[0]+(b2[0]-a[0])*t/n2;y=a[1]+(b2[1]-a[1])*t/n2;z=a[2]+(b2[2]-a[2])*t/n2;put(o,x,y,z,c);if(th===2){put(o,x,y,z-VS,c);put(o,x+VS,y,z,c);put(o,x+VS,y,z-VS,c)}}}
   function fin(){var tot=0,q;for(q=0;q<parts.length;q++){parts[q].v=new Float32Array(parts[q].v);parts[q].c=new Float32Array(parts[q].c);tot+=parts[q].v.length/3}parts.n=tot;parts.hb=[0,HY-hry,.06];return parts}
@@ -953,7 +953,7 @@ function buildVox(L){
   }
   // 배: 줄무늬
   if(SP===1){                                                                               // 인간형 개미: 큰 주황 머리, 남색 점퍼, 베이지 바지, 크림색 운동화 (의상이 몸에 포함돼 있어 테마 의상은 입히지 않는다)
-    var OR=lin(0xf5821f),ORD=lin(0xdc4f1c),NAVY=lin(0x2b3145),NAV2=lin(0x222839),CRM=lin(0xf3ead9),KH=lin(0xdcbb8c),KH2=lin(0xc7a273),SHO=lin(0xf1e6d2),SHO2=lin(0xddd0b8),RED=lin(0xd9362f),TO,lgp,amp,anp,rw;
+    var OR=lin(0xf5821f),ANB=[lin(0xf5821f)[0]*.3,lin(0xf5821f)[1]*.27,lin(0xf5821f)[2]*.5],NAVY=lin(0x2b3145),NAV2=lin(0x222839),CRM=lin(0xf3ead9),KH=lin(0xdcbb8c),KH2=lin(0xc7a273),SHO=lin(0xf1e6d2),SHO2=lin(0xddd0b8),RED=lin(0xd9362f),TO,lgp,amp,anp,rw;
     body=OR;HY=1.5;h=1;hry=.36;
     TO=part([0,.92,0]);blob(TO,0,0,0,.28,.27,.18,4,function(mi,j,k,front){                       // 점퍼: 앞은 흰 셔츠, 깃과 밑단에 흰 줄, 가슴에 주머니 줄
       if(j<=-3)return CRM;if(front&&mi===0)return CRM;if(front&&mi===1&&j>=2)return (j&1)?CRM:NAVY;if(front&&mi===2&&(j===-1||j===0)&&!(j===0&&mi===2&&false))return j===-1?CRM:NAVY;
@@ -964,13 +964,13 @@ function buildVox(L){
       cube(lgp,0,-7*VS,VS*.5,3,1,4,SHO2);cube(lgp,0,-6*VS,VS*.5,3,1,4,SHO);cube(lgp,0,-6*VS+VS*.02,VS*1.6,1,1,1,CRM);                                              // 운동화: 밑창은 한 톤 어둡게
       amp=part([sx*.34,1.1,0],[0,0,sx*.3],sx<0?2:1);for(rw=0;rw<4;rw++)cube(amp,0,-(rw+1)*VS,0,2,1,2,NAVY);cube(amp,0,-5*VS,0,2,1,2,CRM);cube(amp,0,-4*VS+VS*.01,0,2,1,2,NAVY);
       cube(amp,0,-7*VS,0,2,2,2,OR);cube(amp,0,-6.5*VS,VS*.7,1,1,1,OR);                                                                                             // 주황 손
-      anp=part([sx*.17,HY+hry-.05,0],[0,0,-sx*.14],3);anp.h=1;seg(anp,[0,0,0],[sx*.07,.3,0],ORD,2);seg(anp,[sx*.07,.3,0],[sx*.2,.37,.16],ORD,2);cube(anp,sx*.22,.3,.24,2,2,2,ORD)}   // 끝이 앞으로 꺾인 더듬이
+      anp=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3);anp.h=1;rw=L.ant;seg(anp,[0,0,0],[sx*.08,.42*rw,-.06],ANB);seg(anp,[sx*.08,.42*rw,-.06],[sx*.15,.5*rw,.24],ANB);put(anp,sx*.15,.5*rw-VS*.7,.24+VS,ANB);put(anp,sx*.15,.5*rw-VS*.7,.24,ANB)}   // 더듬이: 개미와 같은 모양
     var HH=part([0,HY,.02],null,4);HH.h=1;blob(HH,0,0,0,.44,hry,.39,2.6,function(mi,j,k,front){
       if(front){if(mi>=1&&mi<=3&&(j===0||j===1))return mi===1?V_BLACK:V_WHITE;if(mi===0&&j===-2)return MOUTH;if(mi===0&&j===-3)return RED}return OR});
     blob(HH,0,hry-.03,0,.22,.07,.2,2,function(){return OR});
     if(L.acc==="crown"){var cr2=NV(.2),ck2;for(i=-cr2;i<cr2;i++)for(ck2=-cr2;ck2<cr2;ck2++){if(i>-cr2&&i<cr2-1&&ck2>-cr2&&ck2<cr2-1)continue;put(HH,(i+.5)*VS,hry+.06,(ck2+.5)*VS,V_GOLD);if((i+ck2)&1)put(HH,(i+.5)*VS,hry+.06+VS,(ck2+.5)*VS,V_GOLD)}}
     return fin()}
-  if(NA){var BEL=part([0,.62,-.58]);blob(BEL,0,0,0,.27*b,.24*b,.29*b,2.4,function(){return body});blob(BEL,0,.21*b,0,.16*b,.07,.17*b,2,function(){return body});   // 배: 뒤에 달린 둥근 공, 위에 한 단
+  if(NA){var BEL=part([0,.62-VS,-.58]);blob(BEL,0,0,0,.27*b,.24*b,.29*b,2.4,function(){return body});blob(BEL,0,.21*b,0,.16*b,.07,.17*b,2,function(){return body});   // 배: 뒤에 달린 둥근 공, 위에 한 단
     cube(BEL,0,-VS,.31*b+.02,2,2,3,body);cust(BEL,"belly")}                                                                                          // 가슴과 잇는 자루
   else if(!A){var BEL=part([0,.38,-.34]);blob(BEL,0,0,0,.31*b,.27*b,.38*b,2.3,function(mi,j,k){return ((k+40)%3===0)?[body[0]*.72,body[1]*.72,body[2]*.72]:body});cust(BEL,"belly")}
   // 가슴: 넥타이
@@ -983,7 +983,7 @@ function buildVox(L){
     if(SP===5)return front&&mi<=2&&j<3?lite:body;
     if(SP===7)return j<-1||(front&&mi<=1)?dark:body;
     return body});
-  else if(NA){var CHE=part([0,.82,-.02]);blob(CHE,0,0,0,.185,.3,.165,4,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=0&&j<=2)?V_RED:body});cust(CHE,"chest")}   // 가슴: 곧게 선 가는 기둥
+  else if(NA){var CHE=part([0,.82-VS,-.02]);blob(CHE,0,0,0,.185,.3,.165,4,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=0&&j<=2)?V_RED:body});cust(CHE,"chest")}   // 가슴: 곧게 선 가는 기둥
   else{var CHE=part([0,.80,-.04]);blob(CHE,0,0,0,.22,.23,.2,2.3,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=-NV(.2)&&j<=1)?V_RED:body});cust(CHE,"chest")}
   // 머리: 얼굴을 겉면에 그린다
   var H=part([0,HY,.06],null,4),big=L.eye>1.02,hry=(NA?.31:.32)*h,ny=Math.ceil(hry/VS);H.h=1;
@@ -1048,9 +1048,9 @@ function buildVox(L){
       for(i=0;i<na;i++)for(aa=0;aa<aw;aa++)for(bb=0;bb<ad;bb++)put(am,aa*sx*VS,-(i+.5)*VS,(bb-(ad-1)/2)*VS,i>=na-(SP===4?2:1)?tipc:body);                           // 팔 · 날개 · 지느러미
       if(SP===3)cube(am,sx*VS*.5,-(na+1)*VS,0,3,2,3,dark);
       continue}
-    if(NA){var lgN=part([sx*.14,.58,.04],null,sx<0?1:2),amN=part([sx*.17,.98,.1],null,sx<0?2:1),mdN=part([sx*.14,.6,-.3],null,sx<0?2:1),anN=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3),al=L.ant,sdN=sx<0?"L":"R";anN.h=1;
-      seg(lgN,[0,0,0],[sx*.2,-.14,.06],dark);seg(lgN,[sx*.2,-.14,.06],[sx*.3,-.54,.08],dark);put(lgN,sx*.3,-.54,.08+VS,dark);put(lgN,sx*.3,-.54,.08+VS*2,dark);              // 앞다리: 무릎에서 꺾여 내려오고 발끝이 앞으로
-      seg(mdN,[0,0,0],[sx*.22,-.1,-.1],dark);seg(mdN,[sx*.22,-.1,-.1],[sx*.34,-.56,-.16],dark);put(mdN,sx*.34,-.56,-.16+VS,dark);                                              // 뒷다리
+    if(NA){var lgN=part([sx*.14,.58-VS,.04],null,sx<0?1:2),amN=part([sx*.17,.98-VS,.1],null,sx<0?2:1),mdN=part([sx*.14,.6-VS,-.3],null,sx<0?2:1),anN=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3),al=L.ant,sdN=sx<0?"L":"R";anN.h=1;
+      seg(lgN,[0,0,0],[sx*.2,-.14,.06],dark);seg(lgN,[sx*.2,-.14,.06],[sx*.3,-.54+VS,.08],dark);put(lgN,sx*.3,-.54+VS,.08+VS,dark);put(lgN,sx*.3,-.54+VS,.08+VS*2,dark);              // 앞다리: 무릎에서 꺾여 내려오고 발끝이 앞으로
+      seg(mdN,[0,0,0],[sx*.22,-.1,-.1],dark);seg(mdN,[sx*.22,-.1,-.1],[sx*.34,-.56+VS,-.16],dark);put(mdN,sx*.34,-.56+VS,-.16+VS,dark);                                              // 뒷다리
       seg(amN,[0,0,0],[sx*.16,-.12,.1],dark);seg(amN,[sx*.16,-.12,.1],[sx*.2,.06,.2],dark);put(amN,sx*.2-sx*VS,.06,.2+VS*.6,dark);                                             // 팔: 팔꿈치에서 꺾여 들어 올린 손
       seg(anN,[0,0,0],[sx*.08,.42*al,-.06],dark);seg(anN,[sx*.08,.42*al,-.06],[sx*.15,.5*al,.24],dark);put(anN,sx*.15,.5*al-VS*.7,.24+VS,dark);put(anN,sx*.15,.5*al-VS*.7,.24,dark);                                // 더듬이: 길게 올라가 앞으로 꺾인다
       cust(lgN,"leg"+sdN);cust(amN,"arm"+sdN);cust(mdN,"mid"+sdN);cust(anN,"ant"+sdN);continue}
@@ -2264,7 +2264,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211210";
+var BUILD="B11211212";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
