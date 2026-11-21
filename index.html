@@ -281,6 +281,22 @@ body.compact #topleft{font-size:13px}
 body.compact #topleft small{font-size:12px}
 body.compact #topright{top:62px}
 body.compact #toast{top:64px}
+/* 휴대폰 조작: 보이지 않는 방향키(왼쪽 아래 영역) · 아래쪽에 한 줄로 놓인 버튼 · 대화 바와 팝업 대화창 */
+body.touch #joy{left:0;bottom:66px;width:46vw;height:36dvh;border-radius:0;background:transparent;border:0}
+body.touch #knob{display:none}
+body.touch #btns{right:12px;bottom:68px;width:auto;height:auto;display:flex;gap:10px}
+body.touch #btns button{position:static;width:56px;height:56px}
+body.touch #log{bottom:136px}
+#chatOpen,#chatpop{display:none}
+body.touch #chatOpen{display:block;position:absolute;left:14px;right:14px;bottom:12px;height:44px;box-sizing:border-box;text-align:left;color:var(--dim);font-size:14px;z-index:5;cursor:pointer}
+body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fixed;left:50%;top:70px;transform:translateX(-50%);width:min(420px,calc(100vw - 24px));height:min(50dvh,440px);box-sizing:border-box;padding:12px;z-index:9;
+  background:rgba(13,15,21,.96);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+#chatpop .hd{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:15px;padding:0 2px 0 6px;flex:none}
+#chatX{width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:var(--text);font-size:15px;cursor:pointer}
+#chatSlot{flex:1;min-height:0;display:flex}
+#chatpop #log{position:static;flex:1;width:auto;max-height:none;overflow-y:auto;justify-content:flex-start;pointer-events:auto;-webkit-mask-image:none;mask-image:none;background:rgba(255,255,255,.04);border:0;border-radius:12px;padding:8px;-webkit-backdrop-filter:none;backdrop-filter:none}
+#chatpop #log .ln{background:transparent;font-size:14.5px;text-shadow:none;flex:none}
+#chatpop #chatbar{display:flex;position:static;transform:none;width:auto;left:auto;top:auto;bottom:auto;flex:none}
 </style>
 </head>
 <body>
@@ -293,7 +309,7 @@ body.compact #toast{top:64px}
   <div id="topleft" class="pill"><span>슈카친구들 객장</span><span class="dot"></span><small id="count">0명 함께 보는 중</small><small id="sugarHud"></small><button id="bFull" class="tipb" data-tip="전체화면" aria-label="전체화면">⛶</button></div>
   <div id="thbar" role="group" aria-label="테마 고르기"></div>
   <div id="quick">
-    <button class="pill ic tipb" id="bSound" data-tip="소리 켜기" aria-label="소리 켜기">🔇</button>
+    <button class="pill ic tipb" id="bSound" data-tip="영상 소리 켜기" aria-label="영상 소리 켜기">🔇</button>
     <div class="pill" id="bgmBox"><button class="tipb" id="bBgm" data-tip="배경 음악 켜기" aria-label="배경 음악 켜기">🎵</button><input type="range" id="bgmV" min="0" max="100" step="1" value="45" aria-label="배경 음악 볼륨"><button class="tipb" id="bBgmN" data-tip="다음 곡" aria-label="다음 곡">⏭</button></div>
     <button class="pill" id="bFocus">방송 집중</button>
     <button class="pill" id="bInv">상점·가방</button>
@@ -343,6 +359,8 @@ body.compact #toast{top:64px}
   <div id="log" aria-live="polite"></div>
   <div id="hot"><button><i class="ic"></i><span class="ky">1</span><span class="ct"></span></button><button><i class="ic"></i><span class="ky">2</span><span class="ct"></span></button><button><i class="ic"></i><span class="ky">3</span><span class="ct"></span></button></div>
   <div id="inv"><button class="x" aria-label="닫기">✕</button><h3>상점·가방</h3><div id="invList"></div><p>숫자 버튼을 누르면 그 단축 버튼에 배정됩니다. PC는 1 · 2 · 3 키, 모바일은 오른쪽 패드의 세 버튼입니다. 설탕과 충전은 시연용이며 실제 결제는 일어나지 않습니다.</p></div>
+  <button type="button" id="chatOpen" class="pill">💬 한마디 남기기</button>
+  <div id="chatpop" role="dialog" aria-label="대화"><div class="hd"><b>대화</b><button type="button" id="chatX" aria-label="닫기">✕</button></div><div id="chatSlot"></div></div>
   <form id="chatbar" class="pill" autocomplete="off">
     <button type="button" id="bSrv">서버 이동</button>
     <input id="chat" maxlength="60" placeholder="한마디 남기기">
@@ -2284,7 +2302,7 @@ var chatLast=0;
 $("chatbar").addEventListener("submit",function(ev){ev.preventDefault();
   var s=clean($("chat").value,60);if(!s||!me)return;var now=Date.now();
   if(now-chatLast<2000){toast("조금 뒤에 다시 쓸 수 있어요");return}
-  chatLast=now;$("chat").value="";if(isTouch){document.body.classList.remove("chat");$("chat").blur()}
+  chatLast=now;$("chat").value="";
   var mg=megaArmed?1:0;megaArmed=false;
   if(isHost){say(myId,s,mg);castAll({t:"c",id:myId,s:s,m:mg})}else if(hostConn)hostConn.send({t:"c",s:s,m:mg});
 });
@@ -2295,7 +2313,7 @@ $("bInvite").onclick=function(){var l=inviteLink();$("link").value=l;
 $("bSound").onclick=function(){if(!ytFrame){toast("아직 방송이 없습니다");return}
   muted=!muted;if(muted)ytCmd("mute");else{ytCmd("unMute");ytCmd("setVolume",[100]);ytCmd("playVideo")}
   soundBtn(muted)};
-function soundBtn(m){var b=$("bSound"),t=m?"소리 켜기":"소리 끄기";b.textContent=m?"🔇":"🔊";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m);bgmVol()}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
+function soundBtn(m){var b=$("bSound"),t=m?"영상 소리 켜기":"영상 소리 끄기";b.textContent=m?"🔇":"🔊";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);b.classList.toggle("on",!m);bgmVol()}   // 소리 버튼은 아이콘으로: 꺼짐 🔇 · 켜짐 🔊
 // 배경 음악(사운드트랙): 일곱 곡을 차례로 돌려 튼다. 방송 소리를 켜면 음악은 작게 깔린다. 테마를 바꿔 화면이 새로 열려도 듣던 곡을 이어서 튼다
 var BGM={L:[["opening","오프닝 · 슈카 기본 테마곡"],["ready-a","준비곡 A"],["ready-b","준비곡 B"],["theme-a","테마 A"],["theme-b","테마 B"],["theme-c","테마 C"],["theme-d","테마 D"]],i:0,t:0,on:true,a:null,v:45};
 try{BGM.on=localStorage.getItem("antbgm")!=="0";(function(){var v=localStorage.getItem("antbgmV");if(v!=null&&isFinite(+v))BGM.v=Math.max(0,Math.min(100,+v))})();(function(){var q=JSON.parse(sessionStorage.getItem("antbgmS")||"null");if(q&&q.i>=0&&q.i<BGM.L.length){BGM.i=q.i|0;BGM.t=+q.t||0}})()}catch(_){}
@@ -2340,16 +2358,22 @@ function touchOn(){if(!isTouch){isTouch=true}document.body.classList.add("touch"
 if(isTouch)touchOn();addEventListener("touchstart",touchOn,{once:true,passive:true});
 (function(){
   var j=$("joy"),kn=$("knob"),id=null;
-  function mv(ev){var r=j.getBoundingClientRect(),x=ev.clientX-(r.left+r.width/2),y=ev.clientY-(r.top+r.height/2),R=r.width/2-18,L=Math.hypot(x,y);
+  var ox=0,oy=0;                                                                              // 보이지 않는 방향키: 손가락을 처음 댄 자리가 중심이 된다
+  function mv(ev){var x=ev.clientX-ox,y=ev.clientY-oy,R=48,L=Math.hypot(x,y);
     if(L>R){x*=R/L;y*=R/L}kn.style.transform="translate("+x+"px,"+y+"px)";joy.x=x/R;joy.y=-y/R}
   function up(){id=null;joy.x=joy.y=0;kn.style.transform=""}
-  j.addEventListener("pointerdown",function(ev){id=ev.pointerId;j.setPointerCapture(id);mv(ev);ev.preventDefault()});
+  j.addEventListener("pointerdown",function(ev){id=ev.pointerId;ox=ev.clientX;oy=ev.clientY;j.setPointerCapture(id);mv(ev);ev.preventDefault()});
   j.addEventListener("pointermove",function(ev){if(ev.pointerId===id)mv(ev)});
   j.addEventListener("pointerup",up);j.addEventListener("pointercancel",up);
   function btn(el,fn){$(el).addEventListener("pointerdown",function(ev){ev.preventDefault();fn()})}
   btn("pA",doJump);
   btn("pB",function(){useSlot(0)});btn("pX",function(){useSlot(1)});btn("pY",function(){useSlot(2)});
-  $("bChat").onclick=function(){var on=document.body.classList.toggle("chat");if(on)$("chat").focus();else $("chat").blur()};
+  // 휴대폰 대화창: 아래의 대화 바(또는 메뉴의 채팅)를 누르면 화면 가운데에 팝업으로 뜬다. 대화 기록과 입력 칸을 팝업 안으로 옮겼다가 닫으면 제자리로 돌려놓는다
+  var chatHome=$("log").nextSibling,barHome=$("chatbar").nextSibling,stage0=$("log").parentNode;
+  function chatPop(on){document.body.classList.toggle("chat",on);document.body.classList.remove("menu");
+    if(on){$("chatSlot").appendChild($("log"));$("chatpop").appendChild($("chatbar"));$("log").scrollTop=$("log").scrollHeight;$("chat").focus()}
+    else{$("chat").blur();document.body.classList.remove("chatting");stage0.insertBefore($("log"),chatHome);stage0.insertBefore($("chatbar"),barHome)}}
+  $("bChat").onclick=function(){chatPop(!document.body.classList.contains("chat"))};$("chatOpen").onclick=function(){chatPop(true)};$("chatX").onclick=function(){chatPop(false)};
   $("bInv").onclick=function(){renderInv();$("inv").classList.toggle("show");$("pop").classList.remove("show")};
   [].forEach.call($("hot").children,function(el,i){el.onclick=function(){useSlot(i)}});
   renderHot();setInterval(renderHot,250);
@@ -2501,7 +2525,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211844";
+var BUILD="B11211853";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
