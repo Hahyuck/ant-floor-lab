@@ -1235,11 +1235,10 @@ function bossGen(){
       ln(sx*.16,2.52,1.3,sx*.3,3.0,1.5,LEGC);ln(sx*.3,3.0,1.5,sx*.33,3.2,1.34,LEGC)}
     gcur="bPaper";                                                                                                   // 들고 있는 신문: 앞장에 제호 두 줄, 왼쪽 기사 줄, 오른쪽 지구본. 뒷장에는 기사 줄
     var NW=lin(0xf6f5ef),NK=lin(0x3a3d46),NG=lin(0x9a9da6),NB=lin(0x2f6fd0),NGR=lin(0x4f9a4a),ni,nj,nc,gd;
-    for(ni=-7;ni<7;ni++)for(nj=0;nj<12;nj++){nc=NW;gd=Math.hypot(ni-1.5,nj-3);
-      if((nj===10||nj===9)&&ni>=-5&&ni<=4&&ni!==-1)nc=NK;else if(nj===7&&ni>=-5&&ni<=4&&ni!==-2&&ni!==1)nc=NK;
-      else if(gd<2.6&&ni>=-1)nc=((ni+nj)%3===0||(ni===2&&nj===4))?NGR:NB;
-      else if(ni>=-6&&ni<=-3&&(nj===5||nj===3||nj===1))nc=NG;
-      gd=Math.round((ni+7)/13*2.4);put((ni+.5)*VS,1.25+nj*VS,1.05+gd*VS,nc);if(gd>0)put((ni+.5)*VS,1.25+nj*VS,1.05-gd*VS,(nj===5||nj===3||nj===8)&&ni>-5&&ni<5?NG:NW,.92)}   // 반으로 접은 모양: 왼쪽 접힌 선에서 붙고 오른쪽으로 갈수록 앞장과 뒷장이 벌어진다
+    for(ni=-8;ni<8;ni++)for(nj=0;nj<12;nj++){nc=NW;gd=Math.hypot(ni-3.5,nj-3.5);                                       // 펼쳐 든 신문: 가운데 접힌 선이 앞으로 나오고 양쪽 장이 뒤로 꺾인다 (위에서 보면 V)
+      if(ni>=0){if((nj===10||nj===9)&&ni>=1&&ni<=6&&ni!==3)nc=NK;else if(nj===7&&ni>=1&&ni<=6&&ni!==4)nc=NK;else if(gd<2.5)nc=((ni+nj)%3===0)?NGR:NB}
+      else if(ni>=-7&&ni<=-2&&(nj===10||nj===8||nj===6||nj===4||nj===2)&&!(nj===6&&ni<-5))nc=NG;
+      gd=Math.round(Math.abs(ni+.5)*.55);put((ni+.5)*VS,1.25+nj*VS,1.3-gd*VS,nc);put((ni+.5)*VS,1.25+nj*VS,1.3-(gd+1)*VS,(nj%2===1&&Math.abs(ni+.5)>1&&Math.abs(ni+.5)<7)?NG:NW,.92)}
     gcur="boss";                                  // 짧은 더듬이
   }else{
   // 몸통 마디: 아래로 갈수록 가늘어지며 앞으로 말린다. 마디 경계는 어둡게, 배 쪽은 밝게
@@ -2350,7 +2349,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211445";
+var BUILD="B11211446";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2403,10 +2402,12 @@ function startEditor(){
         model.parts[gn].push(v)});
       if(keep.length)model.parts[old]=keep;else{delete model.parts[old];delete model.sub[old];delete model.off[old];delete model.rot[old]}});
     ["bTailL","bTailR"].forEach(function(k){if(model.sub[k])model.sub[k].mir=null});
-    try{if(!localStorage.getItem(KEY+"_paper")){localStorage.setItem(KEY+"_paper","1");                              // 신문이 없던 때 저장한 편집본에는 신문 조각을 한 번만 더해 준다 (그 뒤에 지우면 다시 생기지 않는다)
+    var pp;try{if(!localStorage.getItem(KEY+"_paper")){localStorage.setItem(KEY+"_paper","1");                              // 신문이 없던 때 저장한 편집본에는 신문 조각을 한 번만 더해 준다 (그 뒤에 지우면 다시 생기지 않는다)
       if(!model.parts.bPaper&&BASE0.parts.bPaper){localStorage.setItem(KEY+"_paper2","1");model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper));model.sub.bPaper=JSON.parse(JSON.stringify(BASE0.sub.bPaper))}}
       if(!localStorage.getItem(KEY+"_paper2")){localStorage.setItem(KEY+"_paper2","1");                              // 처음 넣어 준 납작한 신문을 손대지 않았으면 접힌 신문으로 바꾼다 (옮기고 돌린 값은 그대로)
-        var pp=model.parts.bPaper,zs={};if(pp&&pp.length===336&&model.sub.bPaper){pp.forEach(function(v){zs[v[2]]=1});if(Object.keys(zs).length===2)model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper))}}}catch(_){}})();   // 꼬리 부채는 좌우를 따로 움직인다 (대칭으로 함께 움직이지 않는다)                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
+        var zs={};pp=model.parts.bPaper;if(pp&&pp.length===336&&model.sub.bPaper){pp.forEach(function(v){zs[v[2]]=1});if(Object.keys(zs).length===2)model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper))}}
+      if(!localStorage.getItem(KEY+"_paper3")){localStorage.setItem(KEY+"_paper3","1");pp=model.parts.bPaper;         // 먼저 넣어 준 신문(납작한 것 336개 · 한쪽만 접힌 것 300개)을 손대지 않았으면 펼쳐 든 모양으로 바꾼다
+        if(pp&&(pp.length===336||pp.length===300)&&model.sub.bPaper)model.parts.bPaper=JSON.parse(JSON.stringify(BASE0.parts.bPaper))}}catch(_){}})();   // 꼬리 부채는 좌우를 따로 움직인다 (대칭으로 함께 움직이지 않는다)                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
                                          // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
   // ── 화면
