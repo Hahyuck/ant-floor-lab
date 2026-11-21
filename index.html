@@ -287,7 +287,7 @@ body.touch #knob{display:none}
 body.touch #btns{right:12px;bottom:68px;width:auto;height:auto;display:flex;gap:10px}
 body.touch #btns button{position:relative;left:auto;top:auto;right:auto;bottom:auto;width:56px;height:56px}
 body.touch #btns #pA{font-size:16px!important;white-space:nowrap}
-#btns button[data-over="1"]::before{content:"+";position:absolute;right:1px;bottom:13px;width:14px;text-align:center;color:var(--amber);font-size:13px;font-weight:800;line-height:1;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}   /* 99개를 넘으면 숫자 위에 + */
+#btns button[data-over="1"]::before{content:"+";position:absolute;right:-11px;bottom:7px;width:14px;text-align:center;color:var(--amber);font-size:13px;font-weight:800;line-height:1;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}   /* 99개를 넘으면 숫자 위에 + */
 #btns button[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;right:-3px;bottom:-3px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:rgba(10,12,17,.92);border:1px solid var(--line);color:var(--amber);font-size:11px;font-weight:700;line-height:16px;text-align:center;pointer-events:none}
 body.touch #log{bottom:136px}
 #chatOpen,#chatpop{display:none}
@@ -2528,7 +2528,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211858";
+var BUILD="B11211900";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
