@@ -235,7 +235,9 @@
   .card h1{margin:0;font-size:24px;letter-spacing:-.02em}
   .card .sub{color:var(--dim);font-size:13px;margin:6px 0 4px}
   #pv{width:220px;height:220px;display:block;margin:6px auto 0}
-  #pvtitle{font-size:15px;font-weight:700;color:var(--amber);min-height:22px;margin-bottom:12px}
+  #pvtitle{font-size:15px;font-weight:700;color:var(--amber);min-height:22px;margin-bottom:6px}
+  #reroll{display:block;margin:0 auto 12px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--dim);font:inherit;font-size:12px;cursor:pointer}
+  #reroll:hover{background:rgba(255,255,255,.14);color:#fff}
   .card input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--text);
     font:inherit;font-size:16px;text-align:center}
   .card .go{width:100%;margin-top:10px;background:var(--amber);color:#201600;border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:800}
@@ -324,6 +326,7 @@
     <div class="sub">이름을 넣으면 그 이름의 개미가 만들어집니다</div>
     <canvas id="pv" width="440" height="440"></canvas>
     <div id="pvtitle"></div>
+    <button type="button" id="reroll">🎲 다른 개미</button>
     <input id="name" maxlength="12" placeholder="이름 입력" autocomplete="off">
     <div id="ths"></div>
     <div id="chs"></div>
@@ -382,10 +385,11 @@ var SPN=["개미","인간형 개미","곰","고릴라","앵무새","펭귄","토
 var SPOK=[0,1,2];                                                                                 // 지금 쓰는 캐릭터: 개미 · 인간형 개미 · 곰 (고릴라 · 펭귄은 뺐다. git 브랜치 backup/gorilla · backup/penguin 에 보관. 나머지 모델도 꺼 둔다)
 function okSp(v){v=(v|0)&7;return SPOK.indexOf(v)<0?0:v}
 var mySp=0;try{mySp=okSp(+localStorage.getItem("antsp")||0)}catch(_){}
+var myLk=0;try{myLk=Math.max(0,(+localStorage.getItem("antlk")||0)|0)%1000000}catch(_){}   // 내 개미 다시 뽑기 번호: 오프닝의 🎲 버튼으로 바꾸고 기억한다
 function botSp(name){return 0}                                                                       // 봇은 모두 개미. 동물은 각자 자기 캐릭터만 골라 바꾼다                        // 봇은 열에 넷이 동물
-function lookFor(e){var L=lookOf(e.name);L.sp=e.sp|0;if(L.sp>1)L.title=L.title.replace(L.type,SPN[L.sp]);return L}   // 이름으로 정한 모습에 고른 동물을 입힌다
-function lookOf(name){
-  var r=rng(hashStr("ant:"+name)), tot=0,i,t;
+function lookFor(e){var L=lookOf(e.name,e.lk);L.sp=e.sp|0;if(L.sp>1)L.title=L.title.replace(L.type,SPN[L.sp]);return L}   // 이름으로 정한 모습에 고른 동물을 입힌다
+function lookOf(name,lk){                                                                 // lk: 다시 뽑기 번호 (0이면 이름만으로 정해진다). 테마 차림 · 직업은 번호와 상관없이 이름으로만 정해진다
+  var r=rng(hashStr("ant:"+name+(lk?"#"+lk:""))), tot=0,i,t;
   for(i=0;i<TYPES.length;i++)tot+=TYPES[i].w;
   var x=r()*tot;for(i=0;i<TYPES.length;i++){x-=TYPES[i].w;if(x<=0)break}
   t=TYPES[Math.min(i,TYPES.length-1)];
@@ -1543,7 +1547,7 @@ if(ZOO){document.body.appendChild(document.getElementById("pv"));document.getEle
 pvScene.add(pvAnts.mesh,new THREE.HemisphereLight(0xbfd0ff,0x3a2f28,1.3));
 (function(){var d=new THREE.DirectionalLight(0xfff2e0,2.4);d.position.set(3,6,5);pvScene.add(d);var k=new THREE.DirectionalLight(0x58a6ff,1.2);k.position.set(-4,2,-3);pvScene.add(k)})();
 var pvEnt={x:0,z:0,r:0,moving:false,look:lookOf(""),parts:null},pvName="";
-function setPreview(name){pvName=name;pvEnt.look=lookFor({name:name,sp:mySp});pvEnt.parts=null;pvAnts.dirty=true}
+function setPreview(name){pvName=name;pvEnt.look=lookFor({name:name,sp:mySp,lk:myLk});pvEnt.parts=null;pvAnts.dirty=true}
 function drawPreview(t){
   if(ZOO){var zi;if(!zooL){zooL=[];for(zi=0;zi<8;zi++){zooL.push({x:(zi%4-1.5)*1.55,y:zi<4?1.85:0,z:0,r:0,moving:false,look:lookFor({name:"동물"+zi,sp:zi}),parts:null});zooL[zi].look.acc="none";zooL[zi].look.scale=1;zooL[zi].look.ant=1;zooL[zi].look.antSpread=1;zooL[zi].look.head=1;zooL[zi].look.belly=1;zooL[zi].look.phase=1;if(!zi)zooL[zi].look.color="#f5821f"}}   // 확인용 화면에서는 이름에 따른 개체 차이(더듬이 길이 · 벌어짐 등)를 없애고 같은 값으로 본다
     var z2=/[?&]zoo=2/.test(location.search);for(zi=0;zi<8;zi++){zooL[zi].r=Math.sin(t*.7)*1.5;zooL[zi].moving=Math.sin(t*.45)>.6;if(z2){zooL[zi].x=zi<2?(zi?1.05:-1.05):99;zooL[zi].y=0}}if(z2){pvCam.position.set(0,1.5,6.6);pvCam.lookAt(0,1.05,0)}else{pvCam.position.set(0,2.6,13.5);pvCam.lookAt(0,1.75,0)}   // ?zoo=2: 개미와 인간형 개미만 크게
@@ -1558,8 +1562,8 @@ var DEFAULT_VIDEO="list:UUsJ6RuBiTVWRX156FVbeaGg";   // 슈카월드 채널 업�
 var ents={}, order=[], me=null, myId=null, isHost=false, roomCode="", video="";
 var cam={yaw:0,pitch:.07,dist:14}, keys={}, moveTarget=null, autoWalk=false, lastInput=0;
 var botTarget=29, botSeq=0, pidSeq=0;
-function addEnt(id,name,bot,x,z,r,cos,sp){
-  var e={id:id,name:name,bot:!!bot,x:x,z:z,r:r,tx:x,tz:z,tr:r,y:0,vy:0,moving:false,look:lookOf(name),parts:null,say:"",sayT:0,ai:null,cos:cos|0,vote:0,party:hashStr("pt"+name)%4};
+function addEnt(id,name,bot,x,z,r,cos,sp,lk){
+  var e={id:id,name:name,lk:Math.max(0,lk|0)%1000000,bot:!!bot,x:x,z:z,r:r,tx:x,tz:z,tr:r,y:0,vy:0,moving:false,look:lookOf(name),parts:null,say:"",sayT:0,ai:null,cos:cos|0,vote:0,party:hashStr("pt"+name)%4};
   e.sp=sp!=null?okSp(sp):(bot?botSp(name):0);e.look=lookFor(e);
   ents[id]=e;order=Object.keys(ents);ants.dirty=true;updateCount();return e;
 }
@@ -1865,7 +1869,7 @@ function wander(e,dt,speed){ // 봇·자동 산책 공용
 
 /* ───────────── 네트워크 ───────────── */
 var PREFIX="shuka-friends-v2-", conns={}, hostConn=null, lastSnap=0, useBC=/[?&]bc\b/.test(location.search)||typeof Peer==="undefined";
-function pack(e){return [e.id,e.name,e.bot?1:0,+e.x.toFixed(2),+e.z.toFixed(2),+e.r.toFixed(2),e.cos|0,e.sp|0]}
+function pack(e){return [e.id,e.name,e.bot?1:0,+e.x.toFixed(2),+e.z.toFixed(2),+e.r.toFixed(2),e.cos|0,e.sp|0,e.lk|0]}
 function castAll(m,except){for(var k in conns)if(k!==except)try{conns[k].send(m)}catch(_){}}
 
 // BroadcastChannel 대체 전송 (같은 브라우저의 탭끼리만 연결: 테스트·오프라인용)
@@ -1928,7 +1932,7 @@ function hostOnConn(c){
       var humans=order.filter(function(id){return !ents[id].bot}).length;
       if(humans>=30){c.send({t:"full"});return}
       var nm=clean(m.n,12)||"이름없는개미",p=spawnPos();pid="p"+(++pidSeq);
-      var e=addEnt(pid,nm,false,p[0],p[1],Math.PI,(m.cos|0)&3,(m.sp|0)&7);conns[pid]=c;c.last=Date.now();
+      var e=addEnt(pid,nm,false,p[0],p[1],Math.PI,(m.cos|0)&3,(m.sp|0)&7,m.lk|0);conns[pid]=c;c.last=Date.now();
       c.send({t:"wel",th:THEME,id:pid,vid:video,vt:vtMsg(),ps:order.map(function(id){return pack(ents[id])})});
       castAll({t:"join",p:pack(e)},pid);toast(nm+" 님이 들어왔습니다");logSys(nm+" 님이 들어왔습니다");
     }else if(pid&&ents[pid]){
@@ -1952,9 +1956,9 @@ function clientOnData(m){
   if(!m||typeof m!=="object")return;lastSnap=Date.now();
   var i,e;
   if(m.t==="wel"){if(m.th&&m.th!==THEME)applyTheme(m.th);myId=m.id;ents={};order=[];
-    for(i=0;i<m.ps.length;i++){var p=m.ps[i];addEnt(p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7])}
+    for(i=0;i<m.ps.length;i++){var p=m.ps[i];addEnt(p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8])}
     me=ents[myId];if((m.vid||"")!==video||!ytFrame)setVideo(m.vid||"",true);if(m.vt)vsync=mkSync(m.vt);enterRoom();
-  }else if(m.t==="join"){var q=m.p;if(!ents[q[0]]){addEnt(q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);if(!q[2])logSys(q[1]+" 님이 들어왔습니다")}}
+  }else if(m.t==="join"){var q=m.p;if(!ents[q[0]]){addEnt(q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7],q[8]);if(!q[2])logSys(q[1]+" 님이 들어왔습니다")}}
   else if(m.t==="left"){if(m.id!==myId){if(ents[m.id]&&!ents[m.id].bot)logSys(ents[m.id].name+" 님이 나갔습니다");delEnt(m.id)}}
   else if(m.t==="s"){var a=m.a,sn=performance.now(),hts=+m.ts||sn,sd=sn-hts;netOff=netOff==null?sd:Math.min(sd,netOff+2);          // 방장 시계와 내 시계의 차이
     if(lastHts&&hts>lastHts)netIv=netIv*.8+clamp(hts-lastHts,40,1600)*.2;lastHts=hts;
@@ -2361,13 +2365,13 @@ function enterRoom(){
 var curPeer=null,reconn=false,myName="";
 // 방은 코드로 유지된다: 들어가려는 방에 방장이 없으면 내가 그 코드로 방을 연다. 방장이 나가면 남은 사람이 이어받는다.
 function startHost(name,code,migr){
-  myName=name;
+  myName=name;try{localStorage.setItem("antname",name)}catch(_){}
   if(code)roomCode=code;else{roomCode="";var al="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<6;i++)roomCode+=al[(Math.random()*al.length)|0]}
   if(!migr)status("방을 여는 중...");
   var ready=function(online){
     var px=me?me.x:null,pz=me?me.z:null,p=spawnPos();
     isHost=true;myId="h";hostConn=null;conns={};ents={};order=[];reconn=false;
-    me=addEnt("h",name,false,px!=null?px:p[0]*.3,pz!=null?pz:8,Math.PI,myCos,mySp);setBots(botTarget);
+    me=addEnt("h",name,false,px!=null?px:p[0]*.3,pz!=null?pz:8,Math.PI,myCos,mySp,myLk);setBots(botTarget);
     if(!(migr&&video&&ytFrame)){var qv="";try{qv=ytId(new URLSearchParams(location.search).get("yt")||"")}catch(_){}setVideo(qv||DEFAULT_VIDEO)}
     try{history.replaceState(null,"","#room-"+roomCode)}catch(_){location.hash="room-"+roomCode}
     enterRoom();
@@ -2380,7 +2384,7 @@ function startHost(name,code,migr){
 function connect(name,code,migr,tries){
   myName=name;roomCode=code;tries=tries||0;if(!migr)status("방에 들어가는 중...");
   (useBC?bcJoin(code):pjJoin(code)).then(function(c){
-    reconn=false;isHost=false;netOff=null;lastHts=0;hostConn=c;c.ondata=clientOnData;c.onclose=hostLost;lastSnap=Date.now();c.send({t:"hi",n:name,cos:myCos,sp:mySp});
+    reconn=false;isHost=false;netOff=null;lastHts=0;hostConn=c;c.ondata=clientOnData;c.onclose=hostLost;lastSnap=Date.now();c.send({t:"hi",n:name,cos:myCos,sp:mySp,lk:myLk});
   },function(err){
     var ty=err&&err.type;
     if(ty==="peer-unavailable"||(err&&err.message==="no-room")){                  // 방장이 없다 → 내가 연다
@@ -2414,6 +2418,9 @@ addEventListener("pointerdown",function(ev){if(document.body.classList.contains(
 $("name").addEventListener("input",function(){var n=clean(this.value,12);$("go").disabled=!n;
   setPreview(n);$("pvtitle").textContent=n?pvEnt.look.title:""});
 $("name").addEventListener("keydown",function(ev){if(ev.key==="Enter"&&!$("go").disabled)$("go").click()});
+$("reroll").onclick=function(){this.blur();myLk=1+((Math.random()*999998)|0);try{localStorage.setItem("antlk",myLk)}catch(_){}var n=clean($("name").value,12);setPreview(n);$("pvtitle").textContent=n?pvEnt.look.title:""};   // 다시 뽑기: 같은 이름으로 다른 개미
+(function(){var n="";try{n=clean(localStorage.getItem("antname")||"",12)}catch(_){}if(n&&!$("name").value){$("name").value=n;$("name").dispatchEvent(new Event("input"))}})();   // 지난번 이름을 미리 채운다
+
 $("go").onclick=function(){var n=clean($("name").value,12);if(!n)return;if(!invited&&!ownsTheme(THEME))return status(TSHORT[THEME]+" 테마는 구입해야 방을 열 수 있습니다",true);this.disabled=true;if(isTouch)goFull(true);if(joinCode)connect(n,joinCode);else startHost(n).catch(function(){fail("방을 만들지 못했습니다. 다시 시도해 주세요.")})};
 $("alt").onclick=function(){joinCode="";[].forEach.call($("chs").children,function(x){x.classList.remove("on")});this.style.display="none";$("go").textContent="입장하기";$("go").disabled=!clean($("name").value,12);status("")};
 if(joinCode){$("go").textContent="입장하기";$("alt").style.display="";status("초대받은 방: "+joinCode)}else $("go").textContent="입장하기";
@@ -2456,7 +2463,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211754";
+var BUILD="B11211801";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
