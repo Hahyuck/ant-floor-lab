@@ -275,8 +275,8 @@
       <label for="yt">가운데 화면에 틀 유튜브 주소 (실시간 방송·일반 영상). 들어오는 사람 모두 같은 시점을 봅니다</label>
       <div class="row"><input type="text" id="yt" placeholder="비우고 적용하면 방송을 끕니다"><button class="btn" id="ytGo">적용</button></div>
       <div class="row" style="margin-top:6px"><button class="btn alt2" id="ytDef">슈카월드 최신 영상</button><button class="btn alt2" id="ytLive">슈카월드 실시간</button></div>
-      <label for="bots">자리 채우는 봇 개미 수: <b id="botsN">60</b></label>
-      <input type="range" id="bots" min="0" max="100" value="60">
+      <label for="bots">방에 보이는 개미 수 (기본 30 · 최대 100): <b id="botsN">30</b></label>
+      <input type="range" id="bots" min="1" max="100" value="30">
     </div>
     <p id="popNote"></p>
     <label>초대 링크</label>
@@ -1235,6 +1235,11 @@ function buildVox(L){
       for(a2=-1;a2<=1;a2++)for(b2=20;b2<23;b2++)for(q=-1;q<=1;q++)if(Math.abs(a2)+Math.abs(b2-21)+Math.abs(q)<=1)put(it,a2*VS,(b2+.5)*VS,q*VS,[1.7,.5,2.2])}      // 지팡이
     else for(sx=-1;sx<=1;sx+=2){it=part([sx*.44,.6,.2]);put(it,0,0,0,lin(0x5a3d22));for(q=1;q<5;q++)put(it,0,0,q*VS,STEEL)}                                       // 단검
   }
+  if(RIVER&&ARM.length&&r()<.4){                                                              // 강변: 열에 넷쯤은 한 손에 맥주잔을 든다. 든 쪽의 팔은 걷는 동안에도 가만히 둔다 (다리와 반대쪽 팔은 움직인다)
+    var bs=r()<.5?0:1,bx=bs?1:-1,BEER=lin(0xf2a81d),FOAM=lin(0xfdf8ec),GLS=lin(0xcfd8e2),mug=part([bx*.46,.56,.14]),ma,mb,mc;
+    for(ma=-1;ma<=1;ma++)for(mb=0;mb<5;mb++)for(mc=-1;mc<=1;mc++)put(mug,ma*VS,mb*VS,mc*VS,mb>=4?FOAM:mb===0?GLS:BEER,mb>=4?1.15:1);   // 잔: 바닥은 유리, 가운데는 맥주, 위는 거품
+    put(mug,0,5*VS,0,FOAM,1.15);put(mug,bx*2*VS,VS,0,GLS);put(mug,bx*2*VS,2*VS,0,GLS);put(mug,bx*2*VS,3*VS,0,GLS);                     // 넘치는 거품과 바깥쪽 손잡이
+    if(ARM[bs])ARM[bs].a=0;if(MID[bs])MID[bs].a=0;parts.forEach(function(q){if(q.par&&q.par.a===0&&(q.par===ARM[bs]||q.par===MID[bs]))q.a=0})}
   return fin();
 }
 function AntMesh(max){
@@ -1538,7 +1543,7 @@ var XMAX=RW-2.8;
 var DEFAULT_VIDEO="list:UUsJ6RuBiTVWRX156FVbeaGg";   // 슈카월드 채널 업로드 목록(최신 영상부터)
 var ents={}, order=[], me=null, myId=null, isHost=false, roomCode="", video="";
 var cam={yaw:0,pitch:.07,dist:14}, keys={}, moveTarget=null, autoWalk=false, lastInput=0;
-var botTarget=60, botSeq=0, pidSeq=0;
+var botTarget=29, botSeq=0, pidSeq=0;
 function addEnt(id,name,bot,x,z,r,cos,sp){
   var e={id:id,name:name,bot:!!bot,x:x,z:z,r:r,tx:x,tz:z,tr:r,y:0,vy:0,moving:false,look:lookOf(name),parts:null,say:"",sayT:0,ai:null,cos:cos|0,vote:0,party:hashStr("pt"+name)%4};
   e.sp=sp!=null?okSp(sp):(bot?botSp(name):0);e.look=lookFor(e);
@@ -2295,7 +2300,7 @@ $("bEdit").onclick=function(){window.open(location.pathname+"?edit"+(mySp?"="+my
 
 $("bGfx").onclick=function(){var on=!$("gfx").classList.contains("show");closePops();if(on){renderGfx();$("gfx").classList.add("show")}};
 $("bQ").onclick=function(){quality=quality==="high"?"low":"high";try{localStorage.setItem("antq",quality)}catch(_){}applyQuality()};
-$("bots").oninput=function(){$("botsN").textContent=this.value;setBots(+this.value)};
+$("bots").oninput=function(){$("botsN").textContent=this.value;setBots(Math.max(0,+this.value-order.filter(function(id){return !ents[id].bot}).length))};   // 고른 수는 방에 보이는 전체 개미 수: 사람 수를 뺀 만큼 봇으로 채운다
 
 /* ───────────── 입장 흐름 ───────────── */
 var joinCode=(location.hash.match(/^#room-([a-z0-9]{4,12})$/)||[])[1]||"";
@@ -2413,7 +2418,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211553";
+var BUILD="B11211600";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
