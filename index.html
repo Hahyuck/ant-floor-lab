@@ -2269,15 +2269,18 @@ function bgmBtn(){var b=$("bBgm"),t=BGM.on?"배경 음악 끄기 · ♪ "+BGM.L[
 function bgmPlay(){if(!BGM.on)return;var a=BGM.a,src="bgm/"+BGM.L[BGM.i][0]+".mp3",t,p;
   if(!a){a=BGM.a=new Audio();a.preload="auto";a.onended=function(){bgmNext()}}
   if(a.getAttribute("src")!==src){a.src=src;t=BGM.t;BGM.t=0;if(t)a.addEventListener("loadedmetadata",function(){try{a.currentTime=t}catch(_){}},{once:true})}
-  bgmVol();p=a.play();if(p&&p.catch)p.catch(function(){});bgmBtn()}                                       // 브라우저가 막으면 화면을 처음 누를 때 시작된다
+  bgmVol();p=a.play();if(p&&p.catch)p.catch(function(){});bgmBtn();try{if(bgmCh)bgmCh.postMessage(1)}catch(_){}}                                       // 브라우저가 막으면 화면을 처음 누를 때 시작된다
+// 음악이 겹치지 않게: 같은 브라우저의 다른 탭이 틀기 시작하면 이 탭은 멈추고, 화면이 가려진 탭(숨은 창)도 멈춘다. 다시 보이거나 누르면 이어서 튼다
+var bgmCh=null,bgmHid=false;try{bgmCh=new BroadcastChannel("antbgm1");bgmCh.onmessage=function(){if(BGM.a&&!BGM.a.paused)BGM.a.pause()}}catch(_){}
+document.addEventListener("visibilitychange",function(){if(document.hidden){if(BGM.a&&!BGM.a.paused){BGM.a.pause();bgmHid=true}}else if(bgmHid){bgmHid=false;bgmPlay()}});
 function bgmNext(){BGM.i=(BGM.i+1)%BGM.L.length;BGM.t=0;bgmPlay();if(BGM.on)toast("♪ "+BGM.L[BGM.i][1],2200)}
 $("bBgm").onclick=function(){this.blur();BGM.on=!BGM.on;try{localStorage.setItem("antbgm",BGM.on?"1":"0")}catch(_){}
   if(BGM.on){bgmPlay();toast("♪ "+BGM.L[BGM.i][1],2200)}else{if(BGM.a)BGM.a.pause();bgmBtn();toast("배경 음악을 껐습니다",1800)}};
 $("bBgmN").onclick=function(){this.blur();bgmNext()};
 $("bgmV").oninput=function(){BGM.v=+this.value;this.style.setProperty("--v",BGM.v+"%");bgmVol();try{localStorage.setItem("antbgmV",BGM.v)}catch(_){}};$("bgmV").onchange=function(){this.blur()};
-["pointerdown","keydown"].forEach(function(ev){document.addEventListener(ev,function(e){if(BGM.on&&(!BGM.a||BGM.a.paused)&&!(e.target&&e.target.id==="bBgm"))bgmPlay()},true)});
+["pointerdown","keydown"].forEach(function(ev){document.addEventListener(ev,function(e){if(BGM.on&&!document.hidden&&(!BGM.a||BGM.a.paused)&&!(e.target&&e.target.id==="bBgm"))bgmPlay()},true)});
 window.addEventListener("pagehide",function(){try{sessionStorage.setItem("antbgmS",JSON.stringify({i:BGM.i,t:BGM.a?BGM.a.currentTime:BGM.t}))}catch(_){}});
-bgmBtn();if(!/[?&]edit/.test(location.search))bgmPlay();
+bgmBtn();if(!/[?&]edit/.test(location.search)&&!document.hidden)bgmPlay();
 var focusMode=false;
 $("bFocus").onclick=function(){focusMode=!focusMode;this.classList.toggle("on",focusMode);toast(focusMode?"방송 집중: 화면을 크게 잡고 객장 조명을 낮춥니다":"객장 시점으로 돌아왔습니다",2600)};
 $("rwGo").onclick=function(){var s=clean($("rwText").value,40);if(!s||!isHost)return;$("rwText").value="";raidWarn(s);castAll({t:"rw",s:s});closePops()};
@@ -2453,7 +2456,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211751";
+var BUILD="B11211754";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
