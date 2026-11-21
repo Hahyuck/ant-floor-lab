@@ -309,7 +309,7 @@ body.touch.chat #chatpop{display:flex;flex-direction:column;gap:10px;position:fi
 #chatpop .hd #bSrv{display:block;height:32px;border-radius:999px;border:0;background:rgba(255,255,255,.1);color:var(--text);padding:0 13px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
 #svp{z-index:10}
 /* 선 아이콘 */
-.ic2{width:1.2em;height:1.2em;vertical-align:-.22em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ic2{width:1.2em;height:1.2em;vertical-align:-.22em;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .ic2+span{margin-left:7px}
 #thbar button{color:var(--text)}
 #thbar button .ic2{width:20px;height:20px;vertical-align:middle}
@@ -338,7 +338,7 @@ body.touch #log{bottom:72px}
   <div id="thbar" role="group" aria-label="테마 고르기"></div>
   <div id="quick">
     <button class="pill ic tipb" id="bSound" data-tip="영상 소리 켜기" aria-label="영상 소리 켜기" data-ic="mute"></button>
-    <div class="pill" id="bgmBox"><button class="tipb" id="bBgm" data-tip="배경 음악 켜기" aria-label="배경 음악 켜기" data-ic="music"></button><input type="range" id="bgmV" min="0" max="100" step="1" value="45" aria-label="배경 음악 볼륨"><button class="tipb" id="bBgmN" data-tip="다음 곡" aria-label="다음 곡" data-ic="next"></button></div>
+    <div class="pill" id="bgmBox"><button class="tipb" id="bBgm" data-tip="BGM 꺼짐" aria-label="BGM 꺼짐" data-ic="musicoff"></button><input type="range" id="bgmV" min="0" max="100" step="1" value="45" aria-label="BGM 볼륨"><button class="tipb" id="bBgmN" data-tip="다음 곡" aria-label="다음 곡" data-ic="next"></button></div>
     <button class="pill" id="bFocus" data-ic="tv">방송 집중</button>
     <button class="pill" id="bInv" data-ic="bag">상점·가방</button>
     <button class="pill" id="bMenu" data-ic="gear">설정</button>
@@ -1843,32 +1843,33 @@ function renderHot(){
     p=$(SLOT_PAD[i]);p.textContent=it?it.i:"·";p.setAttribute("data-n",it?Math.min(99,inv[k]|0):"");p.setAttribute("data-over",it&&inv[k]>99?"1":"");p.classList.toggle("cool",!!cool)}   // 버튼 귀퉁이에 가진 개수 (최대 두 자리)
 }
 function IC(n){var P={
-  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
-  chart:'<path d="M3 3v18h18"/><path d="M7 15l4-5 4 3 5-7"/>',
-  swords:'<path d="M4 4l11 11M20 4L9 15"/><path d="M4 4v3M4 4h3M20 4v3M20 4h-3"/><path d="M6 14l4 4M18 14l-4 4M5 20l3-3M19 20l-3-3"/>',
-  wave:'<path d="M2 8c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1"/><path d="M2 14c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1"/><path d="M2 20c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1"/>',
-  ant:'<circle cx="12" cy="6.5" r="2.5"/><ellipse cx="12" cy="12" rx="1.8" ry="2"/><ellipse cx="12" cy="18" rx="2.8" ry="3.4"/><path d="M10.5 4.5L8 2M13.5 4.5L16 2M10.2 11.5L5 9.5M13.8 11.5l5.2-2M10.2 12.8L5 15M13.8 12.8L19 15M9.6 16.5L5.5 20.5M14.4 16.5l4.1 4"/>',
-  person:'<circle cx="12" cy="5.5" r="3"/><path d="M6 21v-6a6 6 0 0112 0v6"/><path d="M10 9.5l2 3 2-3M12 12.5V16"/>',
-  bear:'<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="13" r="8"/><path d="M9.5 11.5v.6M14.5 11.5v.6M12 14.2v1"/><path d="M10.3 16.3c1.1 1 2.3 1 3.4 0"/>',
-  vol:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/>',
-  mute:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/>',
-  music:'<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
-  next:'<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>',
-  tv:'<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 22h8M9 3l3 4 3-4"/>',
+  home:'<path d="M4 11l8-7 8 7v9H4z"/>',
+  chart:'<path d="M4 18l5-6 4 3 7-9"/>',
+  swords:'<path d="M19 5L8 16"/><path d="M6 13l5 5M5 19l2.5-2.5"/>',
+  wave:'<path d="M3 9c3-3 6-3 9 0s6 3 9 0"/><path d="M3 15c3-3 6-3 9 0s6 3 9 0"/>',
+  ant:'<circle cx="12" cy="7.5" r="3"/><circle cx="12" cy="16.5" r="4.5"/><path d="M10.5 5L8.5 2.5M13.5 5l2-2.5"/>',
+  person:'<circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0114 0"/>',
+  bear:'<circle cx="12" cy="13" r="7.5"/><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/>',
+  vol:'<path d="M5 9v6h3l5 4V5L8 9z"/><path d="M16.5 9a4 4 0 010 6"/>',
+  mute:'<path d="M5 9v6h3l5 4V5L8 9z"/><path d="M21 5L4 20"/>',
+  music:'<path d="M10 17V5l8-2v4l-8 2"/><circle cx="7.5" cy="17" r="2.5"/>',
+  musicoff:'<path d="M10 17V5l8-2v4l-8 2"/><circle cx="7.5" cy="17" r="2.5"/><path d="M21 5L4 21"/>',
+  next:'<path d="M6 5l9 7-9 7z"/><path d="M18 5v14"/>',
+  tv:'<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M9 21h6"/>',
   bag:'<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
-  link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  link:'<path d="M9 12h6"/><path d="M10 8H7a4 4 0 000 8h3M14 8h3a4 4 0 010 8h-3"/>',
   crown:'<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
   chat:'<path d="M4 5h16v11H9l-5 4z"/>',
-  screen:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
-  sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-  pencil:'<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
-  shuffle:'<path d="M3 6h4l10 12h4M3 18h4l3-3.5M14 9.5L17 6h4"/><path d="M18 3l3 3-3 3M18 15l3 3-3 3"/>',
+  screen:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>',
+  sliders:'<path d="M4 8h3M11 8h9M4 16h9M17 16h3"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/>',
+  pencil:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',
+  shuffle:'<path d="M4 8h14l-3-3M20 16H6l3 3"/>',
   menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
-  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/>',
+  gear:'<circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>',
   full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
   send:'<path d="M3 11l18-8-7 18-3-7z"/>',
-  dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M15 9h.01M12 12h.01M9 15h.01M15 15h.01"/>'};
+  dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M12 12h.01M15 15h.01"/>'};
   return '<svg class="ic2" viewBox="0 0 24 24" aria-hidden="true">'+(P[n]||"")+'</svg>'}
 function setIc(el,n,t){el.innerHTML=IC(n)+(t?"<span>"+t+"</span>":"")}                       // 아이콘 + 글자 (글자는 코드에 적힌 고정 문구만 넣는다)
 [].forEach.call(document.querySelectorAll("[data-ic]"),function(el){setIc(el,el.getAttribute("data-ic"),el.textContent.trim())});
@@ -2379,7 +2380,7 @@ try{BGM.on=localStorage.getItem("antbgm")!=="0";(function(){var v=localStorage.g
 function vidOn(){return !!(ytFrame&&!muted)}                                                // 영상 소리가 켜져 있는가
 function bgmVol(){if(BGM&&BGM.a)BGM.a.volume=BGM.v/100}
 function bgmSync(){if(!BGM)return;if(vidOn()){if(BGM.a&&!BGM.a.paused)BGM.a.pause();bgmBtn()}else if(BGM.on&&!document.hidden)bgmPlay();else bgmBtn()}   // 영상 소리와 배경 음악은 한쪽만 들린다
-function bgmBtn(){var b=$("bBgm"),act=BGM.on&&!vidOn(),t=act?"배경 음악 끄기 · ♪ "+BGM.L[BGM.i][1]:"배경 음악 켜기";b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);$("bgmBox").classList.toggle("off",!act);$("bgmV").value=BGM.v;$("bgmV").style.setProperty("--v",BGM.v+"%")}
+function bgmBtn(){var b=$("bBgm"),act=BGM.on&&!vidOn(),t=act?"BGM 끄기 · ♪ "+BGM.L[BGM.i][1]:"BGM 꺼짐";b.innerHTML=IC(act?"music":"musicoff");b.setAttribute("data-tip",t);b.setAttribute("aria-label",t);$("bgmBox").classList.toggle("off",!act);$("bgmV").value=BGM.v;$("bgmV").style.setProperty("--v",BGM.v+"%")}
 function bgmPlay(){if(!BGM.on||vidOn()||/[?&]edit/.test(location.search))return;var a=BGM.a,src="bgm/"+BGM.L[BGM.i][0]+".mp3",t,p;
   if(!a){a=BGM.a=new Audio();a.preload="auto";a.onended=function(){bgmNext()}}
   if(a.getAttribute("src")!==src){a.src=src;t=BGM.t;BGM.t=0;if(t)a.addEventListener("loadedmetadata",function(){try{a.currentTime=t}catch(_){}},{once:true})}
@@ -2389,7 +2390,7 @@ var bgmCh=null,bgmHid=false;try{bgmCh=new BroadcastChannel("antbgm1");bgmCh.onme
 document.addEventListener("visibilitychange",function(){if(document.hidden){if(BGM.a&&!BGM.a.paused){BGM.a.pause();bgmHid=true}}else if(bgmHid){bgmHid=false;bgmPlay()}});
 function bgmNext(){BGM.i=(BGM.i+1)%BGM.L.length;BGM.t=0;bgmPlay();if(BGM.on&&!vidOn())toast("♪ "+BGM.L[BGM.i][1],2200)}
 $("bBgm").onclick=function(){this.blur();if(vidOn()){muted=true;ytCmd("mute");BGM.on=false;soundBtn(true)}BGM.on=!BGM.on;try{localStorage.setItem("antbgm",BGM.on?"1":"0")}catch(_){}
-  if(BGM.on){bgmPlay();toast("♪ "+BGM.L[BGM.i][1],2200)}else{if(BGM.a)BGM.a.pause();bgmBtn();toast("배경 음악을 껐습니다",1800)}};
+  if(BGM.on){bgmPlay();toast("♪ "+BGM.L[BGM.i][1],2200)}else{if(BGM.a)BGM.a.pause();bgmBtn();toast("BGM을 껐습니다",1800)}};
 $("bBgmN").onclick=function(){this.blur();bgmNext()};
 $("bgmV").oninput=function(){BGM.v=+this.value;this.style.setProperty("--v",BGM.v+"%");bgmVol();try{localStorage.setItem("antbgmV",BGM.v)}catch(_){}};$("bgmV").onchange=function(){this.blur()};
 ["pointerdown","keydown"].forEach(function(ev){document.addEventListener(ev,function(e){if(BGM.on&&!document.hidden&&(!BGM.a||BGM.a.paused)&&!(e.target&&e.target.id==="bBgm"))bgmPlay()},true)});
@@ -2586,7 +2587,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211915";
+var BUILD="B11211916";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
