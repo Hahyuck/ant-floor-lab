@@ -348,7 +348,7 @@ var TYPES=[
   {k:"왕개미",w:5,c:["#3a3f4a","#2f333d","#4a3f52"],acc:["crown"],s:[1.28,1.42]}
 ];
 var SPN=["개미","인간형 개미","곰","고릴라","앵무새","펭귄","토끼","레서판다"],SPI=["🐜","🧥","🐻","🦍","🦜","🐧","🐰","🐾"];   // 고를 수 있는 투자자 동물
-var SPOK=[0,1,2,5];                                                                                 // 지금 쓰는 캐릭터: 개미 · 인간형 개미 · 곰 · 펭귄 (고릴라는 뺐다. git 브랜치 backup/gorilla 에 보관. 나머지 모델도 꺼 둔다)
+var SPOK=[0,1,2];                                                                                 // 지금 쓰는 캐릭터: 개미 · 인간형 개미 · 곰 (고릴라 · 펭귄은 뺐다. git 브랜치 backup/gorilla · backup/penguin 에 보관. 나머지 모델도 꺼 둔다)
 function okSp(v){v=(v|0)&7;return SPOK.indexOf(v)<0?0:v}
 var mySp=0;try{mySp=okSp(+localStorage.getItem("antsp")||0)}catch(_){}
 function botSp(name){return 0}                                                                       // 봇은 모두 개미. 동물은 각자 자기 캐릭터만 골라 바꾼다                        // 봇은 열에 넷이 동물
@@ -2303,7 +2303,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211354";
+var BUILD="B11211358";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
