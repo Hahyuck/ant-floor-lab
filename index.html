@@ -909,7 +909,7 @@ var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
 var CM=null;                                     // 직접 편집한 개미 모델 (?edit 화면에서 저장). 부위 이름 → [x,y,z,색] 목록. 좌표는 복셀 칸 단위
 var CMO=null,CMR=null;                           // CMR: 부위별 각도 옮김값 (도)                                    // 부위별 붙는 위치 옮김값 (칸 단위)
 var CMS={};                                      // 캐릭터별 편집 모델: 0 개미("antmodel"), 1 인간형 개미("antmodel1"). 각각 {parts, off, rot}
-function loadCM(){CMS={};try{if(localStorage.getItem("antmodelOn")==="1")[0,1,2,3,4,5,6,7].forEach(function(k){var t=localStorage.getItem(k?"antmodel"+k:"antmodel"),j=t?JSON.parse(t):null;if(j&&j.parts&&j.v===2)CMS[k]=j})}catch(_){CMS={}}}loadCM();   // v 2: 리디자인한 몸에 맞춘 편집본만 쓴다 (예전 개미 모양의 편집본은 건너뛴다)
+function loadCM(){CMS={};try{if(localStorage.getItem("antmodelOn")==="1"||/[?&]sb(&|$)/.test(location.search))[0,1,2,3,4,5,6,7].forEach(function(k){var t=localStorage.getItem((/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(k?"antmodel"+k:"antmodel")),j=t?JSON.parse(t):null;if(j&&j.parts&&j.v===2)CMS[k]=j})}catch(_){CMS={}}}loadCM();   // v 2: 리디자인한 몸에 맞춘 편집본만 쓴다 (예전 개미 모양의 편집본은 건너뛴다)
 var CS=.85;   // 귀요미 개미 전체 배율: 머리가 커진 만큼 줄여서 기본 개미와 키를 맞춘다
 var CVS=[.08,.068,.056,.047,.04];                              // 귀요미 개미 밀도 −2 ~ +2 (복셀 한 칸의 크기)
 function setVS(){VS=CUTE?CVS[(GFX&&GFX.cdens!=null)?GFX.cdens:2]:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
@@ -938,9 +938,13 @@ function buildVox(L){
   function cust(o,nm){o.nm=nm;var CC=!CUTE&&!L.raw&&CMS[SP],M=CC&&CC.parts[nm],OF=CC&&CC.off&&CC.off[nm],RT=CC&&CC.rot&&CC.rot[nm],q,cc,y0=1e9,y1=-1e9;
     if(OF)o.p=[o.p[0]+OF[0]*VS,o.p[1]+OF[1]*VS,o.p[2]+OF[2]*VS];
     if(RT)o.r=[o.r[0]+RT[0]*.017453,o.r[1]+RT[1]*.017453,o.r[2]+RT[2]*.017453];if(!M)return;o.v.length=0;o.c.length=0;
-    for(q=0;q<M.length;q++){y0=Math.min(y0,M[q][1]);y1=Math.max(y1,M[q][1])}
-    for(q=0;q<M.length;q++){cc=M[q][3];cc=cc==="B"?body:cc==="D"?dark:cc==="S"?[body[0]*.72,body[1]*.72,body[2]*.72]:lin(cc);
-      put(o,M[q][0]*VS,M[q][1]*VS,M[q][2]*VS,cc,y1>y0?.86+.18*(M[q][1]-y0)/(y1-y0):1)}}
+    var fill=function(t,V){var q2,c2,a0=1e9,a1=-1e9;for(q2=0;q2<V.length;q2++){a0=Math.min(a0,V[q2][1]);a1=Math.max(a1,V[q2][1])}
+      for(q2=0;q2<V.length;q2++){c2=V[q2][3];c2=c2==="B"?body:c2==="D"?dark:c2==="S"?[body[0]*.72,body[1]*.72,body[2]*.72]:lin(c2);put(t,V[q2][0]*VS,V[q2][1]*VS,V[q2][2]*VS,c2,a1>a0?.86+.18*(V[q2][1]-a0)/(a1-a0):1)}};
+    fill(o,M);
+    if(CC.sub)for(var sn2 in CC.sub){var su=CC.sub[sn2],sv2=CC.parts[sn2],so,sf,sr,sc2;if(su.par!==nm||!sv2||!sv2.length)continue;                // 이 부위에 딸린 조각: 부위와 함께 움직이고, 안쪽 변환(m)으로 제 자리 · 각도를 잡는다
+      so=part(o.p.slice(),o.r.slice(),o.a);so.h=o.h;sf=(CC.off&&CC.off[sn2])||[0,0,0];sr=(CC.rot&&CC.rot[sn2])||[0,0,0];sc2=su.c;
+      so.m=new THREE.Matrix4().makeTranslation((sc2[0]+sf[0])*VS,(sc2[1]+sf[1])*VS,(sc2[2]+sf[2])*VS).multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(sr[0]*.017453,sr[1]*.017453,sr[2]*.017453))).multiply(new THREE.Matrix4().makeTranslation(-sc2[0]*VS,-sc2[1]*VS,-sc2[2]*VS));
+      fill(so,sv2)}}
   // 초타원체를 복셀화해서 겉면만 남긴다. paint(mi,j,k,front,i)가 색을 정하고, null이면 그 칸을 비운다.
   function blob(o,cx,cy,cz,rx,ry,rz,pw,paint,zc,zb){                                          // zc · zb: 앞 · 뒤로 튀어나오는 층을 잘라 평평하게
     var nx=Math.ceil(rx/VS),ny=Math.ceil(ry/VS),nz=Math.ceil(rz/VS),i,j,k;
@@ -1136,7 +1140,7 @@ AntMesh.prototype.update=function(list,time){
       px=q.p[0];py=q.p[1];pz=q.p[2];
       _J.makeRotationFromEuler(_e.set(q.r[0]+ax,q.a===4?Math.sin(time*.8+L.phase)*.22:0,q.r[2]+(q.a===3?Math.sin(time*3+L.phase)*.07:0)));
       if(q.h&&hk!==1){px=hb[0]+(px-hb[0])*hk;py=hb[1]+(py-hb[1])*hk;pz=hb[2]+(pz-hb[2])*hk;_J.scale(_s.set(hk,hk,hk))}   // 왕머리
-      _J.setPosition(px,py,pz);
+      _J.setPosition(px,py,pz);if(q.m)_J.multiply(q.m);
       w=_W.multiplyMatrices(_A,_J).elements;v=q.v;c=q.c;n=v.length/3;var pv=vs*(q.s||1);
       for(k=0;k<n;k++,idx++){o=idx*16;x=v[k*3];y=v[k*3+1];z=v[k*3+2];
         arr[o]=w[0]*pv;arr[o+1]=w[1]*pv;arr[o+2]=w[2]*pv;arr[o+3]=0;arr[o+4]=w[4]*pv;arr[o+5]=w[5]*pv;arr[o+6]=w[6]*pv;arr[o+7]=0;
@@ -2266,7 +2270,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211232";
+var BUILD="B11211300";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2297,7 +2301,8 @@ function startEditor(){
   var BASE0=base();
   try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.parts&&sv.parts.head&&sv.v===2){model=sv;model.xf=BASE0.xf}else if(sv&&sv.parts){localStorage.setItem(KEY+"_v1",JSON.stringify(sv));var h0=[];try{h0=JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(e){}h0.unshift({t:"예전 형식",w:"건너뛴 편집본",d:JSON.stringify({parts:sv.parts,off:sv.off||{},rot:sv.rot||{}})});if(h0.length>8)h0.length=8;localStorage.setItem(KEY+"_hist",JSON.stringify(h0))}}catch(_){}   // 예전 모양의 편집본은 따로 보관만 하고 새 디자인에서 시작한다
   if(!model)model=JSON.parse(JSON.stringify(BASE0));
-  if(!model.off)model.off={};if(!model.rot)model.rot={};                                       // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
+  if(!model.off)model.off={};if(!model.rot)model.rot={};if(!model.sub)model.sub={};                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
+                                         // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
   // ── 화면
   var st=document.createElement("style");st.textContent=
@@ -2328,20 +2333,25 @@ function startEditor(){
   function colOf(c){if(c==="B"||c==="D"||c==="S"){var b=edSp?edB:lin(bodyHex),k=c==="B"?1:.72;return c==="D"?(edSp?edD:[b[0]*.3,b[1]*.27,b[2]*.5]):[b[0]*k,b[1]*k,b[2]*k]}return lin(c)}   // 개미는 미리 볼 몸 색을 따르고, 다른 캐릭터는 제 몸 색
   function cssOf(c){var q=colOf(c);return "#"+new THREE.Color().setRGB(q[0],q[1],q[2]).getHexString()}
   function refreshSel(){setBoxes(SM,sels.map(function(q){return {nm:q.nm,pos:q.v}}),1.16)}
-  function rebuild(){var nm,M,m,i,mt=new THREE.Matrix4(),col,tot=0,sc=VS*1.02,c,ck;
-    meshes.forEach(function(x){G.remove(x);x.dispose()});meshes=[];byNm={};
-    for(nm in model.parts){M=model.parts[nm];tot+=M.length;if(!M.length)continue;m=new THREE.InstancedMesh(boxGeo,antMat,M.length);col=new Float32Array(M.length*3);
+  function rebuild(){var nm,M,m,i,mt=new THREE.Matrix4(),col,tot=0,sc=VS*1.02,c,ck,su,pm,pg,of,rt,xp,xr;
+    meshes.forEach(function(x){if(x.parent)x.parent.remove(x);x.dispose()});meshes=[];byNm={};
+    var mkM=function(nm){M=model.parts[nm];m=new THREE.InstancedMesh(boxGeo,antMat,M.length);col=new Float32Array(M.length*3);
       for(i=0;i<M.length;i++){mt.makeScale(sc,sc,sc).setPosition(M[i][0]*VS,M[i][1]*VS,M[i][2]*VS);m.setMatrixAt(i,mt);c=colOf(M[i][3]);ck=pv?.9+((i*7919)%13)/100:((Math.floor(M[i][0])+Math.floor(M[i][1])+Math.floor(M[i][2]))&1)?.86:1;col[i*3]=c[0]*ck;col[i*3+1]=c[1]*ck;col[i*3+2]=c[2]*ck}   // 블록 경계가 보이게 한 칸 걸러 살짝 어둡게
-      m.instanceColor=new THREE.InstancedBufferAttribute(col,3);var of=model.off[nm]||[0,0,0],xp=model.xf[nm].p;m.position.set(xp[0]+of[0]*VS,xp[1]+of[1]*VS,xp[2]+of[2]*VS);var rt=model.rot[nm]||[0,0,0],xr=model.xf[nm].r;m.userData.r=[xr[0]+rt[0]*.017453,xr[1]+rt[1]*.017453,xr[2]+rt[2]*.017453];m.userData.a=model.xf[nm].a;m.rotation.set(m.userData.r[0],m.userData.r[1],m.userData.r[2]);m.userData.nm=nm;m.frustumCulled=false;G.add(m);meshes.push(m);byNm[nm]=m}
+      m.instanceColor=new THREE.InstancedBufferAttribute(col,3);m.userData.nm=nm;m.frustumCulled=false;meshes.push(m);byNm[nm]=m;return m};
+    for(nm in model.parts){M=model.parts[nm];tot+=M.length;if(!M.length||model.sub[nm]||!model.xf[nm])continue;mkM(nm);
+      of=model.off[nm]||[0,0,0];xp=model.xf[nm].p;m.position.set(xp[0]+of[0]*VS,xp[1]+of[1]*VS,xp[2]+of[2]*VS);rt=model.rot[nm]||[0,0,0];xr=model.xf[nm].r;m.userData.r=[xr[0]+rt[0]*.017453,xr[1]+rt[1]*.017453,xr[2]+rt[2]*.017453];m.userData.a=model.xf[nm].a;m.rotation.set(m.userData.r[0],m.userData.r[1],m.userData.r[2]);G.add(m)}
+    for(nm in model.sub){su=model.sub[nm];pm=byNm[su.par];if(!pm||!model.parts[nm]||!model.parts[nm].length)continue;PNAME[nm]="분리한 조각";mkM(nm);             // 조각: 회전 중심(c)을 축으로 돌고 옮겨진다
+      of=model.off[nm]||[0,0,0];rt=model.rot[nm]||[0,0,0];pg=new THREE.Group();pg.position.set((su.c[0]+of[0])*VS,(su.c[1]+of[1])*VS,(su.c[2]+of[2])*VS);pg.rotation.set(rt[0]*.017453,rt[1]*.017453,rt[2]*.017453);
+      m.position.set(-su.c[0]*VS,-su.c[1]*VS,-su.c[2]*VS);m.userData.r=[0,0,0];m.userData.a=0;m.userData.sub=1;pg.add(m);pm.add(pg)}
     G.updateMatrixWorld(true);refreshSel();info.textContent="블록 "+tot.toLocaleString("ko-KR")+"개 · "+(on?"게임에 적용 중":"게임에는 아직 적용 안 함");
-    try{localStorage.setItem(KEY,JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot}))}catch(_){}}
+    try{localStorage.setItem(KEY,JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}))}catch(_){}}
 
   // ── 모델 다루기
   function find(M,x,y,z){for(var i=0;i<M.length;i++)if(Math.abs(M[i][0]-x)<.02&&Math.abs(M[i][1]-y)<.02&&Math.abs(M[i][2]-z)<.02)return i;return -1}
-  function mirOf(nm){var e=nm.slice(-1);return e==="L"?nm.slice(0,-1)+"R":e==="R"?nm.slice(0,-1)+"L":nm}
+  function mirOf(nm){if(model.sub&&model.sub[nm])return model.sub[nm].mir||nm;var e=nm.slice(-1);return e==="L"?nm.slice(0,-1)+"R":e==="R"?nm.slice(0,-1)+"L":nm}
   function mt(nm,pos){var o=[{nm:nm,pos:pos}],mn=mirOf(nm);if(mirror&&(mn!==nm||Math.abs(pos[0])>.02))o.push({nm:mn,pos:[-pos[0],pos[1],pos[2]]});return o}   // 대칭까지 포함한 대상 칸
-  function snapStr(){return JSON.stringify({p:model.parts,o:model.off,r:model.rot})}
-  function restore(t){var j=JSON.parse(t);model.parts=j.p;model.off=j.o||{};model.rot=j.r||{}}
+  function snapStr(){return JSON.stringify({p:model.parts,o:model.off,r:model.rot,s:model.sub})}
+  function restore(t){var j=JSON.parse(t);model.parts=j.p;model.off=j.o||{};model.rot=j.r||{};model.sub=j.s||{}}
   function commit(before){if(before===snapStr())return false;undo.push(before);if(undo.length>80)undo.shift();redo.length=0;return true}   // 실제로 바뀐 때만 되돌리기 단계로 남긴다
   function doUndo(){if(!undo.length)return flash("되돌릴 단계가 없습니다");redo.push(snapStr());restore(undo.pop());sels=[];lineA=null;rebuild();paint()}
   function doRedo(){if(!redo.length)return flash("다시 실행할 단계가 없습니다");undo.push(snapStr());restore(redo.pop());sels=[];lineA=null;rebuild();paint()}
@@ -2369,6 +2379,19 @@ function startEditor(){
     L.forEach(function(e){e.v[0]=+(e.v[0]+e.sg*dx).toFixed(2);e.v[1]=+(e.v[1]+dy).toFixed(2);e.v[2]=+(e.v[2]+dz).toFixed(2)});commit(before);rebuild();paint()}
   function turn(ax,sg){if(!sels.length)return flash("먼저 돌릴 부위를 누르세요");var nm=sels[0].nm,mn=mirOf(nm),before=snapStr(),a=(model.rot[nm]||[0,0,0]).slice(),b;   // 부위 각도를 5도씩. 반대쪽 짝은 거울처럼 돈다
     a[ax]+=sg*5;model.rot[nm]=a;if(mirror&&mn!==nm){b=(model.rot[mn]||[0,0,0]).slice();b[ax]+=(ax===0?1:-1)*sg*5;model.rot[mn]=b}commit(before);rebuild();paint()}
+  function detachSel(){var L=moveList(),nm,mn,mainV=[],mirV=[],n=1,nA,nB,cx=0,cy=0,cz=0,P1,P2;                                   // 선택한 블록을 조각으로 떼어 낸다 (같은 부위 안에서만). 대칭이 켜져 있으면 반대쪽 짝도 함께
+    if(!L.length)return null;nm=sels[0].nm;if(model.sub[nm]){flash("이미 분리한 조각입니다");return null}mn=mirOf(nm);
+    if(L.some(function(e){return e.sg===1?e.nm!==nm:e.nm!==mn})){flash("한 부위 안의 블록만 조각으로 분리할 수 있습니다");return null}
+    L.forEach(function(e){(e.sg===1?mainV:mirV).push(e.v)});P1=model.parts[nm];P2=model.parts[mn];
+    if(P1.length-mainV.length-(P2===P1?mirV.length:0)<1||(P2!==P1&&mirV.length&&P2.length-mirV.length<1)){flash("부위에 블록이 하나는 남아야 합니다");return null}
+    while(model.parts["x"+n]||model.parts["x"+n+"m"])n++;nA="x"+n;nB="x"+n+"m";
+    mainV.forEach(function(v){cx+=v[0];cy+=v[1];cz+=v[2];P1.splice(P1.indexOf(v),1)});cx=+(cx/mainV.length).toFixed(2);cy=+(cy/mainV.length).toFixed(2);cz=+(cz/mainV.length).toFixed(2);
+    model.parts[nA]=mainV;model.sub[nA]={par:nm,c:[cx,cy,cz],mir:mirV.length?nB:null};
+    if(mirV.length){mirV.forEach(function(v){P2.splice(P2.indexOf(v),1)});model.parts[nB]=mirV;model.sub[nB]={par:mn,c:[-cx,cy,cz],mir:nA}}
+    sels=mainV.map(function(v){return {nm:nA,v:v}});return nA}
+  function mergeSub(nm){var bf=snapStr(),list=[nm],su=model.sub[nm];if(!su)return;if(su.mir&&model.sub[su.mir])list.push(su.mir);                 // 조각을 원래 부위에 다시 붙인다 (옮기고 돌린 것은 버린다)
+    list.forEach(function(k){var par=model.parts[model.sub[k].par];if(par)(model.parts[k]||[]).forEach(function(v){if(find(par,v[0],v[1],v[2])<0)par.push(v)});delete model.parts[k];delete model.sub[k];delete model.off[k];delete model.rot[k]});
+    sels=[];commit(bf);rebuild();paint();flash("조각을 원래 부위에 다시 붙였습니다")}
   function targets(dx,dy,dz){return moveList().map(function(e){return {nm:e.nm,pos:[+(e.v[0]+e.sg*dx).toFixed(2),+(e.v[1]+dy).toFixed(2),+(e.v[2]+dz).toFixed(2)],e:e}})}
   function extend(dx,dy,dz){if(!sels.length)return flash("먼저 블록을 선택하세요");if(joint)return nudge(dx,dy,dz);var before=snapStr(),ns=[],n=0;strokeId++;   // 확장: 선택한 블록을 그 방향으로 한 칸 늘린다. 선택은 새 블록으로 넘어가서 계속 늘릴 수 있다
     targets(dx,dy,dz).forEach(function(t){var M=model.parts[t.nm],v;if(find(M,t.pos[0],t.pos[1],t.pos[2])>=0){if(t.e.sg===1&&inSel(t.e.v)>=0)ns.push({nm:t.nm,v:M[find(M,t.pos[0],t.pos[1],t.pos[2])]});return}
@@ -2432,20 +2455,23 @@ function startEditor(){
   function isPart(){var i,nm;if(!sels.length)return false;nm=sels[0].nm;if(sels.length!==model.parts[nm].length)return false;for(i=1;i<sels.length;i++)if(sels[i].nm!==nm)return false;return true}   // 부위 하나를 통째로 골랐는가 → 미세 이동 · 회전
   function updateGizmo(){var m,i,n,q,act=drag&&drag.mode==="giz"?drag:null,hot=act||gzHot,on,st=function(o,isHot,dim){o.mat.color.set(isHot?0xfff06a:GCOL[i]);o.mat.opacity=dim?.22:isHot?1:.9};
     GZ.visible=tool==="move"&&sels.length>0&&!!byNm[sels[0].nm];if(!GZ.visible)return;m=byNm[sels[0].nm];
-    if(joint){GZ.position.copy(m.position).add(G.position);GZ.quaternion.identity()}                                  // 부위: 붙는 자리에서, 몸 기준 축으로
+    if(joint&&m.userData.sub){m.parent.getWorldPosition(GZ.position);m.parent.parent.getWorldQuaternion(GZ.quaternion)}   // 조각: 회전 중심에서, 딸린 부위의 축으로
+    else if(joint){GZ.position.copy(m.position).add(G.position);GZ.quaternion.identity()}                                  // 부위: 붙는 자리에서, 몸 기준 축으로
     else if(!act){GZ.position.set(0,0,0);n=Math.min(sels.length,80);for(i=0;i<n;i++){q=sels[i];if(byNm[q.nm])GZ.position.add(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld))}GZ.position.multiplyScalar(1/n);GZ.quaternion.copy(m.quaternion)}
     else if(byNm[act.nm]){q=sels[0];GZ.position.copy(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld)).add(act.goff)}
     GZ.scale.setScalar(C.position.distanceTo(GZ.position)*.085);
     for(i=0;i<3;i++){on=hot&&hot.ax===i&&hot.kind==="move";st(gzA[i],on,act&&!on);gzA[i].g.scale.setScalar(on?1.22:1);                 // 커서를 올린 손잡이는 노랗게 · 굵게, 끄는 동안 나머지는 흐리게
-      on=hot&&hot.ax===i&&hot.kind==="rot";gzR[i].m.visible=joint;st(gzR[i],on,act&&!on);gzR[i].m.scale.setScalar(on?1.06:1)}
+      on=hot&&hot.ax===i&&hot.kind==="rot";gzR[i].m.visible=true;st(gzR[i],on,act&&!on);gzR[i].m.scale.setScalar(on?1.06:1)}
     GZ.updateMatrixWorld(true)}
   function setRay(ev){var r=cv.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((ev.clientX-r.left)/r.width*2-1,-((ev.clientY-r.top)/r.height*2-1)),C)}
-  function pickGiz(ev){if(!GZ.visible)return null;setRay(ev);var hs=ray.intersectObjects(gzH.filter(function(x){return joint||x.userData.kind==="move"}),false),i;for(i=0;i<hs.length;i++)if(hs[i].object.userData.kind==="move")return hs[i].object.userData;return hs.length?hs[0].object.userData:null}   // 화살표와 고리가 겹치면 화살표가 먼저
+  function pickGiz(ev){if(!GZ.visible)return null;setRay(ev);var hs=ray.intersectObjects(gzH,false),i;for(i=0;i<hs.length;i++)if(hs[i].object.userData.kind==="move")return hs[i].object.userData;return hs.length?hs[0].object.userData:null}   // 화살표와 고리가 겹치면 화살표가 먼저
   function scrOf(v){var w=root.clientWidth,h=root.clientHeight;tmpV.copy(v).project(C);return [(tmpV.x+1)/2*w,(1-tmpV.y)/2*h]}
   function setJoint(kind,nm,ax,val){var mn=mirOf(nm),a=(model[kind][nm]||[0,0,0]).slice(),b,d=val-a[ax];a[ax]=val;model[kind][nm]=a;                       // 부위 위치(off) · 각도(rot) 한 축을 정한 값으로. 반대쪽 짝은 거울처럼
     if(mirror&&mn!==nm){b=(model[kind][mn]||[0,0,0]).slice();b[ax]=+(b[ax]+((kind==="off"?ax===0:ax!==0)?-d:d)).toFixed(2);model[kind][mn]=b}}
-  function gizStart(ev,gh){var o=GZ.position.clone(),a=new THREE.Vector3(gh.ax===0?1:0,gh.ax===1?1:0,gh.ax===2?1:0).applyQuaternion(GZ.quaternion),s0=scrOf(o),s1=scrOf(o.clone().addScaledVector(a,.4)),nm=sels[0].nm,q=sels[0];
-    drag={mode:"giz",ax:gh.ax,kind:gh.kind,sx:ev.clientX,sy:ev.clientY,before:snapStr(),ul:undo.length,done:0,nm:nm,sv:[(s1[0]-s0[0])/.4,(s1[1]-s0[1])/.4],c:s0,a0:Math.atan2(ev.clientY-cv.getBoundingClientRect().top-s0[1],ev.clientX-cv.getBoundingClientRect().left-s0[0]),
+  function gizStart(ev,gh){var bf0=snapStr();
+    if(gh.kind==="rot"&&!joint){if(!detachSel()){drag=null;return}joint=true;rebuild();updateGizmo()}                                  // 블록 묶음을 돌리려면 먼저 조각으로 분리한다
+    var o=GZ.position.clone(),a=new THREE.Vector3(gh.ax===0?1:0,gh.ax===1?1:0,gh.ax===2?1:0).applyQuaternion(GZ.quaternion),s0=scrOf(o),s1=scrOf(o.clone().addScaledVector(a,.4)),nm=sels[0].nm,q=sels[0];
+    drag={mode:"giz",ax:gh.ax,kind:gh.kind,sx:ev.clientX,sy:ev.clientY,before:bf0,ul:undo.length,done:0,nm:nm,sv:[(s1[0]-s0[0])/.4,(s1[1]-s0[1])/.4],c:s0,a0:Math.atan2(ev.clientY-cv.getBoundingClientRect().top-s0[1],ev.clientX-cv.getBoundingClientRect().left-s0[0]),
       sg:a.dot(C.position.clone().sub(o))>=0?1:-1,v0:(model[gh.kind==="rot"?"rot":"off"][nm]||[0,0,0])[gh.ax],acc:0,last:null,
       goff:o.clone().sub(tmpV.set(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld))};
     GH.count=0;hov.visible=false}
@@ -2473,7 +2499,7 @@ function startEditor(){
   cv.addEventListener("pointermove",function(ev){var ks=Object.keys(P),h,a,b,d,mx,my;
     if(drag&&drag.mode==="pinch"&&P[ev.pointerId]&&ks.length===2){P[ev.pointerId]=[ev.clientX,ev.clientY];a=P[ks[0]];b=P[ks[1]];d=Math.hypot(a[0]-b[0],a[1]-b[1]);mx=(a[0]+b[0])/2;my=(a[1]+b[1])/2;
       if(pd)cam2.dist=clamp(cam2.dist*pd/d,1.2,12);if(pmid){cam2.yaw-=(mx-pmid[0])*.008;cam2.pitch=clamp(cam2.pitch+(my-pmid[1])*.006,-1.3,1.45)}pd=d;pmid=[mx,my];return}
-    if(!drag||!P[ev.pointerId]){gzHot=pickGiz(ev);if(gzHot){cv.style.cursor="grab";GH.count=0;hov.visible=false;say(gzHot.kind==="rot"?"이 고리를 끌면 "+["앞뒤로 숙이는","좌우로 돌리는","옆으로 기울이는"][gzHot.ax]+" 각도가 바뀝니다 · Shift 는 0.1도씩":joint?"이 화살표를 끌면 "+["좌우","위아래","앞뒤"][gzHot.ax]+"로 미세하게 옮겨집니다 · Shift 는 더 미세하게":padMode==="ext"?"이 화살표를 끌면 그쪽으로 블록이 늘어납니다":"이 화살표를 끌면 그쪽으로 한 칸씩 옮겨집니다")}else{cv.style.cursor="";preview(pick(ev))}return}
+    if(!drag||!P[ev.pointerId]){gzHot=pickGiz(ev);if(gzHot){cv.style.cursor="grab";GH.count=0;hov.visible=false;say(gzHot.kind==="rot"?(joint?"이 고리를 끌면 "+["앞뒤로 숙이는","좌우로 돌리는","옆으로 기울이는"][gzHot.ax]+" 각도가 바뀝니다 · Shift 는 0.1도씩":"이 고리를 끌면 선택한 블록이 조각으로 분리되어 이 축으로 돕니다"):joint?"이 화살표를 끌면 "+["좌우","위아래","앞뒤"][gzHot.ax]+"로 미세하게 옮겨집니다 · Shift 는 더 미세하게":padMode==="ext"?"이 화살표를 끌면 그쪽으로 블록이 늘어납니다":"이 화살표를 끌면 그쪽으로 한 칸씩 옮겨집니다")}else{cv.style.cursor="";preview(pick(ev))}return}
     if(drag.mode==="giz"){gizMove(ev)}
     else if(drag.mode==="stroke"){h=pick(ev,tool==="add"?strokeId:0);if(h){strokeGo(h);preview(h)}}
     else if(drag.mode==="sel"){h=pick(ev);if(h){if(drag.add&&inSel(h.v)<0){sels.push({nm:h.nm,v:h.v});refreshSel()}else if(!drag.add&&inSel(h.v)>=0){sels.splice(inSel(h.v),1);refreshSel()}}}
@@ -2508,7 +2534,7 @@ function startEditor(){
   var tools=[["move","선택"],["add","쌓기"],["del","지우기"],["paint","칠하기"],["pick","색 뽑기"]];
   function armBtn(b,key,label,fn){if(arm===key){b.textContent="한 번 더 누르면 실행";b.className="warn"}else b.textContent=label;
     b.onclick=function(){clearTimeout(armT);if(arm===key){arm=null;fn()}else{arm=key;armT=setTimeout(function(){arm=null;paint()},3500)}paint()}}
-  function resetAll(){histPush("완전 초기화 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};undo=[];redo=[];sels=[];lineA=null;tool="move";padMode="move";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6;
+  function resetAll(){histPush("완전 초기화 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};model.sub={};undo=[];redo=[];sels=[];lineA=null;tool="move";padMode="move";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6;
     try{localStorage.removeItem(KEY);localStorage.setItem("antmodelOn","0")}catch(_){}rebuild();try{localStorage.removeItem(KEY)}catch(_){}paint();flash("처음 상태로 모두 되돌렸습니다")}
   // ── 패널: 꼭 필요한 것만. 선택한 블록으로 하는 일은 블록 둘레의 동그란 버튼(고리 메뉴)으로 한다
   var more=false,ringMode="main",ringEl=mk("div"),st2=document.createElement("style");ringEl.id="edr";root.appendChild(ringEl);
@@ -2529,19 +2555,19 @@ function startEditor(){
   function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,(lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장")+" · 백업 "+bakGet().length+"개"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
     b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
   function bakGet(){try{return JSON.parse(localStorage.getItem(KEY+"_bak"))||[]}catch(_){return []}}
-  function bakPush(){var h=bakGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot}),n=0,q;for(q in model.parts)n+=model.parts[q].length;
+  function bakPush(){var h=bakGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}),n=0,q;for(q in model.parts)n+=model.parts[q].length;
     if(h.length&&h[0].d===d)return false;                                                                                       // 바뀐 것이 없으면 같은 백업을 또 만들지 않는다
     h.unshift({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}),n:n,d:d});if(h.length>10)h.length=10;
     try{localStorage.setItem(KEY+"_bak",JSON.stringify(h))}catch(_){try{h.length=4;localStorage.setItem(KEY+"_bak",JSON.stringify(h))}catch(e){return false}}return true}
-  function bakLoad(i){var h=bakGet()[i],bf=snapStr(),j;if(!h)return;histPush("백업 불러오기 전");j=JSON.parse(h.d);model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash(h.t+" 백업을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
+  function bakLoad(i){var h=bakGet()[i],bf=snapStr(),j;if(!h)return;histPush("백업 불러오기 전");j=JSON.parse(h.d);model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};model.sub=j.sub||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash(h.t+" 백업을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function histGet(){try{return JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(_){return []}}
-  function histPush(why){var h=histGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot});if(h.length&&h[0].d===d)return;                 // 같은 내용이면 다시 쌓지 않는다
+  function histPush(why){var h=histGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot,sub:model.sub});if(h.length&&h[0].d===d)return;                 // 같은 내용이면 다시 쌓지 않는다
     h.unshift({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}),w:why,d:d});if(h.length>8)h.length=8;
     try{localStorage.setItem(KEY+"_hist",JSON.stringify(h))}catch(_){try{h.length=3;localStorage.setItem(KEY+"_hist",JSON.stringify(h))}catch(e){}}}
-  function histLoad(i){var h=histGet()[i],bf=snapStr(),j;if(!h)return;histPush("기록 불러오기 전");j=JSON.parse(h.d);model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash(h.t+" 기록을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
+  function histLoad(i){var h=histGet()[i],bf=snapStr(),j;if(!h)return;histPush("기록 불러오기 전");j=JSON.parse(h.d);model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};model.sub=j.sub||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash(h.t+" 기록을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function slotGet(i){try{return JSON.parse(localStorage.getItem(KEY+"_s"+i))}catch(_){return null}}
-  function slotSave(i){try{localStorage.setItem(KEY+"_s"+i,JSON.stringify({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}),parts:model.parts,off:model.off,rot:model.rot}))}catch(_){}paint();flash("저장본 "+i+"에 지금 상태를 담았습니다")}
-  function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");histPush("저장본 불러오기 전");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
+  function slotSave(i){try{localStorage.setItem(KEY+"_s"+i,JSON.stringify({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}),parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}))}catch(_){}paint();flash("저장본 "+i+"에 지금 상태를 담았습니다")}
+  function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");histPush("저장본 불러오기 전");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};model.sub=j.sub||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function btn(par,label,cls,fn,sub){var b=mk("button",cls||"",label);if(sub)b.appendChild(mk("small",null,sub));b.onclick=fn;par.appendChild(b);return b}
   function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
     panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));panel.appendChild(mk("h4",null,"모델 불러오기 · 지금 "+SPN[edSp]));g=mk("div","g g3");
@@ -2551,7 +2577,7 @@ function startEditor(){
     if(tool==="move"){panel.appendChild(mk("h4",null,"선택 방식 · 지금 "+(joint?PNAME[sels[0].nm]+" 부위":sels.length+"개")));g=mk("div","g");
       btn(g,"블록 여러 개",multi?"on":"",function(){multi=!multi;if(multi)whole=false;paint()},"누르거나 끌어서 더하기");
       btn(g,"부위 통째로",whole?"on":"",function(){whole=!whole;if(whole)multi=false;sels=[];refreshSel();paint()},"미세 이동 · 회전");panel.appendChild(g);
-      panel.appendChild(mk("p",null,joint?"화살표를 끌면 위치가, 고리를 끌면 각도가 미세하게 바뀝니다. Shift 를 누르면 더 미세해집니다. 아래 칸에 숫자를 직접 넣어도 됩니다.":whole?"부위를 누르세요. 화살표(위치)와 고리(각도)가 뜹니다.":"블록을 누르면 화살표가 뜹니다. 화살표를 끌면 그쪽으로 옮겨지고, 블록은 칸 단위로 움직입니다."));
+      panel.appendChild(mk("p",null,joint?"화살표를 끌면 위치가, 고리를 끌면 각도가 미세하게 바뀝니다. Shift 를 누르면 더 미세해집니다. 아래 칸에 숫자를 직접 넣어도 됩니다.":whole?"부위나 분리한 조각을 누르세요. 화살표(위치)와 고리(각도)가 뜹니다.":"블록을 누르면 화살표와 고리가 뜹니다. 화살표는 칸 단위로 옮기고, 고리를 끌면 선택한 블록이 조각으로 분리되어 자유롭게 돕니다."));
       if(joint&&sels.length){var jn=sels[0].nm,num=function(kind,ax,lab,stp){var w=mk("label","nf",lab),i2=document.createElement("input");i2.type="number";i2.step=stp;i2.value=(model[kind][jn]||[0,0,0])[ax];
           i2.onchange=function(){var bf=snapStr(),v=parseFloat(i2.value);if(isNaN(v))return;setJoint(kind,jn,ax,+v.toFixed(2));commit(bf);rebuild();paint()};w.appendChild(i2);return w};
         panel.appendChild(mk("h4",null,PNAME[jn]+" 위치 (칸)"));g=mk("div","g g3");g.appendChild(num("off",0,"좌우",.05));g.appendChild(num("off",1,"위아래",.05));g.appendChild(num("off",2,"앞뒤",.05));panel.appendChild(g);
@@ -2566,15 +2592,15 @@ function startEditor(){
     btn(panel,more?"더보기 접기 ▴":"더보기 ▾ (파일 · 초기화 · 몸 색)","more",function(){more=!more;paint()});
     if(more){panel.appendChild(mk("h4",null,"미리 볼 몸 색"));g=mk("div","sw");BODYS.forEach(function(c){b=mk("button",bodyHex===c?"on":"","");b.style.background=c;b.onclick=function(){bodyHex=c;rebuild();paint()};g.appendChild(b)});panel.appendChild(g);
       panel.appendChild(mk("h4",null,"파일 · 게임"));g=mk("div","g");
-      btn(g,"파일로 내보내기","",function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot})],{type:"application/json"}));a.download="ant-model.json";a.click()});
-      btn(g,"파일 불러오기","",function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;histPush("파일 불러오기 전");model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()});
+      btn(g,"파일로 내보내기","",function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot,sub:model.sub})],{type:"application/json"}));a.download="ant-model.json";a.click()});
+      btn(g,"파일 불러오기","",function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;histPush("파일 불러오기 전");model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};model.sub=j.sub||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()});
       btn(g,"게임 열기","",function(){window.open(location.pathname,"_blank")});btn(g,"보기 초기화","",function(){cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6});panel.appendChild(g);
       panel.appendChild(mk("h4",null,"백업 · 저장을 누를 때마다 (최근 10개)"));var bl=bakGet();if(!bl.length)panel.appendChild(mk("p",null,"아직 백업이 없습니다. 오른쪽 위 \"저장\"을 누르면 하나씩 만들어집니다."));
       bl.forEach(function(e,i){var r=mk("div","slot");r.style.gridTemplateColumns="1fr auto";r.appendChild(mk("span",null,e.t+" · 블록 "+e.n+"개"));btn(r,"불러오기","",function(){bakLoad(i)});panel.appendChild(r)});
       panel.appendChild(mk("h4",null,"저장 기록 · 자동 보관 (최근 8개)"));var hl=histGet();if(!hl.length)panel.appendChild(mk("p",null,"아직 기록이 없습니다. 저장을 누르거나 모양을 통째로 바꾸기 직전에 자동으로 쌓입니다."));
       hl.forEach(function(e,i){var r=mk("div","slot");r.style.gridTemplateColumns="1fr auto";r.appendChild(mk("span",null,e.t+" · "+e.w));btn(r,"불러오기","",function(){histLoad(i)});panel.appendChild(r)});
       panel.appendChild(mk("h4",null,"처음으로"));g=mk("div","g");
-      b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();histPush("처음으로 돌리기 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
+      b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();histPush("처음으로 돌리기 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};model.sub={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
       b=mk("button");armBtn(b,"all","완전 초기화",resetAll);g.appendChild(b);panel.appendChild(g);
       panel.appendChild(mk("p",null,"편집 내용은 이 브라우저에 자동 저장됩니다. \"완전 초기화\"는 저장 내용 · 되돌리기 기록 · 게임 적용까지 모두 처음으로 돌립니다. 단축키: 1~5 도구, 방향키 이동, Shift+방향키 확장, Delete 삭제, J 잇기, Ctrl+Z 되돌리기."))}
     panel.scrollTop=sc;paintBar();paintRing();idle()}
@@ -2585,10 +2611,12 @@ function startEditor(){
     if(enter){b.onmouseenter=enter;b.onmouseleave=function(){idle()}}ringEl.appendChild(b);return b}
   function dirBtns(go){DIRS.forEach(function(t){var b=ringBtn("","dir",function(){go(t[1],t[2],t[3])},function(){padShow(t[1],t[2],t[3])});b.appendChild(mk("i",null,"➜"));b.appendChild(document.createTextNode(t[0]));b._d=t})}
   function paintRing(){var b;ringEl.textContent="";if(tool!=="move"||!sels.length){ringEl.style.display="none";return}ringEl.style.display="";   // 옮기기는 화살표로 하므로 여기에는 그 밖의 일만 둔다
-    if(joint){ringBtn("원래대로","warn",function(){var bf=snapStr(),nm=sels[0].nm,mn=mirOf(nm);delete model.off[nm];delete model.rot[nm];if(mirror&&mn!==nm){delete model.off[mn];delete model.rot[mn]}commit(bf);rebuild();paint()});
+    if(joint){if(model.sub[sels[0].nm])ringBtn("합치기","",function(){mergeSub(sels[0].nm)});
+      ringBtn("원래대로","warn",function(){var bf=snapStr(),nm=sels[0].nm,mn=mirOf(nm);delete model.off[nm];delete model.rot[nm];if(mirror&&mn!==nm){delete model.off[mn];delete model.rot[mn]}commit(bf);rebuild();paint()});
       ringBtn("해제","",function(){sels=[];refreshSel();paint()});return}
     ringBtn("확장",padMode==="ext"?"on":"",function(){padMode=padMode==="ext"?"move":"ext";paint();flash(padMode==="ext"?"확장 켬 · 화살표를 끌면 그쪽으로 블록이 늘어납니다":"확장 끔 · 화살표를 끌면 옮겨집니다")});
     b=ringBtn("잇기","",joinSel);b.disabled=sels.length<2;
+    ringBtn("분리","",function(){var bf=snapStr();if(detachSel()){commit(bf);rebuild();paint();flash("조각으로 분리했습니다 · 화살표와 고리로 미세하게 옮기고 돌릴 수 있습니다")}});
     ringBtn("칠하기","",function(){paintSel();paint()}).style.boxShadow="inset 0 0 0 5px "+cssOf(cur)+",0 4px 14px rgba(0,0,0,.45)";
     ringBtn("삭제","warn",delSel);ringBtn("여러 개",multi?"on":"",function(){multi=!multi;if(multi)whole=false;paint()});ringBtn("해제","",function(){sels=[];refreshSel();paint()})}
   function layoutRing(){if(ringEl.style.display==="none")return;var n=Math.min(sels.length,80),i,j,q,m,cx=0,cy=0,pts=[],w=root.clientWidth,h=root.clientHeight,Rr=0,ch=ringEl.children,A=[],todo=[],ord,d,k,pass,best,gap,P0,P1,pl=w>700?272:0;
@@ -2604,7 +2632,7 @@ function startEditor(){
       todo.forEach(function(t){ord=[];for(i=0;i<ch.length;i++)if(A[i]!=null)ord.push(A[i]);ord.sort(function(x,y){return x-y});best=0;gap=-1;                 // 남은 버튼은 가장 넓은 빈자리에
         if(!ord.length){A[t]=-1.5708;return}for(k=0;k<ord.length;k++){d=k+1<ord.length?ord[k+1]-ord[k]:ord[0]+6.2832-ord[k];if(d>gap){gap=d;best=ord[k]+d/2}}A[t]=best;
         if(ch[t].firstChild&&ch[t].firstChild.style)ch[t].firstChild.style.transform="rotate("+A[t]+"rad)"})}
-    else for(i=0;i<ch.length;i++)A[i]=ch.length===2?[.95,2.19][i]:-1.5708+i*6.2832/ch.length;
+    else for(i=0;i<ch.length;i++)A[i]=joint?[.75,2.39,1.57][i]:-1.5708+i*6.2832/ch.length;
     for(i=0;i<ch.length;i++){ch[i].style.left=(cx+Math.cos(A[i])*Rr)+"px";ch[i].style.top=(cy+Math.sin(A[i])*Rr)+"px"}}
   function size(){var w=root.clientWidth,h=root.clientHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()}
   addEventListener("resize",size);size();rebuild();histPush("편집 시작");paint();
@@ -2613,7 +2641,7 @@ function startEditor(){
     for(i=0;i<meshes.length;i++){m=meshes[i];u=m.userData;m.rotation.set(u.r[0]+(u.a===1?wk*.75:u.a===2?-wk*.75:0),u.r[1]+(anim&&u.a===4?Math.sin(tm*.8)*.22:0),u.r[2]+(anim&&u.a===3?Math.sin(tm*3)*.07:0))}
     if(anim){G.updateMatrixWorld(true);refreshSel()}
     if(flashT&&performance.now()>flashT){flashT=0;idle()}updateGizmo();layoutRing();R.render(S,C)})();
-  window.__ed={model:function(){return model},sels:function(){return sels},undoN:function(){return [undo.length,redo.length]},nudge:nudge,delSel:delSel,doUndo:doUndo,doRedo:doRedo,resetAll:resetAll,linePts:linePts,
+  window.__ed={detach:function(){var bf=snapStr(),r=detachSel();if(r){commit(bf);rebuild();paint()}return r},merge:mergeSub,setJoint:function(k,nm,ax,v){var bf=snapStr();setJoint(k,nm,ax,v);commit(bf);rebuild();paint()},model:function(){return model},sels:function(){return sels},undoN:function(){return [undo.length,redo.length]},nudge:nudge,delSel:delSel,doUndo:doUndo,doRedo:doRedo,resetAll:resetAll,linePts:linePts,
     click:function(h,ev){clickTool(h,ev)},ring:function(){return [ringMode,[].map.call(ringEl.children,function(b){return b.textContent+"@"+Math.round(parseFloat(b.style.left))+","+Math.round(parseFloat(b.style.top))})]},ringGo:function(i){ringEl.children[i].click()},giz:function(){return {vis:GZ.visible,pos:GZ.position.toArray(),scr:scrOf(GZ.position.clone()),tip:[0,1,2].map(function(i){var a=new THREE.Vector3(i===0?1:0,i===1?1:0,i===2?1:0).applyQuaternion(GZ.quaternion).multiplyScalar(GZ.scale.x*.8).add(GZ.position);return scrOf(a)}),rings:gzR[0].m.visible,hot:gzHot}},extend:extend,joinSel:joinSel,paintSel:paintSel,stroke:function(h,t){var bf=snapStr();strokeId++;if(applyTool(h,t)){commit(bf);rebuild();paint()}},preview:preview,ghosts:function(){return GH.count},hint:function(){return hint.textContent},
     set:function(k,v){if(k==="tool")return setTool(v);if(k==="cur")cur=v;if(k==="mirror")mirror=v;if(k==="whole")whole=v;if(k==="multi")multi=v;if(k==="pad")padMode=v;if(k==="joint")joint=v;if(k==="anim")anim=v;if(k==="pv"){pv=v;grid.visible=!v;rebuild()}paint()},turn:turn,meshes:function(){return meshes},cam:cam2};
 }
