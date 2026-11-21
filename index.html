@@ -74,7 +74,7 @@
   #thbar button{position:relative;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.07);font-size:18px;line-height:1;padding:0;cursor:pointer;transition:background .15s ease,transform .15s ease}
   #thbar button:hover{background:rgba(255,255,255,.18)}
   #thbar button:active{transform:scale(.94)}
-  #thbar button.on{background:var(--amber)}
+  #thbar button.on{background:rgba(255,255,255,.1);box-shadow:0 0 0 2px rgba(255,255,255,.92)}
   #thbar button.lock{opacity:.55}
   #thbar button:hover::after,#thbar button:focus-visible::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;
     background:var(--panel);border:1px solid var(--line);color:var(--text);font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:10px;pointer-events:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -92,7 +92,7 @@
   @media (max-width:1180px){#thbar{top:62px}}
   @media (max-width:560px){#thbar{top:106px}}
   #bMenu{font-weight:700}
-  body #topright{display:none;position:absolute;right:14px;left:auto;top:62px;width:300px;max-width:calc(100vw - 28px);grid-template-columns:1fr 1fr;gap:6px;z-index:6;
+  body #topright{display:none;position:absolute;right:14px;left:auto;top:62px;width:210px;max-width:calc(100vw - 28px);grid-template-columns:1fr;gap:6px;z-index:6;
     background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   body.menu #topright{display:grid}
   body #topright .pill{border-radius:10px;text-align:left;padding:10px 12px;font-size:13px;background:rgba(255,255,255,.05);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2452,7 +2452,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211747";
+var BUILD="B11211749";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
