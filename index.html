@@ -2266,7 +2266,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211221";
+var BUILD="B11211230";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2295,7 +2295,7 @@ function startEditor(){
       m.parts[q.nm]=arr;m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]],a:q.a||0}}
     return m}
   var BASE0=base();
-  try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.parts&&sv.parts.head&&sv.v===2){model=sv;model.xf=BASE0.xf}else if(sv&&sv.parts)localStorage.setItem(KEY+"_v1",JSON.stringify(sv))}catch(_){}   // 예전 모양의 편집본은 따로 보관만 하고 새 디자인에서 시작한다
+  try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.parts&&sv.parts.head&&sv.v===2){model=sv;model.xf=BASE0.xf}else if(sv&&sv.parts){localStorage.setItem(KEY+"_v1",JSON.stringify(sv));var h0=[];try{h0=JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(e){}h0.unshift({t:"예전 형식",w:"건너뛴 편집본",d:JSON.stringify({parts:sv.parts,off:sv.off||{},rot:sv.rot||{}})});if(h0.length>8)h0.length=8;localStorage.setItem(KEY+"_hist",JSON.stringify(h0))}}catch(_){}   // 예전 모양의 편집본은 따로 보관만 하고 새 디자인에서 시작한다
   if(!model)model=JSON.parse(JSON.stringify(BASE0));
   if(!model.off)model.off={};if(!model.rot)model.rot={};                                       // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
@@ -2508,7 +2508,7 @@ function startEditor(){
   var tools=[["move","선택"],["add","쌓기"],["del","지우기"],["paint","칠하기"],["pick","색 뽑기"]];
   function armBtn(b,key,label,fn){if(arm===key){b.textContent="한 번 더 누르면 실행";b.className="warn"}else b.textContent=label;
     b.onclick=function(){clearTimeout(armT);if(arm===key){arm=null;fn()}else{arm=key;armT=setTimeout(function(){arm=null;paint()},3500)}paint()}}
-  function resetAll(){model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};undo=[];redo=[];sels=[];lineA=null;tool="move";padMode="move";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6;
+  function resetAll(){histPush("완전 초기화 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};undo=[];redo=[];sels=[];lineA=null;tool="move";padMode="move";cur="B";mirror=true;whole=false;multi=false;joint=false;anim=0;pv=false;grid.visible=true;on=false;bodyHex=BODYS[0];cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6;
     try{localStorage.removeItem(KEY);localStorage.setItem("antmodelOn","0")}catch(_){}rebuild();try{localStorage.removeItem(KEY)}catch(_){}paint();flash("처음 상태로 모두 되돌렸습니다")}
   // ── 패널: 꼭 필요한 것만. 선택한 블록으로 하는 일은 블록 둘레의 동그란 버튼(고리 메뉴)으로 한다
   var more=false,ringMode="main",ringEl=mk("div"),st2=document.createElement("style");ringEl.id="edr";root.appendChild(ringEl);
@@ -2525,12 +2525,17 @@ function startEditor(){
     "@media (max-width:700px){#eds span{display:none}#edh{top:66px}}";
   document.head.appendChild(st3);
   function nowStr(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
-  function saveNow(){rebuild();lastSave=nowStr();paintBar();flash("지금 상태를 저장했습니다"+(on?" · 게임에 적용 중":" · 게임에는 아직 적용 안 함"))}
+  function saveNow(){rebuild();histPush("저장");lastSave=nowStr();paintBar();flash("지금 상태를 저장했습니다"+(on?" · 게임에 적용 중":" · 게임에는 아직 적용 안 함"))}
   function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
     b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
+  function histGet(){try{return JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(_){return []}}
+  function histPush(why){var h=histGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot});if(h.length&&h[0].d===d)return;                 // 같은 내용이면 다시 쌓지 않는다
+    h.unshift({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}),w:why,d:d});if(h.length>8)h.length=8;
+    try{localStorage.setItem(KEY+"_hist",JSON.stringify(h))}catch(_){try{h.length=3;localStorage.setItem(KEY+"_hist",JSON.stringify(h))}catch(e){}}}
+  function histLoad(i){var h=histGet()[i],bf=snapStr(),j;if(!h)return;histPush("기록 불러오기 전");j=JSON.parse(h.d);model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash(h.t+" 기록을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function slotGet(i){try{return JSON.parse(localStorage.getItem(KEY+"_s"+i))}catch(_){return null}}
   function slotSave(i){try{localStorage.setItem(KEY+"_s"+i,JSON.stringify({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}),parts:model.parts,off:model.off,rot:model.rot}))}catch(_){}paint();flash("저장본 "+i+"에 지금 상태를 담았습니다")}
-  function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
+  function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");histPush("저장본 불러오기 전");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function btn(par,label,cls,fn,sub){var b=mk("button",cls||"",label);if(sub)b.appendChild(mk("small",null,sub));b.onclick=fn;par.appendChild(b);return b}
   function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
     panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));panel.appendChild(mk("h4",null,"모델 불러오기 · 지금 "+SPN[edSp]));g=mk("div","g g3");
@@ -2556,10 +2561,12 @@ function startEditor(){
     if(more){panel.appendChild(mk("h4",null,"미리 볼 몸 색"));g=mk("div","sw");BODYS.forEach(function(c){b=mk("button",bodyHex===c?"on":"","");b.style.background=c;b.onclick=function(){bodyHex=c;rebuild();paint()};g.appendChild(b)});panel.appendChild(g);
       panel.appendChild(mk("h4",null,"파일 · 게임"));g=mk("div","g");
       btn(g,"파일로 내보내기","",function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot})],{type:"application/json"}));a.download="ant-model.json";a.click()});
-      btn(g,"파일 불러오기","",function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()});
+      btn(g,"파일 불러오기","",function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;histPush("파일 불러오기 전");model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()});
       btn(g,"게임 열기","",function(){window.open(location.pathname,"_blank")});btn(g,"보기 초기화","",function(){cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6});panel.appendChild(g);
+      panel.appendChild(mk("h4",null,"저장 기록 · 자동 보관 (최근 8개)"));var hl=histGet();if(!hl.length)panel.appendChild(mk("p",null,"아직 기록이 없습니다. 저장을 누르거나 모양을 통째로 바꾸기 직전에 자동으로 쌓입니다."));
+      hl.forEach(function(e,i){var r=mk("div","slot");r.style.gridTemplateColumns="1fr auto";r.appendChild(mk("span",null,e.t+" · "+e.w));btn(r,"불러오기","",function(){histLoad(i)});panel.appendChild(r)});
       panel.appendChild(mk("h4",null,"처음으로"));g=mk("div","g");
-      b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
+      b=mk("button");armBtn(b,"base","모양만 처음으로",function(){var bf=snapStr();histPush("처음으로 돌리기 전");model.parts=JSON.parse(JSON.stringify(BASE0.parts));model.off={};model.rot={};sels=[];lineA=null;commit(bf);rebuild();flash("모양을 처음 개미로 되돌렸습니다. 되돌리기로 취소할 수 있습니다")});g.appendChild(b);
       b=mk("button");armBtn(b,"all","완전 초기화",resetAll);g.appendChild(b);panel.appendChild(g);
       panel.appendChild(mk("p",null,"편집 내용은 이 브라우저에 자동 저장됩니다. \"완전 초기화\"는 저장 내용 · 되돌리기 기록 · 게임 적용까지 모두 처음으로 돌립니다. 단축키: 1~5 도구, 방향키 이동, Shift+방향키 확장, Delete 삭제, J 잇기, Ctrl+Z 되돌리기."))}
     panel.scrollTop=sc;paintBar();paintRing();idle()}
@@ -2592,7 +2599,7 @@ function startEditor(){
     else for(i=0;i<ch.length;i++)A[i]=ch.length===2?[.95,2.19][i]:-1.5708+i*6.2832/ch.length;
     for(i=0;i<ch.length;i++){ch[i].style.left=(cx+Math.cos(A[i])*Rr)+"px";ch[i].style.top=(cy+Math.sin(A[i])*Rr)+"px"}}
   function size(){var w=root.clientWidth,h=root.clientHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()}
-  addEventListener("resize",size);size();rebuild();paint();
+  addEventListener("resize",size);size();rebuild();histPush("편집 시작");paint();
   (function loop(){requestAnimationFrame(loop);var cp=Math.cos(cam2.pitch);C.position.set(T.x+Math.sin(cam2.yaw)*cp*cam2.dist,T.y+Math.sin(cam2.pitch)*cam2.dist,T.z+Math.cos(cam2.yaw)*cp*cam2.dist);C.lookAt(T);
     var tm=performance.now()/1000,wk=anim===1?Math.sin(tm*11):0,i,m,u;G.position.y=anim===1?Math.abs(Math.sin(tm*11))*.07:anim===2?Math.sin(tm*2)*.012:0;
     for(i=0;i<meshes.length;i++){m=meshes[i];u=m.userData;m.rotation.set(u.r[0]+(u.a===1?wk*.75:u.a===2?-wk*.75:0),u.r[1]+(anim&&u.a===4?Math.sin(tm*.8)*.22:0),u.r[2]+(anim&&u.a===3?Math.sin(tm*3)*.07:0))}
