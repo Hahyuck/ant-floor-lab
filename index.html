@@ -2349,7 +2349,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211451";
+var BUILD="B11211454";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2524,6 +2524,15 @@ function startEditor(){
     if(A0!==B0){A0.splice(A0.indexOf(q.v),1);B0.push(q.v)}q.v[0]=h.add[0];q.v[1]=h.add[1];q.v[2]=h.add[2];q.nm=h.nm;
     if(mv&&find(mB,-h.add[0],h.add[1],h.add[2])<0&&(mA===mB||mA.length>1)){if(mA!==mB){mA.splice(mA.indexOf(mv),1);mB.push(mv)}mv[0]=-h.add[0];mv[1]=h.add[1];mv[2]=h.add[2]}
     commit(before);rebuild();paint()}
+  function moveToNear(){if(!sels.length)return;var bf=snapStr(),own={},W=[],best=null,bn=0,k,M,m,i,j,c,lim=(VS*6)*(VS*6),t=new THREE.Vector3(),tm,d;   // 선택한 블록을 맞닿은 옆 조각으로 넘긴다 (엉뚱한 조각에 섞여 있는 블록 정리용)
+    G.updateMatrixWorld(true);i=G.matrixWorld.getMaxScaleOnAxis();lim*=i*i;sels.forEach(function(q){own[q.nm]=1;if(byNm[q.nm])W.push({q:q,w:new THREE.Vector3(q.v[0]*VS,q.v[1]*VS,q.v[2]*VS).applyMatrix4(byNm[q.nm].matrixWorld)})});
+    for(k in model.parts){if(own[k]||!byNm[k])continue;M=model.parts[k];m=byNm[k].matrixWorld;
+      for(i=0;i<M.length;i++){t.set(M[i][0]*VS,M[i][1]*VS,M[i][2]*VS).applyMatrix4(m);for(j=0;j<W.length;j++){d=t.distanceToSquared(W[j].w);if(d<lim){lim=d;best=k}}}}   // 가장 가까이 있는 조각 (여섯 칸 안)
+    if(!best)return flash("가까이에 다른 조각이 없습니다");
+    tm=byNm[best].matrixWorld.clone().invert();
+    W.forEach(function(e){var S=model.parts[e.q.nm],ix=S.indexOf(e.q.v),l=e.w.clone().applyMatrix4(tm),nv=[+(l.x/VS).toFixed(2),+(l.y/VS).toFixed(2),+(l.z/VS).toFixed(2),e.q.v[3]];
+      if(ix<0||(S.length<2&&!model.sub[e.q.nm]))return;S.splice(ix,1);if(find(model.parts[best],nv[0],nv[1],nv[2])<0)model.parts[best].push(nv)});
+    pruneSub();sels=[];commit(bf);rebuild();paint();flash("선택한 블록을 "+(PNAME[best]||best)+" 조각으로 옮겼습니다. 되돌리기로 취소할 수 있습니다")}
   function delSel(){if(!sels.length)return;var before=snapStr();moveList().forEach(function(e){var M=model.parts[e.nm],i=M.indexOf(e.v);if(i>=0&&(M.length>1||model.sub[e.nm]))M.splice(i,1)});pruneSub();sels=[];commit(before);rebuild();paint()}
   function clickTool(h,ev){var i,before;
     if(tool==="pick"){cur=h.v[3];tool="paint";paint();return}
@@ -2732,6 +2741,7 @@ function startEditor(){
     ringBtn("확장",padMode==="ext"?"on":"",function(){padMode=padMode==="ext"?"move":"ext";paint();flash(padMode==="ext"?"확장 켬 · 화살표를 끌면 그쪽으로 블록이 늘어납니다":"확장 끔 · 화살표를 끌면 옮겨집니다")});
     b=ringBtn("잇기","",joinSel);b.disabled=sels.length<2;
     ringBtn("분리","",function(){var bf=snapStr();if(detachSel()){commit(bf);rebuild();paint();flash("조각으로 분리했습니다 · 화살표와 고리로 미세하게 옮기고 돌릴 수 있습니다")}});
+    ringBtn("옆 조각으로","",moveToNear);
     ringBtn("칠하기","",function(){paintSel();paint()}).style.boxShadow="inset 0 0 0 5px "+cssOf(cur)+",0 4px 14px rgba(0,0,0,.45)";
     ringBtn("삭제","warn",delSel);ringBtn("여러 개",multi?"on":"",function(){multi=!multi;if(multi)whole=false;paint()});ringBtn("해제","",function(){sels=[];refreshSel();paint()})}
   function layoutRing(){if(ringEl.style.display==="none")return;var n=Math.min(sels.length,80),i,j,q,m,cx=0,cy=0,pts=[],w=root.clientWidth,h=root.clientHeight,Rr=0,ch=ringEl.children,A=[],todo=[],ord,d,k,pass,best,gap,P0,P1,pl=w>700?272:0;
