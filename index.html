@@ -954,15 +954,15 @@ function buildVox(L){
   // 배: 줄무늬
   if(SP===1){                                                                               // 인간형 개미: 큰 주황 머리, 남색 점퍼, 베이지 바지, 크림색 운동화 (의상이 몸에 포함돼 있어 테마 의상은 입히지 않는다)
     var OR=lin(0xf5821f),ANB=[lin(0xf5821f)[0]*.3,lin(0xf5821f)[1]*.27,lin(0xf5821f)[2]*.5],NAVY=lin(0x2b3145),NAV2=lin(0x222839),CRM=lin(0xf3ead9),KH=lin(0xdcbb8c),KH2=lin(0xc7a273),SHO=lin(0xf1e6d2),SHO2=lin(0xddd0b8),RED=lin(0xd9362f),TO,lgp,amp,anp,rw;
-    body=OR;HY=1.5;h=1;hry=.36;
-    TO=part([0,.92,0]);blob(TO,0,0,0,.28,.27,.18,4,function(mi,j,k,front){                       // 점퍼: 앞은 흰 셔츠, 깃과 밑단에 흰 줄, 가슴에 주머니 줄
+    body=OR;HY=1.5-VS;h=1;hry=.36;                                                              // 상체(몸통 · 팔 · 머리)를 한 칸 내려 다리와 균형을 맞춘다
+    TO=part([0,.92-VS,0]);blob(TO,0,0,0,.28,.27,.18,4,function(mi,j,k,front){                       // 점퍼: 앞은 흰 셔츠, 깃과 밑단에 흰 줄, 가슴에 주머니 줄
       if(j<=-3)return CRM;if(front&&mi===0)return CRM;if(front&&mi===1&&j>=2)return (j&1)?CRM:NAVY;if(front&&mi===2&&(j===-1||j===0)&&!(j===0&&mi===2&&false))return j===-1?CRM:NAVY;
       if(j>=3)return (mi&1)?CRM:NAVY;return (k<0&&mi>=2)?NAV2:NAVY});
-    cube(TO,0,-.27-VS*2.4,0,6,3,4,KH);                                                            // 바지 윗단
+    cube(TO,0,-.27-VS*2,0,5,2,3,KH);                                                            // 바지 윗단
     for(sx=-1;sx<=1;sx+=2){
       lgp=part([sx*.13,.6,0],null,sx<0?1:2);for(rw=0;rw<5;rw++)cube(lgp,0,-(rw+1)*VS,0,2,1,2,rw===4?KH2:KH);cube(lgp,0,-5*VS,0,3,1,3,KH2);                         // 바지 다리와 접어 올린 단
       cube(lgp,0,-7*VS,VS*.5,3,1,4,SHO2);cube(lgp,0,-6*VS,VS*.5,3,1,4,SHO);cube(lgp,0,-6*VS+VS*.02,VS*1.6,1,1,1,CRM);                                              // 운동화: 밑창은 한 톤 어둡게
-      amp=part([sx*.34,1.1,0],[0,0,sx*.3],sx<0?2:1);for(rw=0;rw<4;rw++)cube(amp,0,-(rw+1)*VS,0,2,1,2,NAVY);cube(amp,0,-5*VS,0,2,1,2,CRM);cube(amp,0,-4*VS+VS*.01,0,2,1,2,NAVY);
+      amp=part([sx*.34,1.1-VS,0],[0,0,sx*.3],sx<0?2:1);for(rw=0;rw<4;rw++)cube(amp,0,-(rw+1)*VS,0,2,1,2,NAVY);cube(amp,0,-5*VS,0,2,1,2,CRM);cube(amp,0,-4*VS+VS*.01,0,2,1,2,NAVY);
       cube(amp,0,-7*VS,0,2,2,2,OR);cube(amp,0,-6.5*VS,VS*.7,1,1,1,OR);                                                                                             // 주황 손
       anp=part([sx*.13,HY+hry-.05,.02],[0,0,-sx*.1*L.antSpread],3);anp.h=1;rw=L.ant;seg(anp,[0,0,0],[sx*.08,.42*rw,-.06],ANB);seg(anp,[sx*.08,.42*rw,-.06],[sx*.15,.5*rw,.24],ANB);put(anp,sx*.15,.5*rw-VS*.7,.24+VS,ANB);put(anp,sx*.15,.5*rw-VS*.7,.24,ANB)}   // 더듬이: 개미와 같은 모양
     var HH=part([0,HY,.02],null,4);HH.h=1;blob(HH,0,0,0,.44,hry,.39,2.6,function(mi,j,k,front){
@@ -2264,7 +2264,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211215";
+var BUILD="B11211216";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
