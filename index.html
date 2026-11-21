@@ -909,7 +909,8 @@ var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
 var CM=null;                                     // 직접 편집한 개미 모델 (?edit 화면에서 저장). 부위 이름 → [x,y,z,색] 목록. 좌표는 복셀 칸 단위
 var CMO=null,CMR=null;                           // CMR: 부위별 각도 옮김값 (도)                                    // 부위별 붙는 위치 옮김값 (칸 단위)
 var CMS={};                                      // 캐릭터별 편집 모델: 0 개미("antmodel"), 1 인간형 개미("antmodel1"). 각각 {parts, off, rot}
-function loadCM(){CMS={};try{if(localStorage.getItem("antmodelOn")==="1"||/[?&]sb(&|$)/.test(location.search))[0,1,2,3,4,5,6,7].forEach(function(k){var t=localStorage.getItem((/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(k?"antmodel"+k:"antmodel")),j=t?JSON.parse(t):null;if(j&&j.parts&&j.v===2)CMS[k]=j})}catch(_){CMS={}}}loadCM();   // v 2: 리디자인한 몸에 맞춘 편집본만 쓴다 (예전 개미 모양의 편집본은 건너뛴다)
+function loadCM(){CMS={};try{if(localStorage.getItem("antmodelOn")==="1"||/[?&]sb(&|$)/.test(location.search))[0,1,2,3,4,5,6,7].forEach(function(k){var t=localStorage.getItem((/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(k?"antmodel"+k:"antmodel")),j=t?JSON.parse(t):null;if(j&&j.parts&&j.v===2)CMS[k]=j});
+  try{var sbq=/[?&]sb(&|$)/.test(location.search),jq=(localStorage.getItem("antmodelOn")==="1"||sbq)?JSON.parse(localStorage.getItem((sbq?"sb_":"")+"antmodelQ")):null;if(jq&&jq.parts&&jq.v===2)CMS.q=jq}catch(_){}}catch(_){CMS={}}}loadCM();   // v 2: 리디자인한 몸에 맞춘 편집본만 쓴다 (예전 개미 모양의 편집본은 건너뛴다)
 var CS=.85;   // 귀요미 개미 전체 배율: 머리가 커진 만큼 줄여서 기본 개미와 키를 맞춘다
 var CVS=[.08,.068,.056,.047,.04];                              // 귀요미 개미 밀도 −2 ~ +2 (복셀 한 칸의 크기)
 function setVS(){VS=CUTE?CVS[(GFX&&GFX.cdens!=null)?GFX.cdens:2]:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
@@ -937,7 +938,7 @@ function buildVox(L){
   function part(p,rot,a){var o={p:p,r:rot||[0,0,0],a:a||0,v:[],c:[]};parts.push(o);return o}
   function put(o,x,y,z,c,k){k=L.raw?1:(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}   // L.raw: 편집 화면용. 음영 없이 원래 색 그대로
   // 부위에 이름을 붙이고, 편집한 모델이 있으면 그 부위의 복셀을 통째로 바꾼다. 색 B·D·S 는 개미마다 다른 몸 색·짙은 색·줄무늬 색
-  function cust(o,nm){o.nm=nm;var CC=!CUTE&&!L.raw&&CMS[SP],M=CC&&CC.parts[nm],OF=CC&&CC.off&&CC.off[nm],RT=CC&&CC.rot&&CC.rot[nm],q,cc,y0=1e9,y1=-1e9;
+  function cust(o,nm){o.nm=nm;var CC=!L.raw&&(CUTE?(CMS.q&&Math.abs((CMS.q.vs||0)-VS)<1e-6?CMS.q:null):CMS[SP]),M=CC&&CC.parts[nm],OF=CC&&CC.off&&CC.off[nm],RT=CC&&CC.rot&&CC.rot[nm],q,cc,y0=1e9,y1=-1e9;
     if(o.sb&&CC){o.v.length=0;o.c.length=0;return}                                             // 편집본이 있으면 조각은 딸린 부위 쪽에서 편집본대로 다시 만든다
     if(OF)o.p=[o.p[0]+OF[0]*VS,o.p[1]+OF[1]*VS,o.p[2]+OF[2]*VS];
     if(RT)o.r=[o.r[0]+RT[0]*.017453,o.r[1]+RT[1]*.017453,o.r[2]+RT[2]*.017453];if(!M)return;o.v.length=0;o.c.length=0;
@@ -2335,7 +2336,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211507";
+var BUILD="B11211511";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2350,12 +2351,13 @@ try{var agN=sessionStorage.getItem("antgo");if(agN){sessionStorage.removeItem("a
    모델 형식: {v:1, parts:{부위:[[x,y,z,색],...]}, xf:{부위:{p,r}}}  좌표는 부위 안에서의 복셀 칸 단위, 색은 "B"(몸 색) "D"(짙은 색) "S"(줄무늬) 또는 0xRRGGBB */
 var EDIT=/[?&]edit/.test(location.search);
 function startEditor(){
-  var edBoss=/[?&]edit=[bc]/i.test(location.search),edBV=1,edSp=edBoss?9:SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(edBoss?(edBV?"antmodelC":"antmodelB"):edSp?"antmodel"+edSp:"antmodel"),edB=null,edD=null;   // edBoss: 슈카 새우 편집 (한 덩어리 "boss")
+  var edBoss=/[?&]edit=[bc]/i.test(location.search),edCute=/[?&]edit=q/i.test(location.search),edBV=1,edSp=edBoss?9:SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(edBoss?"antmodelC":edCute?"antmodelQ":edSp?"antmodel"+edSp:"antmodel"),edB=null,edD=null;   // edBoss: 슈카 새우 편집 (한 덩어리 "boss")
     // ?sb: 시험용 저장 칸 (실제 편집본을 건드리지 않고 기능을 시험할 때)             // 편집할 캐릭터: 0 개미, 1 인간형 개미 (저장도 따로)
   var PNAME={belly:"배",chest:edSp===3?"가슴":edSp?"몸통":"가슴",waist:"허리",pelvis:"골반",shinL:"정강이",shinR:"정강이",footL:"발",footR:"발",tail:"꼬리",boss:"새우",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
       BODYS=["#f5821f","#b5532a","#2a2320","#d9362f","#6b4a32"],bodyHex=BODYS[0],model,tool="move",padMode="move",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
       sels=[],whole=false,multi=false,joint=false,fine=true,anim=0,pv=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
+  if(edCute){CUTE=true;setVS()}                                                                       // 귀요미 개미를 빚는 설정으로 바꾼다 (이 화면 안에서만)
   var ONKEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+"antmodelOn";   // 게임에 적용 스위치 (시험 칸은 따로 둔다)
   try{on=localStorage.getItem(ONKEY)==="1"}catch(_){}
   if(edBoss&&BVER!==edBV){BVER=edBV;bossGen()}                                                        // 편집할 새우 버전의 처음 모양을 준비한다 (게임 설정은 바꾸지 않는다)
@@ -2437,7 +2439,7 @@ function startEditor(){
       of=model.off[nm]||[0,0,0];rt=model.rot[nm]||[0,0,0];pg=new THREE.Group();pg.position.set((su.c[0]+of[0])*VS,(su.c[1]+of[1])*VS,(su.c[2]+of[2])*VS);pg.rotation.set(rt[0]*.017453,rt[1]*.017453,rt[2]*.017453);
       m.position.set(-su.c[0]*VS,-su.c[1]*VS,-su.c[2]*VS);m.userData.r=[0,0,0];m.userData.a=0;m.userData.sub=1;pg.add(m);pm.add(pg)}
     G.updateMatrixWorld(true);refreshSel();info.textContent="블록 "+tot.toLocaleString("ko-KR")+"개 · "+(on?"게임에 적용 중":"게임에는 아직 적용 안 함");
-    try{localStorage.setItem(KEY,JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}))}catch(_){}}
+    try{localStorage.setItem(KEY,JSON.stringify({v:2,vs:edCute?VS:undefined,parts:model.parts,off:model.off,rot:model.rot,sub:model.sub}))}catch(_){}}
 
   // ── 모델 다루기
   function find(M,x,y,z){for(var i=0;i<M.length;i++)if(Math.abs(M[i][0]-x)<.02&&Math.abs(M[i][1]-y)<.02&&Math.abs(M[i][2]-z)<.02)return i;return -1}
@@ -2675,8 +2677,9 @@ function startEditor(){
   function slotLoad(i){var j=slotGet(i),bf=snapStr();if(!j||!j.parts)return flash("저장본 "+i+"은 비어 있습니다");histPush("저장본 불러오기 전");model.parts=JSON.parse(JSON.stringify(j.parts));model.off=j.off||{};model.rot=j.rot||{};model.sub=j.sub||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash("저장본 "+i+"을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function btn(par,label,cls,fn,sub){var b=mk("button",cls||"",label);if(sub)b.appendChild(mk("small",null,sub));b.onclick=fn;par.appendChild(b);return b}
   function paint(){var g,b,h,sc=panel.scrollTop;panel.textContent="";joint=tool==="move"&&isPart();if(joint&&padMode==="ext")padMode="move";
-    panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));panel.appendChild(mk("h4",null,"모델 불러오기 · 지금 "+(edBoss?"슈카 새우":SPN[edSp])));g=mk("div","g g3");
-    SPOK.forEach(function(k){var has=false;try{has=!!localStorage.getItem(k?"antmodel"+k:"antmodel")}catch(_){}btn(g,SPI[k]+" "+SPN[k],k===edSp?"on":"",function(){if(k!==edSp)location.search=k?"?edit="+k:"?edit"},has?"편집본 있음":"처음 모양")});
+    panel.appendChild(mk("h2",null,"캐릭터 모델 편집"));panel.appendChild(mk("h4",null,"모델 불러오기 · 지금 "+(edBoss?"슈카 새우":edCute?"귀요미 개미":SPN[edSp])));g=mk("div","g g3");
+    SPOK.forEach(function(k){var has=false;try{has=!!localStorage.getItem(k?"antmodel"+k:"antmodel")}catch(_){}btn(g,SPI[k]+" "+SPN[k],k===edSp&&!edCute?"on":"",function(){if(k!==edSp||edCute)location.search=k?"?edit="+k:"?edit"},has?"편집본 있음":"처음 모양")});
+    (function(){var has=false;try{has=!!localStorage.getItem("antmodelQ")}catch(_){}btn(g,"🐜 귀요미 개미",edCute?"on":"",function(){if(!edCute)location.search="?edit=q"},has?"편집본 있음":"처음 모양")})();
     (function(){var has=false;try{has=!!localStorage.getItem("antmodelC")}catch(_){}btn(g,"🦐 슈카 새우",edBoss?"on":"",function(){if(!edBoss)location.search="?edit=c"},has?"편집본 있음":"표준 모양")})();panel.appendChild(g);
     panel.appendChild(mk("h4",null,"도구"));g=mk("div","g g3");tools.forEach(function(t){btn(g,t[1],tool===t[0]?"on":"",function(){setTool(t[0])})});btn(g,"대칭 "+(mirror?"켬":"끔"),mirror?"on":"",function(){mirror=!mirror;paint()});panel.appendChild(g);
     g=mk("div","g");g.style.marginTop="6px";btn(g,"되돌리기","",doUndo).disabled=!undo.length;btn(g,"다시 실행","",doRedo).disabled=!redo.length;panel.appendChild(g);
