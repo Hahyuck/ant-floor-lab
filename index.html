@@ -2343,7 +2343,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211431";
+var BUILD="B11211436";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2445,6 +2445,7 @@ function startEditor(){
   function find(M,x,y,z){for(var i=0;i<M.length;i++)if(Math.abs(M[i][0]-x)<.02&&Math.abs(M[i][1]-y)<.02&&Math.abs(M[i][2]-z)<.02)return i;return -1}
   function mirOf(nm){if(model.sub&&model.sub[nm])return model.sub[nm].mir||nm;var e=nm.slice(-1);return e==="L"?nm.slice(0,-1)+"R":e==="R"?nm.slice(0,-1)+"L":nm}
   function mt(nm,pos){var o=[{nm:nm,pos:pos}],mn=mirOf(nm);if(mirror&&(mn!==nm||Math.abs(pos[0])>.02))o.push({nm:mn,pos:[-pos[0],pos[1],pos[2]]});return o}   // 대칭까지 포함한 대상 칸
+  function pruneSub(){var k,j;for(k in model.sub)if(!model.parts[k]||!model.parts[k].length){delete model.parts[k];delete model.sub[k];delete model.off[k];delete model.rot[k];for(j in model.sub)if(model.sub[j].mir===k)model.sub[j].mir=null}}   // 블록이 하나도 남지 않은 조각은 없앤다 (조각의 마지막 블록도 지울 수 있다. 몸의 기본 부위는 한 개를 남긴다)
   function snapStr(){return JSON.stringify({p:model.parts,o:model.off,r:model.rot,s:model.sub})}
   function restore(t){var j=JSON.parse(t);model.parts=j.p;model.off=j.o||{};model.rot=j.r||{};model.sub=j.s||{}}
   function commit(before){if(before===snapStr())return false;undo.push(before);if(undo.length>80)undo.shift();redo.length=0;return true}   // 실제로 바뀐 때만 되돌리기 단계로 남긴다
@@ -2452,7 +2453,7 @@ function startEditor(){
   function doRedo(){if(!redo.length)return flash("다시 실행할 단계가 없습니다");undo.push(snapStr());restore(redo.pop());sels=[];lineA=null;rebuild();paint()}
   function applyTool(h,t){var ch=false;t=t||tool;                                             // 쌓기 · 지우기 · 칠하기 한 번
     if(t==="add")mt(h.nm,h.add).forEach(function(q){var M=model.parts[q.nm],v;if(find(M,q.pos[0],q.pos[1],q.pos[2])<0){v=[q.pos[0],q.pos[1],q.pos[2],cur];v.sk=strokeId;M.push(v);ch=true}});
-    else if(t==="del")mt(h.nm,h.v.slice(0,3)).forEach(function(q){var M=model.parts[q.nm],i=find(M,q.pos[0],q.pos[1],q.pos[2]);if(i>=0&&M.length>1){M.splice(i,1);ch=true}});
+    else if(t==="del")mt(h.nm,h.v.slice(0,3)).forEach(function(q){var M=model.parts[q.nm],i=find(M,q.pos[0],q.pos[1],q.pos[2]);if(i>=0&&(M.length>1||model.sub[q.nm])){M.splice(i,1);ch=true}});if(ch&&t==="del")pruneSub();
     else mt(h.nm,h.v.slice(0,3)).forEach(function(q){var M=model.parts[q.nm],i=find(M,q.pos[0],q.pos[1],q.pos[2]);if(i>=0&&M[i][3]!==cur){M[i][3]=cur;ch=true}});
     return ch}
   function linePts(a,h){var b=h.v,m1=byNm[h.nm],m0=byNm[a.nm],d,n,t,o=[],q;                    // 잇기: 시작 블록에서 끝 블록까지 곧은 줄 (끝이 다른 부위면 시작 부위의 칸으로 옮겨 계산)
@@ -2507,7 +2508,7 @@ function startEditor(){
     if(A0!==B0){A0.splice(A0.indexOf(q.v),1);B0.push(q.v)}q.v[0]=h.add[0];q.v[1]=h.add[1];q.v[2]=h.add[2];q.nm=h.nm;
     if(mv&&find(mB,-h.add[0],h.add[1],h.add[2])<0&&(mA===mB||mA.length>1)){if(mA!==mB){mA.splice(mA.indexOf(mv),1);mB.push(mv)}mv[0]=-h.add[0];mv[1]=h.add[1];mv[2]=h.add[2]}
     commit(before);rebuild();paint()}
-  function delSel(){if(!sels.length)return;var before=snapStr();moveList().forEach(function(e){var M=model.parts[e.nm],i=M.indexOf(e.v);if(i>=0&&M.length>1)M.splice(i,1)});sels=[];commit(before);rebuild();paint()}
+  function delSel(){if(!sels.length)return;var before=snapStr();moveList().forEach(function(e){var M=model.parts[e.nm],i=M.indexOf(e.v);if(i>=0&&(M.length>1||model.sub[e.nm]))M.splice(i,1)});pruneSub();sels=[];commit(before);rebuild();paint()}
   function clickTool(h,ev){var i,before;
     if(tool==="pick"){cur=h.v[3];tool="paint";paint();return}
     if(tool==="line"){if(!lineA){lineA={nm:h.nm,v:h.v};paint();return}
