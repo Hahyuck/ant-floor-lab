@@ -1200,14 +1200,14 @@ function setBoss(){var p=RAID?[0,1.2,-RD+1.5,0]:BASE?[14.6,3.3,-RD+3.2,-.4]:[-11
 setBoss();
 var bossG=new THREE.Group();BOSS.on=0;BOSS.until=0;BOSS.sc=0;   // 평소에는 숨어 있다가 연설할 때 나타나고, 끝나면 뽕~ 하고 사라진다
 var bossEnt={name:"새우 공대장",bot:false,cos:2,vote:0,party:-1,say:"",sayT:0,megaT:0,look:{title:"공대장 · 대역 캐릭터",scale:1,color:"#f0826a"}};
-var BOSSV=[],BVER=0;try{BVER=localStorage.getItem("bossver")==="1"?1:0}catch(_){}   // BOSSV: 새우의 처음 모양 [x,y,z,색] (칸 단위). BVER: 새우 버전 0 기존 · 1 새 모양
+var BOSSV=[],BOSSG=[],BVER=0;try{BVER=localStorage.getItem("bossver")==="1"?1:0}catch(_){}   // BOSSV: 새우의 처음 모양 [x,y,z,색] (칸 단위). BVER: 새우 버전 0 기존 · 1 새 모양
 function bossGen(){
-  while(bossG.children.length){var oc=bossG.children[0];bossG.remove(oc);if(oc.dispose)oc.dispose()}BOSSV.length=0;
+  while(bossG.children.length){var oc=bossG.children[0];bossG.remove(oc);if(oc.dispose)oc.dispose()}BOSSV.length=0;BOSSG.length=0;
   // 개미와 같은 방식: 작은 복셀로 둥근 덩어리를 빚고 겉면만 남긴다
-  var RAW=[],IM=[];
+  var RAW=[],IM=[],GR=[],gcur="boss";   // gcur: 지금 빚는 부위 이름 (편집 화면에서 따로 집을 수 있는 조각이 된다)
   var VS=.085;   // 새우는 개미 스타일 설정과 상관없이 항상 이 크기의 복셀로 빚는다
   var P=[],C=[],r=rng(4242),PK=lin(0xf0826a),LT=lin(0xf9b09a),DK=lin(0xb9432f),CR=lin(0xffe9d6),CAPE=lin(0xa81f2a),GREY=lin(0x8d8f96),JEWEL=lin(0xd9362f),i,j,t,sx,a,u,v;
-  function put(x,y,z,c,k){RAW.push(c[0]*(k||1),c[1]*(k||1),c[2]*(k||1));k=(k||1)*(1+(r()-.5)*.08);P.push(x,y,z);C.push(c[0]*k,c[1]*k,c[2]*k)}
+  function put(x,y,z,c,k){GR.push(gcur);RAW.push(c[0]*(k||1),c[1]*(k||1),c[2]*(k||1));k=(k||1)*(1+(r()-.5)*.08);P.push(x,y,z);C.push(c[0]*k,c[1]*k,c[2]*k)}
   function blob(cx,cy,cz,rx,ry,rz,pw,paint){
     var nx=Math.ceil(rx/VS),ny=Math.ceil(ry/VS),nz=Math.ceil(rz/VS),i,j,k;
     function ins(i,j,k){return Math.pow(Math.abs((i+.5)*VS/rx),pw)+Math.pow(Math.abs((j+.5)*VS/ry),pw)+Math.pow(Math.abs((k+.5)*VS/rz),pw)<=1}
@@ -1221,18 +1221,19 @@ function bossGen(){
     var B1=lin(0xf2694f),B2=lin(0xf9a48c),B3=lin(0xe2543c),LEGC=lin(0xb02f1c),CP=lin(0xb3162a),CP2=lin(0xcf2338),EW=lin(0xf4efe6),EK=lin(0x1c1a1c),q,tt,rr2,py,
         pl=function(c){return function(){return c}},
         ln=function(x0,y0,z0,x1,y1,z1,c){var n2=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0,z1-z0)/(VS*.9))),w;for(w=0;w<=n2;w++)put(x0+(x1-x0)*w/n2,y0+(y1-y0)*w/n2,z0+(z1-z0)*w/n2,c)};
-    blob(0,2.45,.5,.56,.52,.62,2.2,pl(B1));blob(0,2.08,-.2,.5,.34,.46,2.2,pl(B1));                                   // 머리통과 목
+    gcur="bHead";blob(0,2.45,.5,.56,.52,.62,2.2,pl(B1));gcur="boss";blob(0,2.08,-.2,.5,.34,.46,2.2,pl(B1));gcur="bHead";                                   // 머리통과 목
     for(q=0;q<8;q++){tt=q/7;rr2=.44*(1-tt)+.05;blob(0,2.42-tt*.1,.92+tt*.86,rr2,rr2*.9,.2,2,pl(tt>.55?B3:B1))}        // 앞으로 가늘어지는 뿔
     for(sx=-1;sx<=1;sx+=2){blob(sx*.5,2.47,.72,.1,.3,.3,2,pl(EW));                                                   // 눈: 흰자, 뒤가 올라간 눈썹, 눈동자
       for(q=0;q<5;q++)put(sx*.6,2.64-q*.035,.5+q*VS,EK);put(sx*.6,2.47,.72,EK);put(sx*.6,2.47-VS,.72,EK);put(sx*.6,2.47,.72+VS,EK);put(sx*.6,2.47-VS,.72+VS,EK)}
     var SG=[[1.82,-.5,.5,.42,.5],[1.3,-.56,.45,.4,.45],[.84,-.36,.37,.34,.38],[.46,-.1,.28,.26,.3],[.2,.14,.18,.18,.2]];   // 몸 마디 (높이, 앞뒤, 반지름 셋): 등 쪽으로 휘어 내려가다 앞으로 말린다
-    for(q=0;q<SG.length;q++)blob(0,SG[q][0],SG[q][1],SG[q][2],SG[q][3],SG[q][4],2.3,pl(q&1?B1:B2));
-    blob(0,.08,.24,.1,.16,.1,2,pl(B1));for(sx=-1;sx<=1;sx+=2)blob(sx*.26,.56,.36,.2,.12,.28,2,pl(B1));                // 꼬리 끝과 앞으로 뻗은 꼬리 부채
-    for(sx=-1;sx<=1;sx+=2)for(q=0;q<6;q++){py=2.0-q*.22;for(tt=0;tt<5;tt++)put(sx*.16,py-tt*.03,-.02+tt*VS,LEGC)}     // 헤엄다리
-    blob(0,2.45,-.62,.74,.62,.74,2,function(mi,j,k){var y=2.45+(j+.5)*VS,z=-.62+(k+.5)*VS,e=2.88+.66*(z+.15);if(z>.02||y<e)return null;return (y<e+VS*1.6||z>-.07)?V_GOLD:(((k+mi)&3)===0?CP2:CP)});   // 망토: 등 위를 덮는 둥근 덮개, 가장자리는 금테
-    for(q=0;q<26;q++){a=q/26*6.283;tt=2+Math.round(2.4*Math.max(0,Math.cos(a*5)));for(j=0;j<tt;j++)put(Math.cos(a)*.34,2.98+j*VS,.5+Math.sin(a)*.34,V_GOLD)}   // 왕관
-    for(sx=-1;sx<=1;sx+=2){ln(sx*.22,2.5,1.4,sx*.42,3.25,1.72,LEGC);ln(sx*.42,3.25,1.72,sx*.46,3.62,1.5,LEGC);ln(sx*.46,3.62,1.5,sx*.46,3.66,1.32,LEGC);   // 긴 더듬이
-      ln(sx*.16,2.52,1.3,sx*.3,3.0,1.5,LEGC);ln(sx*.3,3.0,1.5,sx*.33,3.2,1.34,LEGC)}                                  // 짧은 더듬이
+    for(q=0;q<SG.length;q++){gcur="bSeg"+(q+1);blob(0,SG[q][0],SG[q][1],SG[q][2],SG[q][3],SG[q][4],2.3,pl(q&1?B1:B2))}
+    gcur="bTail";blob(0,.08,.24,.1,.16,.1,2,pl(B1));for(sx=-1;sx<=1;sx+=2)blob(sx*.26,.56,.36,.2,.12,.28,2,pl(B1));                // 꼬리 끝과 앞으로 뻗은 꼬리 부채
+    for(sx=-1;sx<=1;sx+=2)for(q=0;q<6;q++){gcur=q<3?"bLegA":"bLegB";py=2.0-q*.22;for(tt=0;tt<5;tt++)put(sx*.16,py-tt*.03,-.02+tt*VS,LEGC)}     // 헤엄다리
+    gcur="bCape";blob(0,2.45,-.62,.74,.62,.74,2,function(mi,j,k){var y=2.45+(j+.5)*VS,z=-.62+(k+.5)*VS,e=2.88+.66*(z+.15);if(z>.02||y<e)return null;return (y<e+VS*1.6||z>-.07)?V_GOLD:(((k+mi)&3)===0?CP2:CP)});   // 망토: 등 위를 덮는 둥근 덮개, 가장자리는 금테
+    gcur="bCrown";for(q=0;q<26;q++){a=q/26*6.283;tt=2+Math.round(2.4*Math.max(0,Math.cos(a*5)));for(j=0;j<tt;j++)put(Math.cos(a)*.34,2.98+j*VS,.5+Math.sin(a)*.34,V_GOLD)}   // 왕관
+    for(sx=-1;sx<=1;sx+=2){gcur=sx<0?"bAntL":"bAntR";ln(sx*.22,2.5,1.4,sx*.42,3.25,1.72,LEGC);ln(sx*.42,3.25,1.72,sx*.46,3.62,1.5,LEGC);ln(sx*.46,3.62,1.5,sx*.46,3.66,1.32,LEGC);   // 긴 더듬이
+      ln(sx*.16,2.52,1.3,sx*.3,3.0,1.5,LEGC);ln(sx*.3,3.0,1.5,sx*.33,3.2,1.34,LEGC)}
+    gcur="boss";                                  // 짧은 더듬이
   }else{
   // 몸통 마디: 아래로 갈수록 가늘어지며 앞으로 말린다. 마디 경계는 어둡게, 배 쪽은 밝게
   var SEG=[[1.92,-.04,.56,.40,.56],[1.48,-.14,.52,.36,.52],[1.08,-.18,.46,.33,.46],[.74,-.09,.40,.29,.40],[.48,.14,.33,.24,.35]];
@@ -1257,6 +1258,7 @@ function bossGen(){
   for(i=0;i<44;i++){a=i/44*6.283;put(Math.cos(a)*.6,2.22,-.02+Math.sin(a)*.6,V_GOLD)}                    // 깃
   for(i=-6;i<6;i++)for(j=0;j<9;j++)put((i+.5)*VS,1.42+j*VS,.9-j*.03,(j%2===1&&i>-5&&i<4&&(i+j)%7!==0)?GREY:V_WHITE);   // 신문
   }
+  for(i=0;i<P.length/3;i++)BOSSG.push(GR[i]);
   for(i=0;i<P.length/3;i++)BOSSV.push([+(P[i*3]/VS).toFixed(2),+(P[i*3+1]/VS).toFixed(2),+(P[i*3+2]/VS).toFixed(2),new THREE.Color().setRGB(Math.min(1,RAW[i*3]),Math.min(1,RAW[i*3+1]),Math.min(1,RAW[i*3+2])).getHex()]);
   // 편집 화면(?edit=b)에서 저장한 새우가 있으면 그 모양으로 바꾼다. 분리한 조각은 제 위치 · 각도를 그대로 살린다
   (function(){var CB=null,pre=/[?&]sb(&|$)/.test(location.search)?"sb_":"",sn,su,sf,sr,mx;
@@ -2341,7 +2343,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211411";
+var BUILD="B11211417";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2364,7 +2366,12 @@ function startEditor(){
       sels=[],whole=false,multi=false,joint=false,fine=true,anim=0,pv=false,lineA=null,strokeId=0,arm=null,armT=0,flashT=0;   // sels: 옮기기로 집은 블록들, lineA: 잇기의 시작 블록
   try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
   if(edBoss&&BVER!==edBV){BVER=edBV;bossGen()}                                                        // 편집할 새우 버전의 처음 모양을 준비한다 (게임 설정은 바꾸지 않는다)
-  function base(){if(edBoss){edB=lin(0xf0826a);edD=lin(0xb9432f);return {v:2,parts:{boss:BOSSV.map(function(v){return v.slice()})},xf:{boss:{p:[0,0,0],r:[0,0,0],a:0}}}}
+  function base(){if(edBoss){edB=lin(0xf0826a);edD=lin(0xb9432f);
+      var bm={v:2,parts:{boss:[]},xf:{boss:{p:[0,0,0],r:[0,0,0],a:0}},sub:{}},gi,gn,ga2,cc2,MIRB={bAntL:"bAntR",bAntR:"bAntL"};
+      for(gi=0;gi<BOSSV.length;gi++){gn=BOSSG[gi]||"boss";(bm.parts[gn]=bm.parts[gn]||[]).push(BOSSV[gi].slice())}                    // 부위 이름별로 나눠 담는다
+      for(gn in bm.parts){if(gn==="boss")continue;ga2=bm.parts[gn];cc2=[0,0,0];ga2.forEach(function(v){cc2[0]+=v[0];cc2[1]+=v[1];cc2[2]+=v[2]});
+        bm.sub[gn]={par:"boss",c:[Math.round(cc2[0]/ga2.length*2)/2,Math.round(cc2[1]/ga2.length*2)/2,Math.round(cc2[2]/ga2.length*2)/2],mir:MIRB[gn]||null}}   // 회전 중심은 조각 한가운데
+      return bm}
     var L=lookOf("기본개미"),P,b,m={v:2,parts:{},xf:{}},i,k,q,c,arr;L.color="#f5821f";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=edSp;L.raw=true;
     var near=function(a,t){return Math.abs(a[0]-t[0])+Math.abs(a[1]-t[1])+Math.abs(a[2]-t[2])<.004};
     P=buildVox(L);b=P.bc;edB=P.bc;edD=P.dc;
@@ -2373,8 +2380,13 @@ function startEditor(){
       m.parts[q.nm]=arr;if(q.sb){m.sub=m.sub||{};m.sub[q.nm]={par:q.sb.par,c:q.sb.c.slice(),mir:q.sb.mir}}else m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]],a:q.a||0}}
     return m}
   var BASE0=base();if(edSp===3){PNAME.legL=PNAME.legR="허벅지"}
+  if(edBoss){PNAME.boss=edBV?"목":"새우";PNAME.bHead="머리";PNAME.bCrown="왕관";PNAME.bCape="망토";PNAME.bAntL=PNAME.bAntR="더듬이";PNAME.bSeg1="몸 마디 1";PNAME.bSeg2="몸 마디 2";PNAME.bSeg3="몸 마디 3";PNAME.bSeg4="몸 마디 4";PNAME.bSeg5="몸 마디 5";PNAME.bTail="꼬리";PNAME.bLegA="헤엄다리 위";PNAME.bLegB="헤엄다리 아래"}
   try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.parts&&(sv.parts.head||sv.parts.boss)&&sv.v===2){model=sv;model.xf=BASE0.xf}else if(sv&&sv.parts){localStorage.setItem(KEY+"_v1",JSON.stringify(sv));var h0=[];try{h0=JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(e){}h0.unshift({t:"예전 형식",w:"건너뛴 편집본",d:JSON.stringify({parts:sv.parts,off:sv.off||{},rot:sv.rot||{}})});if(h0.length>8)h0.length=8;localStorage.setItem(KEY+"_hist",JSON.stringify(h0))}}catch(_){}   // 예전 모양의 편집본은 따로 보관만 하고 새 디자인에서 시작한다
   if(!model)model=JSON.parse(JSON.stringify(BASE0));
+  if(edBoss&&BASE0.sub&&Object.keys(BASE0.sub).length&&model.parts.boss&&!(model.sub&&Object.keys(model.sub).length))(function(){
+    var G={},i2,k2,gn2,keep=[];for(i2=0;i2<BOSSV.length;i2++)G[BOSSV[i2][0]+","+BOSSV[i2][1]+","+BOSSV[i2][2]]=BOSSG[i2];
+    model.parts.boss.forEach(function(v){gn2=G[v[0]+","+v[1]+","+v[2]];if(gn2&&gn2!=="boss")(model.parts[gn2]=model.parts[gn2]||[]).push(v);else keep.push(v)});
+    model.parts.boss=keep;model.sub={};for(k2 in BASE0.sub)if(model.parts[k2]&&model.parts[k2].length)model.sub[k2]=JSON.parse(JSON.stringify(BASE0.sub[k2]))})();
   if(!model.off)model.off={};if(!model.rot)model.rot={};if(!model.sub)model.sub={};                // sub: 분리한 조각 → {par 딸린 부위, c 회전 중심, mir 반대쪽 짝}
                                          // rot: 부위 각도를 돌린 값 (도, 5도씩)                                                                // off: 부위가 몸에 붙는 위치를 옮긴 값 (칸 단위, 반 칸씩)
 
