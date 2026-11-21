@@ -287,6 +287,7 @@ body.touch #knob{display:none}
 body.touch #btns{right:12px;bottom:68px;width:auto;height:auto;display:flex;gap:10px}
 body.touch #btns button{position:relative;left:auto;top:auto;right:auto;bottom:auto;width:56px;height:56px}
 body.touch #btns #pA{font-size:16px!important;white-space:nowrap}
+#btns button[data-over="1"]::before{content:"+";position:absolute;right:1px;bottom:13px;width:14px;text-align:center;color:var(--amber);font-size:13px;font-weight:800;line-height:1;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}   /* 99개를 넘으면 숫자 위에 + */
 #btns button[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;right:-3px;bottom:-3px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:rgba(10,12,17,.92);border:1px solid var(--line);color:var(--amber);font-size:11px;font-weight:700;line-height:16px;text-align:center;pointer-events:none}
 body.touch #log{bottom:136px}
 #chatOpen,#chatpop{display:none}
