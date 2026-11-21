@@ -2266,7 +2266,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11211230";
+var BUILD="B11211232";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2281,7 +2281,7 @@ try{var agN=sessionStorage.getItem("antgo");if(agN){sessionStorage.removeItem("a
    모델 형식: {v:1, parts:{부위:[[x,y,z,색],...]}, xf:{부위:{p,r}}}  좌표는 부위 안에서의 복셀 칸 단위, 색은 "B"(몸 색) "D"(짙은 색) "S"(줄무늬) 또는 0xRRGGBB */
 var EDIT=/[?&]edit/.test(location.search);
 function startEditor(){
-  var edSp=SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=edSp?"antmodel"+edSp:"antmodel",edB=null,edD=null;             // 편집할 캐릭터: 0 개미, 1 인간형 개미 (저장도 따로)
+  var edSp=SPOK.indexOf(+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0))<0?0:+((location.search.match(/[?&]edit=(\d)/)||[])[1]||0),KEY=(/[?&]sb(&|$)/.test(location.search)?"sb_":"")+(edSp?"antmodel"+edSp:"antmodel"),edB=null,edD=null;   // ?sb: 시험용 저장 칸 (실제 편집본을 건드리지 않고 기능을 시험할 때)             // 편집할 캐릭터: 0 개미, 1 인간형 개미 (저장도 따로)
   var PNAME={belly:"배",chest:edSp?"몸통":"가슴",tail:"꼬리",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
       PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
       BODYS=["#f5821f","#b5532a","#2a2320","#d9362f","#6b4a32"],bodyHex=BODYS[0],model,tool="move",padMode="move",cur="B",mirror=true,undo=[],redo=[],meshes=[],byNm={},on=false,
@@ -2525,9 +2525,15 @@ function startEditor(){
     "@media (max-width:700px){#eds span{display:none}#edh{top:66px}}";
   document.head.appendChild(st3);
   function nowStr(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
-  function saveNow(){rebuild();histPush("저장");lastSave=nowStr();paintBar();flash("지금 상태를 저장했습니다"+(on?" · 게임에 적용 중":" · 게임에는 아직 적용 안 함"))}
-  function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
+  function saveNow(){rebuild();histPush("저장");var made=bakPush();lastSave=nowStr();paint();flash("저장되었습니다 · "+(made?"백업을 만들었습니다 (백업 "+bakGet().length+"개)":"바뀐 것이 없어 기존 백업 그대로입니다")+(on?" · 게임에 적용 중":""))}
+  function paintBar(){bar.textContent="";bar.appendChild(mk("span",null,(lastSave?"저장됨 "+lastSave:"고칠 때마다 자동 저장")+" · 백업 "+bakGet().length+"개"));var b=mk("button","pri","저장");b.onclick=saveNow;bar.appendChild(b);
     b=mk("button",on?"on":"",on?"게임 적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}saveNow();paint();flash(on?"저장했고, 게임의 기본 개미에 적용했습니다":"게임 적용을 껐습니다")};bar.appendChild(b)}
+  function bakGet(){try{return JSON.parse(localStorage.getItem(KEY+"_bak"))||[]}catch(_){return []}}
+  function bakPush(){var h=bakGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot}),n=0,q;for(q in model.parts)n+=model.parts[q].length;
+    if(h.length&&h[0].d===d)return false;                                                                                       // 바뀐 것이 없으면 같은 백업을 또 만들지 않는다
+    h.unshift({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}),n:n,d:d});if(h.length>10)h.length=10;
+    try{localStorage.setItem(KEY+"_bak",JSON.stringify(h))}catch(_){try{h.length=4;localStorage.setItem(KEY+"_bak",JSON.stringify(h))}catch(e){return false}}return true}
+  function bakLoad(i){var h=bakGet()[i],bf=snapStr(),j;if(!h)return;histPush("백업 불러오기 전");j=JSON.parse(h.d);model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint();flash(h.t+" 백업을 불러왔습니다. 되돌리기로 취소할 수 있습니다")}
   function histGet(){try{return JSON.parse(localStorage.getItem(KEY+"_hist"))||[]}catch(_){return []}}
   function histPush(why){var h=histGet(),d=JSON.stringify({parts:model.parts,off:model.off,rot:model.rot});if(h.length&&h[0].d===d)return;                 // 같은 내용이면 다시 쌓지 않는다
     h.unshift({t:new Date().toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}),w:why,d:d});if(h.length>8)h.length=8;
@@ -2563,6 +2569,8 @@ function startEditor(){
       btn(g,"파일로 내보내기","",function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:2,parts:model.parts,off:model.off,rot:model.rot})],{type:"application/json"}));a.download="ant-model.json";a.click()});
       btn(g,"파일 불러오기","",function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result),bf=snapStr();if(!j.parts||!j.parts.head)throw 0;histPush("파일 불러오기 전");model.parts=j.parts;model.off=j.off||{};model.rot=j.rot||{};sels=[];lineA=null;commit(bf);rebuild();paint()}catch(_){flash("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()});
       btn(g,"게임 열기","",function(){window.open(location.pathname,"_blank")});btn(g,"보기 초기화","",function(){cam2.yaw=.7;cam2.pitch=.28;cam2.dist=4.6});panel.appendChild(g);
+      panel.appendChild(mk("h4",null,"백업 · 저장을 누를 때마다 (최근 10개)"));var bl=bakGet();if(!bl.length)panel.appendChild(mk("p",null,"아직 백업이 없습니다. 오른쪽 위 \"저장\"을 누르면 하나씩 만들어집니다."));
+      bl.forEach(function(e,i){var r=mk("div","slot");r.style.gridTemplateColumns="1fr auto";r.appendChild(mk("span",null,e.t+" · 블록 "+e.n+"개"));btn(r,"불러오기","",function(){bakLoad(i)});panel.appendChild(r)});
       panel.appendChild(mk("h4",null,"저장 기록 · 자동 보관 (최근 8개)"));var hl=histGet();if(!hl.length)panel.appendChild(mk("p",null,"아직 기록이 없습니다. 저장을 누르거나 모양을 통째로 바꾸기 직전에 자동으로 쌓입니다."));
       hl.forEach(function(e,i){var r=mk("div","slot");r.style.gridTemplateColumns="1fr auto";r.appendChild(mk("span",null,e.t+" · "+e.w));btn(r,"불러오기","",function(){histLoad(i)});panel.appendChild(r)});
       panel.appendChild(mk("h4",null,"처음으로"));g=mk("div","g");
