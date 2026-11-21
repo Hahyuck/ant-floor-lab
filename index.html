@@ -235,6 +235,7 @@
     <div class="mh">꾸미기</div>
     <button class="pill" id="bCute">개미: 기본</button>
     <button class="pill" id="bTheme">테마</button>
+    <button class="pill" id="bEdit">개미 모델 편집</button>
     <div class="mh">방</div>
     <button class="pill" id="bInvite">초대 링크 복사</button>
     <button class="pill" id="bSrv">서버 이동</button>
@@ -905,6 +906,8 @@ function placeScreen(){var cy=SCR.y0+SCR.h/2;scrPos[1]=cy;holeMesh.position.y=cy
 /* ───────────── 복셀 개미: 작은 복셀로 빚은 둥근 몸 ───────────── */
 var VS=.085, VMAX=3000, MAXA=132;
 var CUTE=false;try{CUTE=localStorage.getItem("antcute")==="1"}catch(_){}
+var CM=null;                                     // 직접 편집한 개미 모델 (?edit 화면에서 저장). 부위 이름 → [x,y,z,색] 목록. 좌표는 복셀 칸 단위
+function loadCM(){CM=null;try{if(localStorage.getItem("antmodelOn")==="1")CM=JSON.parse(localStorage.getItem("antmodel")).parts}catch(_){CM=null}}loadCM();
 var CS=.85;   // 귀요미 개미 전체 배율: 머리가 커진 만큼 줄여서 기본 개미와 키를 맞춘다
 var CVS=[.08,.068,.056,.047,.04];                              // 귀요미 개미 밀도 −2 ~ +2 (복셀 한 칸의 크기)
 function setVS(){VS=CUTE?CVS[(GFX&&GFX.cdens!=null)?GFX.cdens:2]:.085}setVS();   // 귀요미 개미는 한 단계 고운 복셀로 빚는다
@@ -923,7 +926,12 @@ function buildVox(L){
   if(A){var kv=.93+r()*.12,bb0=lin(PAL.b);body=[bb0[0]*kv,bb0[1]*kv,bb0[2]*kv];lite=lin(PAL.l);dark=lin(PAL.d);hcol=PAL.h?lin(PAL.h):body;legc=PAL.g?lin(PAL.g):body;TB=SPB[SP];LEGL=1.1-2*TB[1];h=L.head*TB[4];HY=1.04+.32*h*.74}
   function cube(o,x,y,z,nx,ny,nz,c){for(var a=0;a<nx;a++)for(var b2=0;b2<ny;b2++)for(var c2=0;c2<nz;c2++)put(o,x+(a-(nx-1)/2)*VS,y+b2*VS,z+(c2-(nz-1)/2)*VS,c)}
   function part(p,rot,a){var o={p:p,r:rot||[0,0,0],a:a||0,v:[],c:[]};parts.push(o);return o}
-  function put(o,x,y,z,c,k){k=(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}
+  function put(o,x,y,z,c,k){k=L.raw?1:(k||1)*(1+(r()-.5)*.09);o.v.push(x,y,z);o.c.push(c[0]*k,c[1]*k,c[2]*k)}   // L.raw: 편집 화면용. 음영 없이 원래 색 그대로
+  // 부위에 이름을 붙이고, 편집한 모델이 있으면 그 부위의 복셀을 통째로 바꾼다. 색 B·D·S 는 개미마다 다른 몸 색·짙은 색·줄무늬 색
+  function cust(o,nm){o.nm=nm;var M=CM&&!A&&!CUTE&&!L.raw&&CM[nm],q,cc,y0=1e9,y1=-1e9;if(!M)return;o.v.length=0;o.c.length=0;
+    for(q=0;q<M.length;q++){y0=Math.min(y0,M[q][1]);y1=Math.max(y1,M[q][1])}
+    for(q=0;q<M.length;q++){cc=M[q][3];cc=cc==="B"?body:cc==="D"?dark:cc==="S"?[body[0]*.72,body[1]*.72,body[2]*.72]:lin(cc);
+      put(o,M[q][0]*VS,M[q][1]*VS,M[q][2]*VS,cc,y1>y0?.86+.18*(M[q][1]-y0)/(y1-y0):1)}}
   // 초타원체를 복셀화해서 겉면만 남긴다. paint(mi,j,k,front,i)가 색을 정하고, null이면 그 칸을 비운다.
   function blob(o,cx,cy,cz,rx,ry,rz,pw,paint,zc){
     var nx=Math.ceil(rx/VS),ny=Math.ceil(ry/VS),nz=Math.ceil(rz/VS),i,j,k;
@@ -936,7 +944,7 @@ function buildVox(L){
     }
   }
   // 배: 줄무늬
-  if(!A)blob(part([0,.38,-.34]),0,0,0,.31*b,.27*b,.38*b,2.3,function(mi,j,k){return ((k+40)%3===0)?[body[0]*.72,body[1]*.72,body[2]*.72]:body});
+  if(!A){var BEL=part([0,.38,-.34]);blob(BEL,0,0,0,.31*b,.27*b,.38*b,2.3,function(mi,j,k){return ((k+40)%3===0)?[body[0]*.72,body[1]*.72,body[2]*.72]:body});cust(BEL,"belly")}
   // 가슴: 넥타이
   if(A)blob(part([0,1.06-TB[1],-.02]),0,0,0,TB[0],TB[1],TB[2],2.4,function(mi,j,k,front){                     // 동물: 두 발로 선 통통한 몸통. 배는 밝고 등에는 무늬
     if(L.acc==="tie"&&front&&mi===0&&j>=0)return V_RED;
@@ -947,7 +955,7 @@ function buildVox(L){
     if(SP===5)return front&&mi<=2&&j<3?lite:body;
     if(SP===7)return j<-1||(front&&mi<=1)?dark:body;
     return body});
-  else blob(part([0,.80,-.04]),0,0,0,.22,.23,.2,2.3,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=-NV(.2)&&j<=1)?V_RED:body});
+  else{var CHE=part([0,.80,-.04]);blob(CHE,0,0,0,.22,.23,.2,2.3,function(mi,j,k,front){return (L.acc==="tie"&&front&&mi===0&&j>=-NV(.2)&&j<=1)?V_RED:body});cust(CHE,"chest")}
   // 머리: 얼굴을 겉면에 그린다
   var H=part([0,HY,.06],null,4),big=L.eye>1.02,hry=.32*h,ny=Math.ceil(hry/VS);H.h=1;
   blob(H,0,0,0,.35*h,hry,.32*h,CUTE?2.1:3.2,function(mi,j,k,front){
@@ -975,6 +983,7 @@ function buildVox(L){
     }
     return A?hcol:body;
   },CUTE?.32*h*.78:null);
+  cust(H,"head");
   if(A){var Zf=.32*h,tp=hry,ear;                                                              // 귀·주둥이·부리
     var snout=function(mi,j,k,fr){return fr&&mi===0&&j>=0?V_BLACK:lite};
     if(SP===2)blob(H,0,-.15,Zf-.03,.15,.11,.1,2,snout);
@@ -1014,6 +1023,7 @@ function buildVox(L){
     if(CUTE){for(i=0;i<NV(.56);i++){put(leg,sx*VS,-(i+.5)*VS,0,dark);put(leg,0,-(i+.5)*VS,-VS,dark);put(mid,sx*VS,-(i+.5)*VS,0,dark);put(mid,0,-(i+.5)*VS,-VS,dark)}put(mid,sx*VS,-(NV(.56)-.5)*VS,VS,dark);put(leg,sx*VS,-(NV(.56)-.5)*VS,VS,dark);                  // 통통한 다리
       for(i=0;i<NV(.42);i++)put(arm,0,-(i+.5)*VS,VS,dark);put(arm,sx*VS,-(NV(.42)-.5)*VS,0,body);put(arm,sx*VS,-(NV(.42)-.5)*VS,VS,body);                     // 뭉툭한 손
       for(i=0;i<2;i++)for(var cj=0;cj<2;cj++)for(var ck=0;ck<2;ck++)put(an,(i-.5)*VS,(n+1+cj)*VS,.12+(ck-.5)*VS,body,1.25)}                                    // 더듬이 끝 공
+    var sd=sx<0?"L":"R";cust(leg,"leg"+sd);cust(arm,"arm"+sd);cust(mid,"mid"+sd);cust(an,"ant"+sd);
   }
   if(A){var T;                                                                                // 꼬리
     if(SP===1){T=part([0,LEGL+.08,-TB[2]-.02],[-.45,0,0],3);for(i=0;i<8;i++)cube(T,0,i*VS,0,2,1,2,i>=5?lite:(i%2?dark:body))}
@@ -2098,6 +2108,7 @@ $("bSrv").onclick=function(){var on=!$("svp").classList.contains("show");closePo
   for(var i=1;i<=6;i++)(function(i){var cur=roomCode==="chan0"+i,b=mk("button","btn"+(cur?" on":""),"채널 "+i);
     b.onclick=function(){if(cur)return toast("지금 있는 채널입니다",1800);try{sessionStorage.setItem("antgo",myName||"")}catch(_){}location.hash="room-chan0"+i;location.reload()};box.appendChild(b)})(i);
   $("svp").classList.add("show")};
+$("bEdit").onclick=function(){window.open(location.pathname+"?edit","_blank")};
 $("bTheme").onclick=function(){var on=!$("thp").classList.contains("show");closePops();if(on){paintThemes();$("thp").classList.add("show")}};
 $("bGfx").onclick=function(){var on=!$("gfx").classList.contains("show");closePops();if(on){renderGfx();$("gfx").classList.add("show")}};
 $("bQ").onclick=function(){quality=quality==="high"?"low":"high";try{localStorage.setItem("antq",quality)}catch(_){}applyQuality()};
@@ -2214,7 +2225,7 @@ paintThemes();
   if(a&&a.n&&joinCode&&a.c===joinCode&&Date.now()-a.t<30000){$("name").value=a.n;$("name").dispatchEvent(new Event("input"));setTimeout(function(){$("go").click()},250)}})();
 /* 새 버전 확인: 브라우저가 예전 파일을 붙들고 있으면(캐시) 고친 내용이 안 보인다.
    열 때와 2분마다 서버의 버전을 물어보고, 다르면 입장 전에는 바로 새로 열고 방 안에서는 알려 준다 */
-var BUILD="B11210107";
+var BUILD="B11211045";
 function checkBuild(){try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
   var m=t.match(/var BUILD="(\w+)"/);if(!m||m[1]===BUILD)return;
   if(!inRoom){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}
@@ -2223,7 +2234,105 @@ if(/^https?:$/.test(location.protocol)){checkBuild();setInterval(checkBuild,1200
 logSys("버전 "+BUILD);
 $("name").focus();
 try{var agN=sessionStorage.getItem("antgo");if(agN){sessionStorage.removeItem("antgo");setTimeout(function(){$("name").value=agN;$("name").dispatchEvent(new Event("input"));if(!$("go").disabled)$("go").click()},500)}}catch(_){}   // 서버 이동으로 넘어왔으면 바로 입장한다
-requestAnimationFrame(frame);
+
+/* ───────────── 개미 모델 편집 화면 (?edit) ─────────────
+   게임의 기본 개미를 부위별 복셀로 꺼내 와서 블록을 쌓고 · 지우고 · 칠한다. 저장하면 이 브라우저의 게임에서 기본 개미가 그 모양으로 나온다.
+   모델 형식: {v:1, parts:{부위:[[x,y,z,색],...]}, xf:{부위:{p,r}}}  좌표는 부위 안에서의 복셀 칸 단위, 색은 "B"(몸 색) "D"(짙은 색) "S"(줄무늬) 또는 0xRRGGBB */
+var EDIT=/[?&]edit/.test(location.search);
+function startEditor(){
+  var PNAME={belly:"배",chest:"가슴",head:"머리",legL:"앞다리",legR:"앞다리",armL:"팔",armR:"팔",midL:"뒷다리",midR:"뒷다리",antL:"더듬이",antR:"더듬이"},
+      PAL=[0xf6f5ef,0x101116,0xd9362f,0xf7c62b,0x566b3c,0x2f6fd0,0xf29a2e,0xf5a3b5,0x8a5a36,0x4a4d57,0x7fd8ff,0xb48cff],
+      BODYS=["#b5532a","#2a2320","#d9362f","#e8a13a","#6b4a32"],bodyHex=BODYS[0],model,tool="add",cur="B",mirror=true,undo=[],meshes=[],on=false;
+  try{on=localStorage.getItem("antmodelOn")==="1"}catch(_){}
+  function base(){var L=lookOf("기본개미"),P,b,m={v:1,parts:{},xf:{}},i,k,q,c,arr;L.color="#b5532a";L.acc="none";L.head=1;L.belly=1;L.eye=1;L.ant=1;L.antSpread=1;L.scale=1;L.cls=null;L.sp=0;L.raw=true;
+    var near=function(a,t){return Math.abs(a[0]-t[0])+Math.abs(a[1]-t[1])+Math.abs(a[2]-t[2])<.004};
+    P=buildVox(L);b=lin(L.color);
+    for(i=0;i<P.length;i++){q=P[i];if(!q.nm)continue;arr=[];for(k=0;k<q.v.length/3;k++){c=[q.c[k*3],q.c[k*3+1],q.c[k*3+2]];
+        arr.push([+(q.v[k*3]/VS).toFixed(2),+(q.v[k*3+1]/VS).toFixed(2),+(q.v[k*3+2]/VS).toFixed(2),near(c,b)?"B":near(c,[b[0]*.3,b[1]*.3,b[2]*.3])?"D":near(c,[b[0]*.72,b[1]*.72,b[2]*.72])?"S":new THREE.Color().setRGB(c[0],c[1],c[2]).getHex()])}
+      m.parts[q.nm]=arr;m.xf[q.nm]={p:[q.p[0],q.p[1],q.p[2]],r:[q.r[0],q.r[1],q.r[2]]}}
+    return m}
+  var BASE0=base();
+  try{var sv=JSON.parse(localStorage.getItem("antmodel"));if(sv&&sv.parts&&sv.parts.head){model=sv;model.xf=BASE0.xf}}catch(_){}
+  if(!model)model=JSON.parse(JSON.stringify(BASE0));
+
+  // 화면
+  var st=document.createElement("style");st.textContent=
+    "#ed{position:fixed;inset:0;z-index:1000;background:#1a2233;color:#eef1f6;font-size:13px}#ed canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}"+
+    "#edp{position:absolute;left:12px;top:12px;bottom:12px;width:236px;overflow:auto;background:rgba(14,17,24,.86);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px;backdrop-filter:blur(8px)}"+
+    "#edp h2{margin:0 0 2px;font-size:16px}#edp h4{margin:14px 0 6px;font-size:11px;color:#9aa3b2;letter-spacing:.04em}#edp p{margin:4px 0 0;color:#9aa3b2;line-height:1.5;font-size:12px}"+
+    "#edp .g{display:grid;grid-template-columns:1fr 1fr;gap:6px}#edp button{padding:9px 6px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:inherit;font:inherit;font-weight:700;cursor:pointer}"+
+    "#edp button.on{border-color:#ffc23d;color:#ffc23d}#edp .sw{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}#edp .sw button{padding:0;height:28px;border-radius:8px}#edp .sw button.on{outline:2px solid #ffc23d;outline-offset:1px}"+
+    "#edp .role{grid-template-columns:1fr 1fr 1fr}#edp .role button{height:auto;padding:7px 2px;font-size:11px;text-shadow:0 1px 2px #000}#edp input[type=color]{width:100%;height:30px;border:0;background:none;padding:0;margin-top:6px}"+
+    "#edi{position:absolute;right:14px;bottom:12px;background:rgba(14,17,24,.8);border-radius:10px;padding:8px 12px;color:#c9d0dc}"+
+    "@media (max-width:700px){#edp{right:12px;width:auto;top:auto;height:44vh}}";
+  document.head.appendChild(st);
+  var root=mk("div"),cv=document.createElement("canvas"),panel=mk("div"),info=mk("div");root.id="ed";panel.id="edp";info.id="edi";root.appendChild(cv);root.appendChild(panel);root.appendChild(info);document.body.appendChild(root);
+  var R=new THREE.WebGLRenderer({canvas:cv,antialias:true}),S=new THREE.Scene(),C=new THREE.PerspectiveCamera(32,1,.05,60),G=new THREE.Group(),ray=new THREE.Raycaster(),
+      cam2={yaw:.7,pitch:.28,dist:4.6},T=new THREE.Vector3(0,.78,-.12),tmpM=new THREE.Matrix4(),tmpS=new THREE.Matrix4();
+  S.background=new THREE.Color(0x1a2233);S.add(new THREE.HemisphereLight(0xdfe8ff,0x4a4038,1.25));var dl=new THREE.DirectionalLight(0xfff1d8,2.2);dl.position.set(2.5,5,3.5);S.add(dl);S.add(G);
+  var grid=new THREE.GridHelper(4,Math.round(4/VS/4),0x41506e,0x2b354b);S.add(grid);
+  var hov=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0xffc23d}));hov.matrixAutoUpdate=false;hov.visible=false;S.add(hov);
+  function colOf(c){if(c==="B"||c==="D"||c==="S"){var b=lin(bodyHex),k=c==="B"?1:c==="D"?.3:.72;return [b[0]*k,b[1]*k,b[2]*k]}return lin(c)}
+  function cssOf(c){return "#"+new THREE.Color().setRGB.apply(new THREE.Color(),colOf(c)).getHexString()}
+  function rebuild(){var nm,M,m,i,mt=new THREE.Matrix4(),col,tot=0,sc=VS*1.02;
+    meshes.forEach(function(x){G.remove(x);x.dispose()});meshes=[];
+    for(nm in model.parts){M=model.parts[nm];tot+=M.length;if(!M.length)continue;m=new THREE.InstancedMesh(boxGeo,antMat,M.length);col=new Float32Array(M.length*3);
+      for(i=0;i<M.length;i++){mt.makeScale(sc,sc,sc).setPosition(M[i][0]*VS,M[i][1]*VS,M[i][2]*VS);m.setMatrixAt(i,mt);var c=colOf(M[i][3]),ck=((Math.floor(M[i][0])+Math.floor(M[i][1])+Math.floor(M[i][2]))&1)?.86:1;col[i*3]=c[0]*ck;col[i*3+1]=c[1]*ck;col[i*3+2]=c[2]*ck}   // 블록 경계가 보이게 한 칸 걸러 살짝 어둡게
+      m.instanceColor=new THREE.InstancedBufferAttribute(col,3);m.position.fromArray(model.xf[nm].p);m.rotation.set(model.xf[nm].r[0],model.xf[nm].r[1],model.xf[nm].r[2]);m.userData.nm=nm;m.frustumCulled=false;G.add(m);meshes.push(m)}
+    G.updateMatrixWorld(true);info.textContent="블록 "+tot.toLocaleString("ko-KR")+"개 · "+(on?"게임에 적용 중":"게임에는 아직 적용 안 함");
+    try{localStorage.setItem("antmodel",JSON.stringify({v:1,parts:model.parts}))}catch(_){}}
+  function snap(){undo.push(JSON.stringify(model.parts));if(undo.length>60)undo.shift()}
+  function find(M,x,y,z){for(var i=0;i<M.length;i++)if(Math.abs(M[i][0]-x)<.02&&Math.abs(M[i][1]-y)<.02&&Math.abs(M[i][2]-z)<.02)return i;return -1}
+  function mirOf(nm){var e=nm.slice(-1);return e==="L"?nm.slice(0,-1)+"R":e==="R"?nm.slice(0,-1)+"L":nm}
+  function pick(ev){var r=cv.getBoundingClientRect(),h;ray.setFromCamera(new THREE.Vector2((ev.clientX-r.left)/r.width*2-1,-((ev.clientY-r.top)/r.height*2-1)),C);h=ray.intersectObjects(meshes,false)[0];
+    if(!h||h.instanceId==null)return null;var nm=h.object.userData.nm,v=model.parts[nm][h.instanceId],n=h.face.normal;
+    return {nm:nm,id:h.instanceId,v:v,mesh:h.object,add:[+(v[0]+Math.round(n.x)).toFixed(2),+(v[1]+Math.round(n.y)).toFixed(2),+(v[2]+Math.round(n.z)).toFixed(2)]}}
+  function act(h){var M=model.parts[h.nm],mn=mirOf(h.nm),MM=model.parts[mn],i,q;
+    if(tool==="pick"){cur=h.v[3];paint();return}
+    snap();
+    var each=function(fn){fn(M,1);if(mirror&&(mn!==h.nm||Math.abs(tool==="add"?h.add[0]:h.v[0])>.02))fn(MM,-1)};
+    if(tool==="add")each(function(A2,sg){if(find(A2,sg*h.add[0],h.add[1],h.add[2])<0)A2.push([sg*h.add[0],h.add[1],h.add[2],cur])});
+    else if(tool==="del")each(function(A2,sg){i=find(A2,sg*h.v[0],h.v[1],h.v[2]);if(i>=0&&A2.length>1)A2.splice(i,1)});
+    else each(function(A2,sg){i=find(A2,sg*h.v[0],h.v[1],h.v[2]);if(i>=0)A2[i][3]=cur});
+    rebuild()}
+  // 조작: 끌면 돌려 보기, 톡 누르면 도구 쓰기, 휠·두 손가락으로 확대
+  var dn=null,moved=false,pts={},pd=0;
+  cv.addEventListener("pointerdown",function(ev){cv.setPointerCapture(ev.pointerId);pts[ev.pointerId]=[ev.clientX,ev.clientY];dn=[ev.clientX,ev.clientY];moved=Object.keys(pts).length>1;pd=0});
+  cv.addEventListener("pointermove",function(ev){var ks=Object.keys(pts);
+    if(pts[ev.pointerId]&&ks.length===2){pts[ev.pointerId]=[ev.clientX,ev.clientY];var a=pts[ks[0]],b=pts[ks[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)cam2.dist=clamp(cam2.dist*pd/d,1.2,12);pd=d;moved=true;return}
+    if(dn&&pts[ev.pointerId]){var dx=ev.clientX-pts[ev.pointerId][0],dy=ev.clientY-pts[ev.pointerId][1];if(!moved&&Math.hypot(ev.clientX-dn[0],ev.clientY-dn[1])>6)moved=true;
+      if(moved){cam2.yaw-=dx*.008;cam2.pitch=clamp(cam2.pitch+dy*.006,-1.3,1.45);hov.visible=false}pts[ev.pointerId]=[ev.clientX,ev.clientY];return}
+    var h=pick(ev);hov.visible=!!h;if(h){var q=tool==="add"?h.add:h.v;hov.matrix.copy(h.mesh.matrixWorld).multiply(tmpM.makeTranslation(q[0]*VS,q[1]*VS,q[2]*VS)).multiply(tmpS.makeScale(VS*1.1,VS*1.1,VS*1.1))}});
+  var up=function(ev){if(pts[ev.pointerId]&&!moved&&ev.type==="pointerup"){var h=pick(ev);if(h)act(h)}delete pts[ev.pointerId];if(!Object.keys(pts).length)dn=null;pd=0};
+  cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+  cv.addEventListener("wheel",function(ev){ev.preventDefault();cam2.dist=clamp(cam2.dist*(ev.deltaY>0?1.1:.9),1.2,12)},{passive:false});
+  cv.addEventListener("contextmenu",function(ev){ev.preventDefault()});
+  addEventListener("keydown",function(ev){if((ev.ctrlKey||ev.metaKey)&&ev.key==="z"){ev.preventDefault();doUndo()}});
+  function doUndo(){if(!undo.length)return;model.parts=JSON.parse(undo.pop());rebuild()}
+  // 패널
+  var tools=[["add","쌓기"],["del","지우기"],["paint","칠하기"],["pick","색 뽑기"]];
+  function paint(){panel.textContent="";var g,b,h;
+    panel.appendChild(mk("h2",null,"개미 모델 편집"));panel.appendChild(mk("p",null,"끌면 돌려 보고, 톡 누르면 블록을 고칩니다. 휠로 확대합니다."));
+    panel.appendChild(mk("h4",null,"도구"));g=mk("div","g");tools.forEach(function(t){b=mk("button",tool===t[0]?"on":"",t[1]);b.onclick=function(){tool=t[0];paint()};g.appendChild(b)});panel.appendChild(g);
+    g=mk("div","g");g.style.marginTop="6px";b=mk("button",mirror?"on":"","좌우 대칭 "+(mirror?"켬":"끔"));b.onclick=function(){mirror=!mirror;paint()};g.appendChild(b);b=mk("button",null,"되돌리기");b.onclick=doUndo;g.appendChild(b);panel.appendChild(g);
+    panel.appendChild(mk("h4",null,"색 · 개미마다 달라지는 색"));g=mk("div","sw role");[["B","몸 색"],["D","짙은 색"],["S","줄무늬"]].forEach(function(t){b=mk("button",cur===t[0]?"on":"",t[1]);b.style.background=cssOf(t[0]);b.onclick=function(){cur=t[0];if(tool==="pick"||tool==="del")tool="paint";paint()};g.appendChild(b)});panel.appendChild(g);
+    panel.appendChild(mk("h4",null,"색 · 고정 색"));g=mk("div","sw");PAL.forEach(function(c){b=mk("button",cur===c?"on":"","");b.style.background=cssOf(c);b.onclick=function(){cur=c;if(tool==="pick"||tool==="del")tool="paint";paint()};g.appendChild(b)});panel.appendChild(g);
+    h=document.createElement("input");h.type="color";h.value=typeof cur==="number"?"#"+("00000"+cur.toString(16)).slice(-6):"#ffffff";h.oninput=function(){cur=parseInt(h.value.slice(1),16)};h.onchange=function(){paint()};panel.appendChild(h);
+    panel.appendChild(mk("h4",null,"미리 볼 몸 색"));g=mk("div","sw");BODYS.forEach(function(c){b=mk("button",bodyHex===c?"on":"","");b.style.background=c;b.onclick=function(){bodyHex=c;rebuild();paint()};g.appendChild(b)});panel.appendChild(g);
+    panel.appendChild(mk("h4",null,"게임에 쓰기"));g=mk("div","g");
+    b=mk("button",on?"on":"",on?"적용 중":"게임에 적용");b.onclick=function(){on=!on;try{localStorage.setItem("antmodelOn",on?"1":"0")}catch(_){}rebuild();paint()};g.appendChild(b);
+    b=mk("button",null,"게임 열기");b.onclick=function(){window.open(location.pathname,"_blank")};g.appendChild(b);
+    b=mk("button",null,"파일로 내보내기");b.onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({v:1,parts:model.parts})],{type:"application/json"}));a.download="ant-model.json";a.click()};g.appendChild(b);
+    b=mk("button",null,"파일 불러오기");b.onclick=function(){var f=document.createElement("input");f.type="file";f.accept=".json,application/json";f.onchange=function(){var rd=new FileReader();rd.onload=function(){try{var j=JSON.parse(rd.result);if(!j.parts||!j.parts.head)throw 0;snap();model.parts=j.parts;rebuild()}catch(_){alert("개미 모델 파일이 아닙니다")}};rd.readAsText(f.files[0])};f.click()};g.appendChild(b);
+    b=mk("button",null,"처음 모델로");b.onclick=function(){if(!confirm("편집한 내용을 버리고 처음 개미로 돌아갈까요?"))return;snap();model.parts=JSON.parse(JSON.stringify(BASE0.parts));rebuild()};g.appendChild(b);panel.appendChild(g);
+    panel.appendChild(mk("p",null,"편집 내용은 이 브라우저에 자동 저장됩니다. \"게임에 적용\"을 켜면 이 브라우저의 게임에서 기본 개미가 이 모양으로 나옵니다. 모자·의상·크기·몸 색은 개미마다 그대로 붙습니다."))}
+  function size(){var w=root.clientWidth,h=root.clientHeight;R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix()}
+  addEventListener("resize",size);size();paint();rebuild();
+  (function loop(){requestAnimationFrame(loop);var cp=Math.cos(cam2.pitch);C.position.set(T.x+Math.sin(cam2.yaw)*cp*cam2.dist,T.y+Math.sin(cam2.pitch)*cam2.dist,T.z+Math.cos(cam2.yaw)*cp*cam2.dist);C.lookAt(T);R.render(S,C)})();
+  window.__ed={model:function(){return model},act:act,pick:pick,set:function(k,v){if(k==="tool")tool=v;if(k==="cur")cur=v;if(k==="mirror")mirror=v;paint()},meshes:function(){return meshes},cam:cam2};
+}
+
+if(EDIT)startEditor();else requestAnimationFrame(frame);
 window.__dbg={ents:function(){return ents},me:function(){return me},cam:cam,setVideo:setVideo,renderer:renderer,q:function(){return quality},use:useSlot,fx:applyFx,yt:yt,room:room,roomNow:roomNow,sync:function(){return vsync},ytNow:ytNow,jump:doJump,sug:function(){return SUG},boss:function(){return bossG},raidWarn:raidWarn,bell:doBell,rally:doRally,vote:startVote,don:doDon,throwAt:throwAt,parts:function(){return parts},setFocus:function(v){focusMode=v}};
 </script>
 </body>
